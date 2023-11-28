@@ -11,11 +11,13 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
+    - uses: Swatinem/rust-cache@v2
+      with:
+        save-if: ${{ github.ref == 'refs/heads/main' }}
+        cache-provider: "github"
     - name: Generate Prisma
       run: cargo prisma generate --schema tokenspan-api/prisma/schema.prisma
     - name: Build
