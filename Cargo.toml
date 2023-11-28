@@ -1,0 +1,9 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "tokenspan-api",
+    "prisma-cli",
+    "tokenspan-macros",
+    "tokenspan-utils"
+]

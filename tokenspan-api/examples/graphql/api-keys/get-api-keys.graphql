@@ -1,0 +1,17 @@
+{
+    apiKeys {
+        owner {
+            email
+            id
+            role
+        }
+        key
+        provider {
+            name
+            createdAt
+            updatedAt
+        }
+        createdAt
+        updatedAt
+    }
+}
