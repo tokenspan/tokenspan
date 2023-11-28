@@ -1,0 +1,10 @@
+[package]
+name = "tokenspan-utils"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.75"
+async-graphql = "6.0"
+base64ct = { version = "1.6.0", features = ["alloc"] }
+thiserror = "1.0.50"
