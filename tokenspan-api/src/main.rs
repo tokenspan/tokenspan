@@ -56,7 +56,7 @@ async fn handler_404() -> impl IntoResponse {
     (
         StatusCode::NOT_FOUND,
         Json(json!({
-            "error": "Not found"
+            "message": "404 page found"
         })),
     )
 }
