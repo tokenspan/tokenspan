@@ -21,7 +21,7 @@ jobs:
     - name: Generate Prisma
       run: cargo prisma generate --schema tokenspan-api/prisma/schema.prisma
     - name: Build
-      run: cargo build
+      run: cargo build --locked
     - name: Run tests
       run: cargo test
     - name: Run clippy
