@@ -88,7 +88,7 @@ async fn main() {
     let schema = build_schema(app_state.clone()).await;
 
     let app = Router::new()
-        .route("/graphql", get(graphql_playground).post(graphql_handler))
+        .route("/graphql", get(graphql_sandbox).post(graphql_handler))
         .nest("/api/:version", api::ApiRouter::new())
         .fallback(handler_404)
         .layer(cors_layer)
@@ -98,7 +98,7 @@ async fn main() {
         .layer(middleware::from_fn(guard::guard))
         .with_state(app_state);
 
-    println!("Playground IDE: http://localhost:8080/graphql");
+    println!("Sandbox: http://localhost:8080/graphql");
 
     Server::bind(&"0.0.0.0:8080".parse().unwrap())
         .serve(app.into_make_service())
