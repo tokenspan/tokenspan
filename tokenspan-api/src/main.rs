@@ -23,6 +23,7 @@ mod graphql;
 mod guard;
 mod loader;
 mod prisma;
+mod repository;
 mod state;
 mod version;
 

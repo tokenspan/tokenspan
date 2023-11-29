@@ -25,5 +25,8 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 validator = { version = "0.16", features = ["derive"] }
 openai_api_rust = "0.1.8"
+mongodb = { version = "2.0", features = ["tokio-runtime"] }
+bson = { version = "2.0", features = ["chrono-0_4"] }
+futures = "0.3"
 tokenspan-macros = { path = "../tokenspan-macros" }
 tokenspan-utils = { path = "../tokenspan-utils" }

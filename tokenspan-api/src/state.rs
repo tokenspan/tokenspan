@@ -1,10 +1,12 @@
 use crate::api::services::*;
 use crate::prisma;
+use crate::repository::Repository;
 use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: Arc<prisma::PrismaClient>,
+    pub repository: Arc<Repository>,
     pub user_service: UserServiceDyn,
     pub auth_service: AuthServiceDyn,
     pub api_key_service: ApiKeyServiceDyn,
@@ -25,7 +27,10 @@ impl AppState {
             .expect("Failed to connect to Prisma client");
         let db = Arc::new(db);
 
-        let user_service: UserServiceDyn = UserService::new(db.clone()).into();
+        let repository = Repository::new_with_uri(mongo_url).await;
+        let repository = Arc::new(repository);
+
+        let user_service: UserServiceDyn = UserService::new(repository.clone()).into();
         let auth_service: AuthServiceDyn = AuthService::new(user_service.clone()).into();
         let api_key_service: ApiKeyServiceDyn = ApiKeyService::new(db.clone()).into();
         let provider_service: ProviderServiceDyn = ProviderService::new(db.clone()).into();
@@ -47,6 +52,7 @@ impl AppState {
 
         Self {
             db,
+            repository,
             user_service,
             auth_service,
             api_key_service,

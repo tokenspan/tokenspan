@@ -194,7 +194,7 @@ impl TaskServiceExt for TaskService {
             .await?
             .ok_or(ParameterError::UnableToGetParameter)?;
 
-        let model = self
+        let _model = self
             .model_service
             .get_model_by_id(parameter.model_id.clone())
             .await?
@@ -228,7 +228,7 @@ impl TaskServiceExt for TaskService {
         let rs = openai.chat_completion_create(&body);
         let choices = rs.unwrap().choices;
         info!("choices: {:?}", choices);
-        let message = &choices[0].message.as_ref().unwrap();
+        let _message = &choices[0].message.as_ref().unwrap();
 
         let parameter = serde_json::to_value(&parameter).unwrap();
 

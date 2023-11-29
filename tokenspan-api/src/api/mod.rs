@@ -14,6 +14,18 @@ mod task_version;
 mod user;
 mod view;
 
+pub mod repositories {
+    // pub use super::api_key::api_key_repository::*;
+    // pub use super::auth::auth_repository::*;
+    // pub use super::execution_history::execution_history_repository::*;
+    // pub use super::model::model_repository::*;
+    // pub use super::parameter::parameter_repository::*;
+    // pub use super::provider::provider_repository::*;
+    // pub use super::task::task_repository::*;
+    // pub use super::task_version::task_version_repository::*;
+    pub use super::user::user_repository::*;
+    // pub use super::view::view_repository::*;
+}
 pub mod services {
     pub use super::api_key::api_key_service::*;
     pub use super::auth::auth_service::*;
