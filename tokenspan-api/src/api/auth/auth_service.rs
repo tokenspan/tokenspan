@@ -18,7 +18,7 @@ pub trait AuthServiceExt {
         username: String,
         password: String,
     ) -> Result<AuthPayload>;
-    async fn sign_in(&self, username: String, password: String) -> Result<AuthPayload>;
+    async fn sign_in(&self, email: String, password: String) -> Result<AuthPayload>;
 
     async fn session(&self, parsed_token: &ParsedToken) -> Result<SessionPayload>;
 
@@ -47,7 +47,7 @@ impl AuthService {
         let claims = Claims {
             iss: "tokenspan".to_string(),
             aud: "tokenspan-app".to_string(),
-            sub: user_id.0,
+            sub: user_id.to_string(),
             exp,
             role: role.to_string(),
         };
@@ -70,7 +70,7 @@ impl AuthService {
         let claims = Claims {
             iss: "tokenspan".to_string(),
             aud: "tokenspan-app".to_string(),
-            sub: user_id.0,
+            sub: user_id.to_string(),
             exp,
             role: role.to_string(),
         };
@@ -94,7 +94,7 @@ impl AuthService {
 
         Ok(ParsedToken {
             role: Role::from_str(&decoded.claims.role).map_err(|_| AuthError::CorruptData)?,
-            user_id: UserId(decoded.claims.sub),
+            user_id: UserId::try_from(decoded.claims.sub).unwrap(),
         })
     }
 }
@@ -125,7 +125,7 @@ impl AuthServiceExt for AuthService {
     async fn sign_in(&self, email: String, password: String) -> Result<AuthPayload> {
         let user_service = self.user_service.clone();
         let user = user_service
-            .get_user_by_username(email.clone())
+            .get_user_by_email(email.clone())
             .await?
             .ok_or(AuthError::InvalidCredentials)?;
 

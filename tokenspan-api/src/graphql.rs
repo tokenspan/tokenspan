@@ -2,7 +2,9 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::extensions::Tracing;
 use async_graphql::{EmptySubscription, Schema};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
-use axum::http::HeaderMap;
+
+use axum::extract::Host;
+use axum::http::{HeaderMap};
 use axum::response::{IntoResponse, Redirect};
 use axum::Extension;
 
@@ -37,9 +39,18 @@ pub async fn build_schema(app_state: AppState) -> AppSchema {
     .finish()
 }
 
-pub async fn graphql_sandbox() -> impl IntoResponse {
-    Redirect::permanent(
-        "https://studio.apollographql.com/sandbox/explorer?endpoint=http://localhost:8080/graphql",
+pub async fn graphql_sandbox(Host(hostname): Host) -> impl IntoResponse {
+    let endpoint = if hostname.contains("localhost") {
+        format!("http://{}graphql", hostname)
+    } else {
+        format!("https://{}graphql", hostname)
+    };
+    Redirect::temporary(
+        format!(
+            "https://studio.apollographql.com/sandbox/explorer?endpoint={}",
+            endpoint
+        )
+        .as_str(),
     )
 }
 

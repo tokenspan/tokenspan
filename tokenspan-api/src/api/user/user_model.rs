@@ -1,23 +1,18 @@
 use std::fmt::Display;
-use std::str::FromStr;
+
 
 use async_graphql::{InputValueError, InputValueResult, Scalar, ScalarType, SimpleObject, Value};
 use bson::oid::ObjectId;
+use serde::{Deserialize, Serialize};
 
-use tokenspan_macros::TeraId;
+use tokenspan_macros::ID;
 use tokenspan_utils::pagination::Cursor;
 
 use crate::api::models::Role;
 use crate::prisma::user;
 
-#[derive(TeraId, Clone, Debug, Eq, PartialEq, Hash)]
-pub struct UserId(pub String);
-
-impl From<UserId> for ObjectId {
-    fn from(value: UserId) -> Self {
-        ObjectId::from_str(&value.0).unwrap()
-    }
-}
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+pub struct UserId(ObjectId);
 
 #[derive(SimpleObject, Clone, Debug)]
 pub struct User {
@@ -33,7 +28,7 @@ pub struct User {
 impl From<user::Data> for User {
     fn from(value: user::Data) -> Self {
         Self {
-            id: UserId(value.id),
+            id: UserId::try_from(value.id).unwrap(),
             email: value.email,
             password: value.password,
             salt: value.salt,
@@ -42,10 +37,10 @@ impl From<user::Data> for User {
     }
 }
 
-impl From<super::user_repository::User> for User {
-    fn from(value: crate::api::repositories::User) -> Self {
+impl From<super::user_repository::UserDoc> for User {
+    fn from(value: super::user_repository::UserDoc) -> Self {
         Self {
-            id: UserId(value.id.to_string()),
+            id: UserId::try_from(value.id.to_string()).unwrap(),
             email: value.email,
             password: value.password,
             salt: value.salt,

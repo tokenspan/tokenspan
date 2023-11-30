@@ -1,9 +1,10 @@
+
 use std::fmt::Display;
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::{
-    ComplexObject, Context, InputValueError, InputValueResult, Result, Scalar, ScalarType,
-    SimpleObject, Value,
+    ComplexObject, Context, Result, Scalar, ScalarType,
+    SimpleObject,
 };
 use chrono::{DateTime, FixedOffset};
 
@@ -70,7 +71,7 @@ impl From<api_key::Data> for ApiKey {
             id: ApiKeyId(value.id),
             name: value.name,
             key: value.key,
-            owner_id: UserId(value.owner_id),
+            owner_id: UserId::try_from(value.owner_id).unwrap(),
             provider_id: ProviderId(value.provider_id),
             created_at: value.created_at,
             updated_at: value.updated_at,

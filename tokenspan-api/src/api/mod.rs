@@ -24,7 +24,7 @@ pub mod repositories {
     // pub use super::task::task_repository::*;
     // pub use super::task_version::task_version_repository::*;
     pub use super::user::user_repository::*;
-    // pub use super::view::view_repository::*;
+    pub use super::view::view_repository::*;
 }
 pub mod services {
     pub use super::api_key::api_key_service::*;

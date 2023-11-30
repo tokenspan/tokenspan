@@ -5,19 +5,21 @@ use async_graphql::{
     ComplexObject, Context, InputValueError, InputValueResult, Result, Scalar, ScalarType,
     SimpleObject, Value,
 };
-use chrono::{DateTime, FixedOffset};
+use bson::oid::ObjectId;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
-use tokenspan_macros::TeraId;
+use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
 
 use crate::api::models::{User, UserId};
 use crate::api::user::user_error::UserError;
 use crate::error::AppError;
 use crate::loader::AppLoader;
-use crate::prisma::view;
 
-#[derive(TeraId, Clone, Debug, Eq, PartialEq, Hash)]
-pub struct ViewId(pub String);
+
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+pub struct ViewId(ObjectId);
 
 #[derive(SimpleObject, Debug, Clone)]
 #[graphql(complex)]
@@ -26,8 +28,8 @@ pub struct View {
     pub name: String,
     pub config: Option<serde_json::Value>,
     pub owner_id: UserId,
-    pub created_at: DateTime<FixedOffset>,
-    pub updated_at: DateTime<FixedOffset>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[ComplexObject]
@@ -52,13 +54,13 @@ impl CursorExt<Cursor> for View {
     }
 }
 
-impl From<view::Data> for View {
-    fn from(value: view::Data) -> Self {
+impl From<super::view_repository::ViewDoc> for View {
+    fn from(value: crate::api::repositories::ViewDoc) -> Self {
         Self {
-            id: ViewId(value.id),
+            id: ViewId::try_from(value.id.to_string()).unwrap(),
             name: value.name,
             config: value.config,
-            owner_id: UserId(value.owner_id),
+            owner_id: UserId::try_from(value.owner_id.to_string()).unwrap(),
             created_at: value.created_at,
             updated_at: value.updated_at,
         }

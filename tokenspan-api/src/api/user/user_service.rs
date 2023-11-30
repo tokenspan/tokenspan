@@ -3,36 +3,36 @@ use std::sync::Arc;
 
 use async_graphql::Result;
 use data_encoding::HEXUPPER;
-use ring::{digest, pbkdf2, rand};
 use ring::rand::SecureRandom;
+use ring::{digest, pbkdf2, rand};
 
 use crate::api::models::UserId;
-use crate::api::repositories::UserCreateInput;
+use crate::api::repositories::UserCreateDoc;
 use crate::api::user::user_error::UserError;
 use crate::api::user::user_model::User;
-use crate::prisma::user;
-use crate::repository::Repository;
+
+use crate::repository::RootRepository;
 
 #[async_trait::async_trait]
 pub trait UserServiceExt {
     async fn create_user(&self, email: String, username: String, password: String) -> Result<User>;
     async fn get_user_by_id(&self, id: UserId) -> Result<Option<User>>;
     async fn get_users_by_ids(&self, ids: Vec<UserId>) -> Result<Vec<User>>;
-    async fn get_user_by_username(&self, email: String) -> Result<Option<User>>;
+    async fn get_user_by_email(&self, email: String) -> Result<Option<User>>;
     fn verify_password(&self, password: &str, salt: &str, hash_password: &str) -> Result<()>;
 }
 
 pub type UserServiceDyn = Arc<dyn UserServiceExt + Send + Sync>;
 
 pub struct UserService {
-    repository: Arc<Repository>,
+    repository: Arc<RootRepository>,
 }
 
 impl UserService {
     const CREDENTIAL_LEN: usize = digest::SHA512_OUTPUT_LEN;
     const ITERATIONS: u32 = 100_000;
 
-    pub fn new(repository: Arc<Repository>) -> Self {
+    pub fn new(repository: Arc<RootRepository>) -> Self {
         Self { repository }
     }
 
@@ -66,7 +66,7 @@ impl UserServiceExt for UserService {
         let created_user = self
             .repository
             .user
-            .create(UserCreateInput {
+            .create(UserCreateDoc {
                 email,
                 username,
                 password: hash_password,
@@ -82,7 +82,7 @@ impl UserServiceExt for UserService {
         let user = self
             .repository
             .user
-            .find_by_id(id.into())
+            .find_by_id(id)
             .await
             .map_err(|_| UserError::UserNotFound(None))?
             .map(|user| user.into());
@@ -91,7 +91,6 @@ impl UserServiceExt for UserService {
     }
 
     async fn get_users_by_ids(&self, ids: Vec<UserId>) -> Result<Vec<User>> {
-        let ids = ids.into_iter().map(|id| id.into()).collect();
         let users = self
             .repository
             .user
@@ -105,7 +104,7 @@ impl UserServiceExt for UserService {
         Ok(users)
     }
 
-    async fn get_user_by_username(&self, email: String) -> Result<Option<User>> {
+    async fn get_user_by_email(&self, email: String) -> Result<Option<User>> {
         let user = self
             .repository
             .user

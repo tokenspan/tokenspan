@@ -62,7 +62,7 @@ impl ExecutionHistoryServiceExt for ExecutionHistoryService {
 
         let builder = match (&args.before, &args.after) {
             (Some(cursor), None) => builder
-                .take((take + 2) * -1)
+                .take(-(take + 2))
                 .cursor(execution_history::id::equals(cursor.id.clone())),
             (None, Some(cursor)) => builder
                 .take(take + 2)

@@ -79,7 +79,7 @@ impl TaskServiceExt for TaskService {
 
         let builder = match (&args.before, &args.after) {
             (Some(cursor), None) => builder
-                .take((take + 2) * -1)
+                .take(-(take + 2))
                 .cursor(task::id::equals(cursor.id.clone())),
             (None, Some(cursor)) => builder
                 .take(take + 2)

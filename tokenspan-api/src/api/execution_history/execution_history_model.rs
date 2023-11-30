@@ -1,5 +1,5 @@
 use crate::api::models::{TaskVersionId, UserId};
-use async_graphql::{InputValueError, InputValueResult, Scalar, ScalarType, SimpleObject, Value};
+use async_graphql::{Scalar, ScalarType, SimpleObject};
 use chrono::{DateTime, FixedOffset};
 use std::fmt::Display;
 use tokenspan_macros::TeraId;
@@ -38,7 +38,7 @@ impl From<execution_history::Data> for ExecutionHistory {
         Self {
             id: ExecutionHistoryId(value.id),
             task_version_id: TaskVersionId(value.task_version_id),
-            executed_by_id: UserId(value.executed_by_id),
+            executed_by_id: UserId::try_from(value.executed_by_id).unwrap(),
             endpoint: value.endpoint,
             elapsed_ms: value.elapsed_ms,
             status: value.status,

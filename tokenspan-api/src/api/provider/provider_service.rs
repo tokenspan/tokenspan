@@ -48,7 +48,7 @@ impl ProviderServiceExt for ProviderService {
 
         let builder = match (&args.before, &args.after) {
             (Some(cursor), None) => builder
-                .take((take + 2) * -1)
+                .take(-(take + 2))
                 .cursor(provider::id::equals(cursor.id.clone())),
             (None, Some(cursor)) => builder
                 .take(take + 2)

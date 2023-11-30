@@ -7,4 +7,5 @@ mod view_loader;
 pub mod view_model;
 mod view_mutation;
 mod view_query;
+pub(crate) mod view_repository;
 pub mod view_service;
