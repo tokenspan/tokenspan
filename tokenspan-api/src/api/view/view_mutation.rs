@@ -6,7 +6,6 @@ use crate::api::view::dto::{ViewCreateInput, ViewUpdateInput};
 use crate::api::view::view_model::View;
 use crate::error::AppError;
 
-
 #[derive(Default)]
 pub struct ViewMutation;
 
