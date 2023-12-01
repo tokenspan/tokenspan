@@ -47,7 +47,7 @@ impl Repository<TaskEntity> {
         let id = result
             .inserted_id
             .as_object_id()
-            .map(|id| TaskId::from(id))
+            .map(TaskId::from)
             .ok_or(Error::custom("invalid id"))?;
 
         self.find_by_id(id)

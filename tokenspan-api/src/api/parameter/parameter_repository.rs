@@ -67,7 +67,7 @@ impl Repository<ParameterEntity> {
         let id = result
             .inserted_id
             .as_object_id()
-            .map(|id| ParameterId::from(id))
+            .map(ParameterId::from)
             .ok_or(Error::custom("invalid id"))?;
 
         self.find_by_id(id)

@@ -40,9 +40,9 @@ impl CursorExt<Cursor> for Execution {
 impl From<super::execution_repository::ExecutionEntity> for Execution {
     fn from(value: super::execution_repository::ExecutionEntity) -> Self {
         Self {
-            id: value.id.into(),
-            task_version_id: value.task_version_id.into(),
-            executed_by_id: value.executed_by_id.into(),
+            id: value.id,
+            task_version_id: value.task_version_id,
+            executed_by_id: value.executed_by_id,
             endpoint: value.endpoint,
             elapsed_ms: value.elapsed_ms,
             status: value.status,

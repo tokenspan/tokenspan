@@ -36,7 +36,7 @@ impl Repository<ProviderEntity> {
         let id = result
             .inserted_id
             .as_object_id()
-            .map(|id| ProviderId::from(id))
+            .map(ProviderId::from)
             .ok_or(Error::custom("invalid id"))?;
 
         self.find_by_id(id)
