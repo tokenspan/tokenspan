@@ -6,6 +6,7 @@ use futures::TryStreamExt;
 use mongodb::bson::oid::ObjectId;
 use mongodb::error::{Error, Result};
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 use crate::api::models::{TaskId, TaskVersionId, UserId};
 use crate::repository::Repository;
@@ -15,6 +16,17 @@ pub enum TaskVersionStatus {
     Draft,
     Published,
     Archived,
+}
+
+impl Display for TaskVersionStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            Self::Draft => "Draft".to_string(),
+            Self::Published => "Published".to_string(),
+            Self::Archived => "Archived".to_string(),
+        };
+        write!(f, "{}", str)
+    }
 }
 
 #[Scalar]

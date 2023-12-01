@@ -17,7 +17,7 @@ anyhow = "1.0.75"
 thiserror = "1.0.50"
 async-trait = "0.1.74"
 axum-macros = "0.3.8"
-chrono = "0.4.31"
+chrono = { version = "0.4.31", features = ["serde"] }
 ring = "0.17.5"
 data-encoding = "2.4.0"
 tracing = "0.1"

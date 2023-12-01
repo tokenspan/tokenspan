@@ -26,9 +26,9 @@ pub trait TaskServiceExt {
     async fn get_tasks(&self, args: TaskArgs) -> Result<Pagination<Cursor, Task>>;
     async fn get_task_by_id(&self, id: TaskId) -> Result<Option<Task>>;
     async fn get_tasks_by_ids(&self, ids: Vec<TaskId>) -> Result<Vec<Task>>;
-    async fn count_tasks(&self) -> Result<i64>;
+    async fn count_tasks(&self) -> Result<u64>;
     async fn create_task(&self, input: TaskCreateInput, owner: UserId) -> Result<Task>;
-    async fn update_task(&self, id: TaskId, input: TaskUpdateInput) -> Result<Task>;
+    async fn update_task(&self, id: TaskId, input: TaskUpdateInput) -> Result<Option<Task>>;
     async fn delete_task(&self, id: TaskId) -> Result<Option<Task>>;
     async fn execute_task(
         &self,
@@ -70,7 +70,7 @@ impl TaskServiceExt for TaskService {
     async fn get_tasks(&self, args: TaskArgs) -> Result<Pagination<Cursor, Task>> {
         let paginated = self
             .repository
-            .view
+            .task
             .paginate::<Task>(args.take, args.before, args.after)
             .await
             .map_err(|_| TaskError::UnableToCreateTask)?;
@@ -131,7 +131,7 @@ impl TaskServiceExt for TaskService {
         Ok(created_task.into())
     }
 
-    async fn update_task(&self, id: TaskId, input: TaskUpdateInput) -> Result<Task> {
+    async fn update_task(&self, id: TaskId, input: TaskUpdateInput) -> Result<Option<Task>> {
         let updated_task = self
             .repository
             .task
@@ -144,9 +144,10 @@ impl TaskServiceExt for TaskService {
                 },
             )
             .await
-            .map_err(|_| TaskError::UnableToUpdateTask)?;
+            .map_err(|_| TaskError::UnableToUpdateTask)?
+            .map(|task| task.into());
 
-        Ok(updated_task.into())
+        Ok(updated_task)
     }
 
     async fn delete_task(&self, id: TaskId) -> Result<Option<Task>> {
@@ -211,6 +212,7 @@ impl TaskServiceExt for TaskService {
         let parameter = serde_json::to_value(&parameter).unwrap();
 
         let execution_input = ExecutionCreateInput {
+            task_id: TaskId::new(),
             task_version_id: input.task_version_id,
             endpoint: Endpoint::Studio,
             elapsed_ms: 0,

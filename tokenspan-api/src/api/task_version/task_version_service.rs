@@ -34,7 +34,7 @@ pub trait TaskVersionServiceExt {
         &self,
         id: TaskVersionId,
         input: TaskVersionUpdateInput,
-    ) -> Result<TaskVersion>;
+    ) -> Result<Option<TaskVersion>>;
     async fn delete_task_version(&self, id: TaskVersionId) -> Result<Option<TaskVersion>>;
     async fn release_task_version(&self, id: TaskVersionId) -> Result<TaskVersion>;
 }
@@ -59,7 +59,7 @@ impl TaskVersionServiceExt for TaskVersionService {
     ) -> Result<Pagination<Cursor, TaskVersion>> {
         let paginated = self
             .repository
-            .view
+            .task_version
             .paginate::<TaskVersion>(args.take, args.before, args.after)
             .await
             .map_err(|_| TaskVersionError::UnableToCountTaskVersions)?;
@@ -147,7 +147,7 @@ impl TaskVersionServiceExt for TaskVersionService {
         &self,
         id: TaskVersionId,
         input: TaskVersionUpdateInput,
-    ) -> Result<TaskVersion> {
+    ) -> Result<Option<TaskVersion>> {
         let updated_task_version = self
             .repository
             .task_version
@@ -161,11 +161,11 @@ impl TaskVersionServiceExt for TaskVersionService {
                     messages: input.messages,
                 },
             )
-            .exec()
             .await
-            .map_err(|_| TaskVersionError::UnableToUpdateTaskVersion)?;
+            .map_err(|_| TaskVersionError::UnableToUpdateTaskVersion)?
+            .map(|task_version| task_version.into());
 
-        Ok(updated_task_version.into())
+        Ok(updated_task_version)
     }
 
     async fn delete_task_version(&self, id: TaskVersionId) -> Result<Option<TaskVersion>> {
@@ -174,9 +174,10 @@ impl TaskVersionServiceExt for TaskVersionService {
             .task_version
             .delete_by_id(id)
             .await
-            .map_err(|_| TaskVersionError::UnableToDeleteTaskVersion)?;
+            .map_err(|_| TaskVersionError::UnableToDeleteTaskVersion)?
+            .map(|task_version| task_version.into());
 
-        Ok(deleted_task_version.into())
+        Ok(deleted_task_version)
     }
 
     async fn release_task_version(&self, _id: TaskVersionId) -> Result<TaskVersion> {

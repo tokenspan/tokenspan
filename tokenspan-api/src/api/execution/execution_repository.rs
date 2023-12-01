@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use mongodb::error::{Error, Result};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Endpoint {
     Studio,
     Http,
@@ -32,7 +32,7 @@ impl ScalarType for Endpoint {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ExecutionStatus {
     Success,
     Failure,

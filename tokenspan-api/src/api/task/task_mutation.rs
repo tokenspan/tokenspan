@@ -1,7 +1,7 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 use bson::oid::ObjectId;
 
-use crate::api::models::{Execution, ModelId, ParsedToken, TaskId};
+use crate::api::models::{Execution, ModelId, ParsedToken, Role, TaskId};
 use crate::api::parameter::dto::ParameterCreateInput;
 use crate::api::repositories::TaskVersionStatus;
 use crate::api::services::{ParameterServiceDyn, TaskServiceDyn, TaskVersionServiceDyn};
@@ -80,7 +80,7 @@ impl TaskMutation {
         ctx: &Context<'a>,
         id: TaskId,
         input: TaskUpdateInput,
-    ) -> Result<Task> {
+    ) -> Result<Option<Task>> {
         let task_service = ctx
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

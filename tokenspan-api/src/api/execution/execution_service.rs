@@ -40,7 +40,7 @@ impl ExecutionServiceExt for ExecutionService {
     async fn get_executions(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>> {
         let paginated = self
             .repository
-            .view
+            .execution
             .paginate::<Execution>(args.take, args.before, args.after)
             .await
             .map_err(|_| ExecutionError::UnableToGetExecutions)?;
@@ -107,9 +107,10 @@ impl ExecutionServiceExt for ExecutionService {
             .execution
             .delete_by_id(id)
             .await
-            .map_err(|_| ExecutionError::UnableToDeleteExecution)?;
+            .map_err(|_| ExecutionError::UnableToDeleteExecution)?
+            .map(|execution| execution.into());
 
-        Ok(deleted_execution.into())
+        Ok(deleted_execution)
     }
 }
 

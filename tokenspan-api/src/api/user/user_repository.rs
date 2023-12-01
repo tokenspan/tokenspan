@@ -3,29 +3,11 @@ use chrono::{DateTime, Utc};
 use mongodb::bson::doc;
 use mongodb::bson::oid::ObjectId;
 use mongodb::error::{Error, Result};
+use openai_api_rust::Role;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 
 use crate::api::models::UserId;
 use crate::repository::Repository;
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum Role {
-    Admin,
-    User,
-}
-
-impl FromStr for Role {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self> {
-        match s {
-            "Admin" => Ok(Role::Admin),
-            "User" => Ok(Role::User),
-            _ => Err(Error::custom("invalid role")),
-        }
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserEntity {

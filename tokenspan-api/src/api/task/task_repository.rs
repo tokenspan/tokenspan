@@ -1,6 +1,7 @@
 use crate::api::models::{TaskId, UserId};
 use crate::repository::Repository;
 use bson::doc;
+use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use mongodb::error::{Error, Result};
 use serde::{Deserialize, Serialize};
@@ -60,7 +61,7 @@ impl Repository<TaskEntity> {
         doc: TaskUpdateEntity,
     ) -> Result<Option<TaskEntity>> {
         let filter = doc! {
-            "_id": id,
+            "_id": ObjectId::from(id),
         };
         let update = doc! {
             "$set": {

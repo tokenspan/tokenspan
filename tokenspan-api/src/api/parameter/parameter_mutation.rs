@@ -6,7 +6,6 @@ use crate::api::parameter::parameter_model::Parameter;
 use crate::api::services::ParameterServiceDyn;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
-
 #[derive(Default)]
 pub struct ParameterMutation;
 

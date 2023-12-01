@@ -1,3 +1,4 @@
+use bson::oid::ObjectId;
 use std::fmt::Display;
 
 use async_graphql::dataloader::DataLoader;
@@ -14,7 +15,7 @@ use crate::error::AppError;
 use crate::loader::AppLoader;
 
 #[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub struct ParameterId(pub String);
+pub struct ParameterId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone, Serialize, Deserialize)]
 #[graphql(complex)]

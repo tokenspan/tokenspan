@@ -43,7 +43,7 @@ impl ParameterServiceExt for ParameterService {
     async fn get_parameters(&self, args: ParameterArgs) -> Result<Pagination<Cursor, Parameter>> {
         let paginated = self
             .repository
-            .view
+            .parameter
             .paginate::<Parameter>(args.take, args.before, args.after)
             .await
             .map_err(|_| ParameterError::UnableToGetParameters)?;
@@ -143,9 +143,10 @@ impl ParameterServiceExt for ParameterService {
             .parameter
             .delete_by_id(id)
             .await
-            .map_err(|_| ParameterError::UnableToDeleteParameter)?;
+            .map_err(|_| ParameterError::UnableToDeleteParameter)?
+            .map(|parameter| parameter.into());
 
-        Ok(deleted_parameter.into())
+        Ok(deleted_parameter)
     }
 }
 

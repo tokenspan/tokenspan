@@ -2,7 +2,6 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::extensions::Tracing;
 use async_graphql::{EmptySubscription, Schema};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
-
 use axum::extract::Host;
 use axum::http::HeaderMap;
 use axum::response::{IntoResponse, Redirect};
@@ -24,7 +23,6 @@ pub async fn build_schema(app_state: AppState) -> AppSchema {
         EmptySubscription,
     )
     .extension(Tracing)
-    .data(app_state.db)
     .data(app_state.user_service)
     .data(app_state.auth_service)
     .data(app_state.api_key_service)

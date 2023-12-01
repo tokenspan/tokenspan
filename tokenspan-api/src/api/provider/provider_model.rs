@@ -1,3 +1,4 @@
+use bson::oid::ObjectId;
 use std::fmt::Display;
 
 use async_graphql::{Scalar, ScalarType, SimpleObject};
@@ -8,7 +9,7 @@ use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
 
 #[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub struct ProviderId(pub String);
+pub struct ProviderId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone)]
 pub struct Provider {

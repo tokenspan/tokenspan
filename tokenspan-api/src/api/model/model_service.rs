@@ -39,7 +39,7 @@ impl ModelServiceExt for ModelService {
     async fn get_models(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>> {
         let paginated = self
             .repository
-            .view
+            .model
             .paginate::<Model>(args.take, args.before, args.after)
             .await
             .map_err(|_| ModelError::UnableToGetModels)?;

@@ -15,10 +15,13 @@ pub trait ProviderServiceExt {
     async fn get_providers(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>>;
     async fn get_provider_by_id(&self, id: ProviderId) -> Result<Option<Provider>>;
     async fn get_providers_by_ids(&self, ids: Vec<ProviderId>) -> Result<Vec<Provider>>;
-    async fn count_providers(&self) -> Result<i64>;
+    async fn count_providers(&self) -> Result<u64>;
     async fn create_provider(&self, input: ProviderCreateInput) -> Result<Provider>;
-    async fn update_provider(&self, id: ProviderId, input: ProviderUpdateInput)
-        -> Result<Provider>;
+    async fn update_provider(
+        &self,
+        id: ProviderId,
+        input: ProviderUpdateInput,
+    ) -> Result<Option<Provider>>;
     async fn delete_provider(&self, id: ProviderId) -> Result<Option<Provider>>;
 }
 
@@ -39,7 +42,7 @@ impl ProviderServiceExt for ProviderService {
     async fn get_providers(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>> {
         let paginated = self
             .repository
-            .view
+            .provider
             .paginate::<Provider>(args.take, args.before, args.after)
             .await
             .map_err(|_| ProviderError::UnableToGetProviders)?;
@@ -99,15 +102,16 @@ impl ProviderServiceExt for ProviderService {
         &self,
         id: ProviderId,
         input: ProviderUpdateInput,
-    ) -> Result<Provider> {
+    ) -> Result<Option<Provider>> {
         let updated_provider = self
             .repository
             .provider
             .update_by_id(id, ProviderUpdateEntity { name: input.name })
             .await
-            .map_err(|_| ProviderError::UnableToUpdateProvider)?;
+            .map_err(|_| ProviderError::UnableToUpdateProvider)?
+            .map(|provider| provider.into());
 
-        Ok(updated_provider.into())
+        Ok(updated_provider)
     }
 
     async fn delete_provider(&self, id: ProviderId) -> Result<Option<Provider>> {

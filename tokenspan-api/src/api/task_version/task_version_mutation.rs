@@ -39,7 +39,7 @@ impl TaskVersionMutation {
         ctx: &Context<'a>,
         id: TaskVersionId,
         input: TaskVersionUpdateInput,
-    ) -> Result<TaskVersion> {
+    ) -> Result<Option<TaskVersion>> {
         let task_version_service = ctx
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

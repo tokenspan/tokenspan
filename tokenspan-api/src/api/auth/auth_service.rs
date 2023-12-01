@@ -1,4 +1,3 @@
-use std::str::FromStr;
 use std::sync::Arc;
 
 use async_graphql::Result;
@@ -6,8 +5,8 @@ use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 
 use crate::api::auth::auth_error::AuthError;
-use crate::api::auth::auth_model::{AuthPayload, Claims, ParsedToken, Role, SessionPayload};
-use crate::api::models::{RefreshPayload, UserId};
+use crate::api::auth::auth_model::{AuthPayload, Claims, ParsedToken, SessionPayload};
+use crate::api::models::{RefreshPayload, Role, UserId};
 use crate::api::services::UserServiceDyn;
 
 #[async_trait::async_trait]
@@ -93,8 +92,7 @@ impl AuthService {
             .map_err(AuthError::JwtError)?;
 
         Ok(ParsedToken {
-            role: Role::from_str(decoded.claims.role.as_str())
-                .map_err(|_| AuthError::CorruptData)?,
+            role: Role::from(decoded.claims.role),
             user_id: UserId::try_from(decoded.claims.sub).unwrap(),
         })
     }
