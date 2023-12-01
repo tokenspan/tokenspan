@@ -8,7 +8,7 @@ use crate::api::task::task_model::Task;
 pub async fn execute_task_v1() -> Result<Json<Task>, TaskError> {
     info!("Executing task");
     Ok(Json(Task {
-        id: TaskId("65615337edae9e611f87f993".to_string()),
+        id: TaskId::new(),
         name: "test".to_string(),
         created_at: chrono::DateTime::parse_from_rfc3339("2021-09-30T12:34:56.789+00:00").unwrap(),
         updated_at: chrono::DateTime::parse_from_rfc3339("2021-09-30T12:34:56.789+00:00").unwrap(),

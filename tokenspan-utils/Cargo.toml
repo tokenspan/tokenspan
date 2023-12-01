@@ -8,3 +8,4 @@ anyhow = "1.0.75"
 async-graphql = "6.0"
 base64ct = { version = "1.6.0", features = ["alloc"] }
 thiserror = "1.0.50"
+bson = { version = "2.0" }

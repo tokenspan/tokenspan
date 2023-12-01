@@ -2,9 +2,8 @@ use std::sync::Arc;
 
 use async_graphql::Result;
 
-
 use crate::api::models::{UserId, ViewId};
-use crate::api::repositories::{ViewCreateDoc, ViewUpdateDoc};
+use crate::api::repositories::{ViewCreateEntity, ViewUpdateEntity};
 use crate::api::view::dto::{ViewArgs, ViewCreateInput, ViewUpdateInput};
 use crate::api::view::view_error::ViewError;
 use crate::api::view::view_model::View;
@@ -89,7 +88,7 @@ impl ViewServiceExt for ViewService {
         let created_view = self
             .repository
             .view
-            .create(ViewCreateDoc {
+            .create(ViewCreateEntity {
                 owner_id,
                 name: input.name,
                 config: input.config,
@@ -104,9 +103,9 @@ impl ViewServiceExt for ViewService {
         let updated_view = self
             .repository
             .view
-            .update(
+            .update_by_id(
                 id,
-                ViewUpdateDoc {
+                ViewUpdateEntity {
                     name: input.name,
                     config: input.config,
                 },
@@ -122,7 +121,7 @@ impl ViewServiceExt for ViewService {
         let deleted_view = self
             .repository
             .view
-            .delete(id)
+            .delete_by_id(id)
             .await
             .map_err(|_| ViewError::UnableToDeleteView)?
             .map(|view| view.into());

@@ -1,30 +1,27 @@
 use std::fmt::Display;
 
-use async_graphql::{
-    ComplexObject, Context, Result, Scalar, ScalarType,
-    SimpleObject,
-};
-use chrono::{DateTime, FixedOffset};
-use serde::Serialize;
+use async_graphql::{ComplexObject, Context, Result, Scalar, ScalarType, SimpleObject};
+use bson::oid::ObjectId;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
-use tokenspan_macros::TeraId;
+use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
 
 use crate::api::models::TaskVersion;
 use crate::api::services::TaskVersionServiceDyn;
 use crate::error::AppError;
-use crate::prisma::task;
 
-#[derive(TeraId, Serialize, Clone, Debug, Eq, PartialEq, Hash)]
-pub struct TaskId(pub String);
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+pub struct TaskId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone, Serialize)]
 #[graphql(complex)]
 pub struct Task {
     pub id: TaskId,
     pub name: String,
-    pub created_at: DateTime<FixedOffset>,
-    pub updated_at: DateTime<FixedOffset>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[ComplexObject]
@@ -49,13 +46,13 @@ impl CursorExt<Cursor> for Task {
     }
 }
 
-impl From<task::Data> for Task {
-    fn from(value: task::Data) -> Self {
+impl From<super::task_repository::TaskEntity> for Task {
+    fn from(value: super::task_repository::TaskEntity) -> Self {
         Self {
-            id: TaskId(value.id),
+            id: value.id,
             name: value.name,
-            created_at: value.created_at,
             updated_at: value.updated_at,
+            created_at: value.created_at,
         }
     }
 }

@@ -1,11 +1,9 @@
 use crate::api::services::*;
-use crate::prisma;
 use crate::repository::RootRepository;
 use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub db: Arc<prisma::PrismaClient>,
     pub repository: Arc<RootRepository>,
     pub user_service: UserServiceDyn,
     pub auth_service: AuthServiceDyn,
@@ -16,42 +14,37 @@ pub struct AppState {
     pub task_version_service: TaskVersionServiceDyn,
     pub task_service: TaskServiceDyn,
     pub view_service: ViewServiceDyn,
-    pub execution_history_service: ExecutionHistoryServiceDyn,
+    pub execution_service: ExecutionServiceDyn,
 }
 
 impl AppState {
     pub async fn init() -> Self {
         let mongo_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-        let db = prisma::new_client_with_url(mongo_url.as_str())
-            .await
-            .expect("Failed to connect to Prisma client");
-        let db = Arc::new(db);
-
         let repository = RootRepository::new_with_uri(mongo_url).await;
         let repository = Arc::new(repository);
 
         let user_service: UserServiceDyn = UserService::new(repository.clone()).into();
         let auth_service: AuthServiceDyn = AuthService::new(user_service.clone()).into();
-        let api_key_service: ApiKeyServiceDyn = ApiKeyService::new(db.clone()).into();
-        let provider_service: ProviderServiceDyn = ProviderService::new(db.clone()).into();
-        let model_service: ModelServiceDyn = ModelService::new(db.clone()).into();
-        let parameter_service: ParameterServiceDyn = ParameterService::new(db.clone()).into();
+        let api_key_service: ApiKeyServiceDyn = ApiKeyService::new(repository.clone()).into();
+        let provider_service: ProviderServiceDyn = ProviderService::new(repository.clone()).into();
+        let model_service: ModelServiceDyn = ModelService::new(repository.clone()).into();
+        let parameter_service: ParameterServiceDyn =
+            ParameterService::new(repository.clone()).into();
         let task_version_service: TaskVersionServiceDyn =
-            TaskVersionService::new(db.clone()).into();
+            TaskVersionService::new(repository.clone()).into();
         let view_service: ViewServiceDyn = ViewService::new(repository.clone()).into();
-        let execution_history_service: ExecutionHistoryServiceDyn =
-            ExecutionHistoryService::new(db.clone()).into();
+        let execution_service: ExecutionServiceDyn =
+            ExecutionService::new(repository.clone()).into();
         let task_service: TaskServiceDyn = TaskService::new(
-            db.clone(),
+            repository.clone(),
             parameter_service.clone(),
             model_service.clone(),
             api_key_service.clone(),
-            execution_history_service.clone(),
+            execution_service.clone(),
         )
         .into();
 
         Self {
-            db,
             repository,
             user_service,
             auth_service,
@@ -62,7 +55,7 @@ impl AppState {
             task_version_service,
             task_service,
             view_service,
-            execution_history_service,
+            execution_service,
         }
     }
 }

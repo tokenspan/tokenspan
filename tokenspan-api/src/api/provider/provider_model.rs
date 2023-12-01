@@ -1,20 +1,21 @@
-use async_graphql::{Scalar, ScalarType, SimpleObject};
-use chrono::{DateTime, FixedOffset};
 use std::fmt::Display;
-use tokenspan_macros::TeraId;
+
+use async_graphql::{Scalar, ScalarType, SimpleObject};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+
+use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
 
-use crate::prisma::provider;
-
-#[derive(TeraId, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ProviderId(pub String);
 
 #[derive(SimpleObject, Debug, Clone)]
 pub struct Provider {
     pub id: ProviderId,
     pub name: String,
-    pub created_at: DateTime<FixedOffset>,
-    pub updated_at: DateTime<FixedOffset>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl CursorExt<Cursor> for Provider {
@@ -23,13 +24,13 @@ impl CursorExt<Cursor> for Provider {
     }
 }
 
-impl From<provider::Data> for Provider {
-    fn from(value: provider::Data) -> Self {
+impl From<super::provider_repository::ProviderEntity> for Provider {
+    fn from(value: super::provider_repository::ProviderEntity) -> Self {
         Self {
-            id: ProviderId(value.id),
+            id: value.id,
             name: value.name,
-            created_at: value.created_at,
             updated_at: value.updated_at,
+            created_at: value.created_at,
         }
     }
 }

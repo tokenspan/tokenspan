@@ -10,4 +10,5 @@ mod task_loader;
 pub mod task_model;
 mod task_mutation;
 mod task_query;
+pub mod task_repository;
 pub mod task_service;

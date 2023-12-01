@@ -1,9 +1,8 @@
 use crate::api::models::ProviderId;
-use crate::prisma::api_key;
 use async_graphql::InputObject;
 
 #[derive(InputObject)]
-pub struct CreateApiKeyInput {
+pub struct ApiKeyCreateInput {
     pub name: String,
     #[graphql(secret)]
     pub key: String,
@@ -11,17 +10,6 @@ pub struct CreateApiKeyInput {
 }
 
 #[derive(InputObject)]
-pub struct UpdateApiKeyInput {
+pub struct ApiKeyUpdateInput {
     pub name: Option<String>,
-}
-
-impl From<UpdateApiKeyInput> for Vec<api_key::SetParam> {
-    fn from(value: UpdateApiKeyInput) -> Self {
-        let mut params = Vec::new();
-        if let Some(name) = value.name {
-            params.push(api_key::name::set(name));
-        }
-
-        params
-    }
 }

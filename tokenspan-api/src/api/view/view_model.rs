@@ -1,10 +1,7 @@
 use std::fmt::Display;
 
 use async_graphql::dataloader::DataLoader;
-use async_graphql::{
-    ComplexObject, Context, InputValueError, InputValueResult, Result, Scalar, ScalarType,
-    SimpleObject, Value,
-};
+use async_graphql::{ComplexObject, Context, Result, Scalar, ScalarType, SimpleObject};
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -16,7 +13,6 @@ use crate::api::models::{User, UserId};
 use crate::api::user::user_error::UserError;
 use crate::error::AppError;
 use crate::loader::AppLoader;
-
 
 #[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ViewId(ObjectId);
@@ -54,13 +50,13 @@ impl CursorExt<Cursor> for View {
     }
 }
 
-impl From<super::view_repository::ViewDoc> for View {
-    fn from(value: crate::api::repositories::ViewDoc) -> Self {
+impl From<super::view_repository::ViewEntity> for View {
+    fn from(value: super::view_repository::ViewEntity) -> Self {
         Self {
-            id: ViewId::try_from(value.id.to_string()).unwrap(),
+            id: value.id,
             name: value.name,
             config: value.config,
-            owner_id: UserId::try_from(value.owner_id.to_string()).unwrap(),
+            owner_id: value.owner_id,
             created_at: value.created_at,
             updated_at: value.updated_at,
         }

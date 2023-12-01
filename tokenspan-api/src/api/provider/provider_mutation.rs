@@ -1,7 +1,7 @@
 use async_graphql::{Context, Object, Result};
 
 use crate::api::models::{ProviderId, Role};
-use crate::api::provider::dto::{CreateProviderInput, UpdateProviderInput};
+use crate::api::provider::dto::{ProviderCreateInput, ProviderUpdateInput};
 use crate::api::provider::provider_model::Provider;
 use crate::api::services::ProviderServiceDyn;
 use crate::error::AppError;
@@ -16,7 +16,7 @@ impl ProviderMutation {
     pub async fn create_provider<'a>(
         &self,
         ctx: &Context<'a>,
-        input: CreateProviderInput,
+        input: ProviderCreateInput,
     ) -> Result<Provider> {
         let provider_service = ctx
             .data::<ProviderServiceDyn>()
@@ -30,7 +30,7 @@ impl ProviderMutation {
         &self,
         ctx: &Context<'a>,
         id: ProviderId,
-        input: UpdateProviderInput,
+        input: ProviderUpdateInput,
     ) -> Result<Provider> {
         let provider_service = ctx
             .data::<ProviderServiceDyn>()

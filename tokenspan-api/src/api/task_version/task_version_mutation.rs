@@ -2,7 +2,7 @@ use async_graphql::{Context, ErrorExtensions, Object, Result};
 
 use crate::api::models::{ParsedToken, Role, TaskVersionId};
 use crate::api::services::TaskVersionServiceDyn;
-use crate::api::task_version::dto::{CreateTaskVersionInput, UpdateTaskVersionInput};
+use crate::api::task_version::dto::{TaskVersionCreateInput, TaskVersionUpdateInput};
 use crate::api::task_version::task_version_model::TaskVersion;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
@@ -16,7 +16,7 @@ impl TaskVersionMutation {
     pub async fn create_task_version<'a>(
         &self,
         ctx: &Context<'a>,
-        input: CreateTaskVersionInput,
+        input: TaskVersionCreateInput,
     ) -> Result<TaskVersion> {
         let task_version_service = ctx
             .data::<TaskVersionServiceDyn>()
@@ -38,7 +38,7 @@ impl TaskVersionMutation {
         &self,
         ctx: &Context<'a>,
         id: TaskVersionId,
-        input: UpdateTaskVersionInput,
+        input: TaskVersionUpdateInput,
     ) -> Result<TaskVersion> {
         let task_version_service = ctx
             .data::<TaskVersionServiceDyn>()
@@ -52,7 +52,7 @@ impl TaskVersionMutation {
         &self,
         ctx: &Context<'a>,
         id: TaskVersionId,
-    ) -> Result<TaskVersion> {
+    ) -> Result<Option<TaskVersion>> {
         let task_version_service = ctx
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

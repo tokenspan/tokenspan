@@ -2,8 +2,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use async_graphql::Result;
+use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use prisma_client_rust::chrono::Utc;
 
 use crate::api::auth::auth_error::AuthError;
 use crate::api::auth::auth_model::{AuthPayload, Claims, ParsedToken, Role, SessionPayload};
@@ -93,7 +93,8 @@ impl AuthService {
             .map_err(AuthError::JwtError)?;
 
         Ok(ParsedToken {
-            role: Role::from_str(&decoded.claims.role).map_err(|_| AuthError::CorruptData)?,
+            role: Role::from_str(decoded.claims.role.as_str())
+                .map_err(|_| AuthError::CorruptData)?,
             user_id: UserId::try_from(decoded.claims.sub).unwrap(),
         })
     }

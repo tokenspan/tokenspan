@@ -71,24 +71,24 @@ pub fn impl_tokenspan_id_1(input: TokenStream) -> TokenStream {
 
         #[Scalar]
         impl ScalarType for #name {
-            fn parse(value: Value) -> InputValueResult<Self> {
-                if let Value::String(maybe_id) = value.clone() {
+            fn parse(value: async_graphql::Value) -> async_graphql::InputValueResult<Self> {
+                if let async_graphql::Value::String(maybe_id) = value.clone() {
                     if let Ok(object_id) = mongodb::bson::oid::ObjectId::parse_str(&maybe_id) {
                         return Ok(Self(object_id));
                     }
 
-                    return Err(InputValueError::expected_type(value));
+                    return Err(async_graphql::InputValueError::expected_type(value));
                 } else {
-                    return Err(InputValueError::expected_type(value))
+                    return Err(async_graphql::InputValueError::expected_type(value))
                 }
             }
 
-            fn to_value(&self) -> Value {
-                Value::String(self.0.to_string())
+            fn to_value(&self) -> async_graphql::Value {
+                async_graphql::Value::String(self.0.to_string())
             }
         }
 
-        impl From<#name> for Cursor {
+        impl From<#name> for tokenspan_utils::pagination::Cursor {
             fn from(value: #name) -> Self {
                 Self::new(value.to_string())
             }

@@ -1,23 +1,21 @@
-use std::fmt::Debug;
-
 use bson::doc;
 use bson::serde_helpers::chrono_datetime_as_bson_datetime;
 use chrono::{DateTime, Utc};
-use futures::TryStreamExt;
 use mongodb::bson::oid::ObjectId;
 use mongodb::error::{Error, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::api::models::{UserId, ViewId};
+use crate::api::models::{ApiKeyId, ProviderId, UserId};
 use crate::repository::Repository;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ViewEntity {
+pub struct ApiKeyEntity {
     #[serde(rename = "_id")]
-    pub id: ViewId,
+    pub id: ApiKeyId,
     pub owner_id: UserId,
+    pub provider_id: ProviderId,
     pub name: String,
-    pub config: Option<serde_json::Value>,
+    pub key: String,
     #[serde(with = "chrono_datetime_as_bson_datetime")]
     pub created_at: DateTime<Utc>,
     #[serde(with = "chrono_datetime_as_bson_datetime")]
@@ -25,25 +23,26 @@ pub struct ViewEntity {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ViewCreateEntity {
+pub struct ApiKeyCreateEntity {
     pub owner_id: UserId,
+    pub provider_id: ProviderId,
     pub name: String,
-    pub config: Option<serde_json::Value>,
+    pub key: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ViewUpdateEntity {
+pub struct ApiKeyUpdateEntity {
     pub name: Option<String>,
-    pub config: Option<serde_json::Value>,
 }
 
-impl Repository<ViewEntity> {
-    pub async fn create(&self, doc: ViewCreateEntity) -> Result<ViewEntity> {
-        let doc = ViewEntity {
-            id: ViewId::new(),
+impl Repository<ApiKeyEntity> {
+    pub async fn create(&self, doc: ApiKeyCreateEntity) -> Result<ApiKeyEntity> {
+        let doc = ApiKeyEntity {
+            id: ApiKeyId::new(),
             owner_id: doc.owner_id,
+            provider_id: doc.provider_id,
             name: doc.name,
-            config: doc.config,
+            key: doc.key,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };
@@ -51,45 +50,31 @@ impl Repository<ViewEntity> {
         let id = result
             .inserted_id
             .as_object_id()
-            .map(|id| ViewId::from(id))
+            .map(|id| ApiKeyId::from(id))
             .ok_or(Error::custom("invalid id"))?;
 
         self.find_by_id(id)
             .await?
-            .ok_or(Error::custom("user not found"))
+            .ok_or(Error::custom("api key not found"))
     }
 
     pub async fn update_by_id(
         &self,
-        id: ViewId,
-        doc: ViewUpdateEntity,
-    ) -> Result<Option<ViewEntity>> {
+        id: ApiKeyId,
+        doc: ApiKeyUpdateEntity,
+    ) -> Result<Option<ApiKeyEntity>> {
         let filter = doc! {
             "_id": ObjectId::from(id),
         };
-        let config = doc
-            .config
-            .and_then(|config| bson::ser::to_bson(&config).ok());
         let update = doc! {
             "$set": {
                 "name": doc.name,
-                "config": config,
                 "updated_at": Utc::now(),
-            }
+            },
         };
 
         self.collection
             .find_one_and_update(filter, update, None)
             .await
-    }
-
-    pub async fn find_by_owner_id(&self, owner_id: UserId) -> Result<Vec<ViewEntity>> {
-        let filter = doc! {
-            "owner_id": ObjectId::from(owner_id),
-        };
-
-        let cursor = self.collection.find(filter, None).await?;
-
-        cursor.try_collect().await
     }
 }

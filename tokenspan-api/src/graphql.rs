@@ -4,7 +4,7 @@ use async_graphql::{EmptySubscription, Schema};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 
 use axum::extract::Host;
-use axum::http::{HeaderMap};
+use axum::http::HeaderMap;
 use axum::response::{IntoResponse, Redirect};
 use axum::Extension;
 
@@ -34,7 +34,7 @@ pub async fn build_schema(app_state: AppState) -> AppSchema {
     .data(app_state.task_version_service)
     .data(app_state.task_service)
     .data(app_state.view_service)
-    .data(app_state.execution_history_service)
+    .data(app_state.execution_service)
     .data(loader)
     .finish()
 }

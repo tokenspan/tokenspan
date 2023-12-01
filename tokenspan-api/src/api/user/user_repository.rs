@@ -1,11 +1,10 @@
 use bson::serde_helpers::chrono_datetime_as_bson_datetime;
 use chrono::{DateTime, Utc};
-use futures::TryStreamExt;
 use mongodb::bson::doc;
 use mongodb::bson::oid::ObjectId;
 use mongodb::error::{Error, Result};
 use serde::{Deserialize, Serialize};
-use std::iter::Iterator;
+use std::str::FromStr;
 
 use crate::api::models::UserId;
 use crate::repository::Repository;
@@ -16,8 +15,20 @@ pub enum Role {
     User,
 }
 
+impl FromStr for Role {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        match s {
+            "Admin" => Ok(Role::Admin),
+            "User" => Ok(Role::User),
+            _ => Err(Error::custom("invalid role")),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct UserDoc {
+pub struct UserEntity {
     #[serde(rename = "_id")]
     pub id: UserId,
     pub email: String,
@@ -32,7 +43,7 @@ pub struct UserDoc {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct UserCreateDoc {
+pub struct UserCreateEntity {
     pub email: String,
     pub username: String,
     pub password: String,
@@ -40,14 +51,14 @@ pub struct UserCreateDoc {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct UserUpdateDoc {
+pub struct UserUpdateEntity {
     pub email: Option<String>,
     pub username: Option<String>,
 }
 
-impl Repository<UserDoc> {
-    pub async fn create(&self, input: UserCreateDoc) -> Result<UserDoc> {
-        let user = UserDoc {
+impl Repository<UserEntity> {
+    pub async fn create(&self, input: UserCreateEntity) -> Result<UserEntity> {
+        let user = UserEntity {
             id: UserId::new(),
             email: input.email,
             username: input.username,
@@ -61,7 +72,7 @@ impl Repository<UserDoc> {
         let id = result
             .inserted_id
             .as_object_id()
-            .map(|id| id.into())
+            .map(|id| UserId::from(id))
             .ok_or(Error::custom("invalid id"))?;
 
         self.find_by_id(id)
@@ -69,18 +80,7 @@ impl Repository<UserDoc> {
             .ok_or(Error::custom("user not found"))
     }
 
-    pub async fn find_by_id(&self, id: UserId) -> Result<Option<UserDoc>> {
-        self.collection
-            .find_one(
-                doc! {
-                    "_id": ObjectId::from(id)
-                },
-                None,
-            )
-            .await
-    }
-
-    pub async fn find_by_email(&self, email: String) -> Result<Option<UserDoc>> {
+    pub async fn find_by_email(&self, email: String) -> Result<Option<UserEntity>> {
         self.collection
             .find_one(
                 doc! {
@@ -91,38 +91,11 @@ impl Repository<UserDoc> {
             .await
     }
 
-    pub async fn find_by_username(&self, username: String) -> Result<Option<UserDoc>> {
-        self.collection
-            .find_one(
-                doc! {
-                    "username": username
-                },
-                None,
-            )
-            .await
-    }
-
-    pub async fn find_many_by_ids(&self, ids: Vec<UserId>) -> Result<Vec<UserDoc>> {
-        let ids = ids
-            .into_iter()
-            .map(|id| id.into())
-            .collect::<Vec<ObjectId>>();
-        let cursor = self
-            .collection
-            .find(
-                doc! {
-                    "_id": {
-                        "$in": ids
-                    }
-                },
-                None,
-            )
-            .await?;
-
-        cursor.try_collect().await
-    }
-
-    pub async fn update_by_id(&self, id: UserId, doc: UserUpdateDoc) -> Result<Option<UserDoc>> {
+    pub async fn update_by_id(
+        &self,
+        id: UserId,
+        doc: UserUpdateEntity,
+    ) -> Result<Option<UserEntity>> {
         self.collection
             .find_one_and_update(
                 doc! {
@@ -140,11 +113,11 @@ impl Repository<UserDoc> {
             .await
     }
 
-    pub async fn delete_by_id(&self, id: UserId) -> Result<Option<UserDoc>> {
+    pub async fn find_by_username(&self, username: String) -> Result<Option<UserEntity>> {
         self.collection
-            .find_one_and_delete(
+            .find_one(
                 doc! {
-                    "_id": ObjectId::from(id)
+                    "username": username
                 },
                 None,
             )

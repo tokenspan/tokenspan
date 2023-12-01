@@ -7,7 +7,7 @@ use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2, rand};
 
 use crate::api::models::UserId;
-use crate::api::repositories::UserCreateDoc;
+use crate::api::repositories::UserCreateEntity;
 use crate::api::user::user_error::UserError;
 use crate::api::user::user_model::User;
 
@@ -66,7 +66,7 @@ impl UserServiceExt for UserService {
         let created_user = self
             .repository
             .user
-            .create(UserCreateDoc {
+            .create(UserCreateEntity {
                 email,
                 username,
                 password: hash_password,
