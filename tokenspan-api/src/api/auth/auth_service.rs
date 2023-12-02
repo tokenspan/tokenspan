@@ -8,6 +8,7 @@ use crate::api::auth::auth_error::AuthError;
 use crate::api::auth::auth_model::{AuthPayload, Claims, ParsedToken, SessionPayload};
 use crate::api::models::{RefreshPayload, Role, UserId};
 use crate::api::services::UserServiceDyn;
+use crate::configs::AuthConfig;
 
 #[async_trait::async_trait]
 pub trait AuthServiceExt {
@@ -28,24 +29,28 @@ pub type AuthServiceDyn = Arc<dyn AuthServiceExt + Send + Sync>;
 
 pub struct AuthService {
     user_service: UserServiceDyn,
+    auth_config: AuthConfig,
 }
 
 impl AuthService {
-    pub fn new(user_service: UserServiceDyn) -> Self {
-        Self { user_service }
+    pub fn new(user_service: UserServiceDyn, auth_config: AuthConfig) -> Self {
+        Self {
+            user_service,
+            auth_config,
+        }
     }
 }
 
 impl AuthService {
     fn create_token(&self, user_id: UserId, role: &Role) -> Result<String, AuthError> {
         let exp = Utc::now()
-            .checked_add_signed(chrono::Duration::days(30))
+            .checked_add_signed(chrono::Duration::seconds(self.auth_config.token_exp))
             .ok_or(AuthError::TimeAdditionOverflow)?
             .timestamp();
 
         let claims = Claims {
-            iss: "tokenspan".to_string(),
-            aud: "tokenspan-app".to_string(),
+            iss: self.auth_config.iss.clone(),
+            aud: self.auth_config.aud.clone(),
             sub: user_id.to_string(),
             exp,
             role: role.to_string(),
@@ -55,20 +60,22 @@ impl AuthService {
         encode(
             &header,
             &claims,
-            &EncodingKey::from_secret("secret".as_ref()),
+            &EncodingKey::from_secret(self.auth_config.secret.as_ref()),
         )
         .map_err(AuthError::JwtError)
     }
 
     fn create_refresh_token(&self, user_id: UserId, role: &Role) -> Result<String, AuthError> {
         let exp = Utc::now()
-            .checked_add_signed(chrono::Duration::days(30))
+            .checked_add_signed(chrono::Duration::seconds(
+                self.auth_config.refresh_token_exp,
+            ))
             .ok_or(AuthError::TimeAdditionOverflow)?
             .timestamp();
 
         let claims = Claims {
-            iss: "tokenspan".to_string(),
-            aud: "tokenspan-app".to_string(),
+            iss: self.auth_config.iss.clone(),
+            aud: self.auth_config.aud.clone(),
             sub: user_id.to_string(),
             exp,
             role: role.to_string(),
@@ -78,15 +85,20 @@ impl AuthService {
         encode(
             &header,
             &claims,
-            &EncodingKey::from_secret("secret".as_ref()),
+            &EncodingKey::from_secret(self.auth_config.secret.as_ref()),
         )
         .map_err(AuthError::JwtError)
     }
 
-    pub fn decode_token(jwt: &str, secret: &[u8]) -> Result<ParsedToken, AuthError> {
+    pub fn decode_token(
+        jwt: &str,
+        secret: &[u8],
+        iss: String,
+        aud: String,
+    ) -> Result<ParsedToken, AuthError> {
         let mut validation = Validation::new(Algorithm::HS512);
-        validation.set_issuer(&["tokenspan"]);
-        validation.set_audience(&["tokenspan-app"]);
+        validation.set_issuer(&[iss]);
+        validation.set_audience(&[aud]);
 
         let decoded = decode::<Claims>(jwt, &DecodingKey::from_secret(secret), &validation)
             .map_err(AuthError::JwtError)?;
@@ -154,7 +166,12 @@ impl AuthServiceExt for AuthService {
     }
 
     async fn refresh_token(&self, refresh_token: String) -> Result<RefreshPayload> {
-        let parsed_token = AuthService::decode_token(&refresh_token, "secret".as_ref())?;
+        let parsed_token = AuthService::decode_token(
+            &refresh_token,
+            self.auth_config.secret.as_ref(),
+            self.auth_config.iss.clone(),
+            self.auth_config.aud.clone(),
+        )?;
 
         let new_token = self.create_token(parsed_token.user_id, &parsed_token.role)?;
 

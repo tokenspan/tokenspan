@@ -8,7 +8,9 @@ use tokenspan_macros::ID;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Role {
+    #[serde(rename = "Admin")]
     Admin,
+    #[serde(rename = "User")]
     User,
 }
 
@@ -53,7 +55,7 @@ impl ScalarType for Role {
     }
 }
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct UserId(ObjectId);
 
 #[derive(SimpleObject, Clone, Debug)]

@@ -1,8 +1,10 @@
+use std::sync::Arc;
 use std::time::Duration;
 
 use crate::configs::AppEnv;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use axum::routing::get;
 use axum::{middleware, Extension, Json, Router};
 use serde_json::json;
 use tokio::net::TcpListener;
@@ -35,13 +37,13 @@ async fn handler_404() -> impl IntoResponse {
     )
 }
 
-pub fn register_tracing(config: configs::AppConfig) {
+pub fn register_tracing(config: Arc<configs::AppConfig>) {
     let trace = tracing_subscriber::registry().with(
         tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
             // axum logs rejections from built-in extractors with the `axum::rejection`
             // target, at `TRACE` level.
             // `axum::rejection=trace` enables showing those events
-            tracing_subscriber::EnvFilter::new(config.log.filter)
+            tracing_subscriber::EnvFilter::new(config.log.filter.clone())
         }),
     );
 
@@ -55,6 +57,7 @@ pub fn register_tracing(config: configs::AppConfig) {
 #[tokio::main]
 async fn main() {
     let config = configs::AppConfig::new().unwrap();
+    let config = Arc::new(config);
 
     register_tracing(config.clone());
 
@@ -65,18 +68,19 @@ async fn main() {
     let cors_layer = CorsLayer::permissive();
     let timeout_layer = TimeoutLayer::new(Duration::from_secs(10));
 
-    let app_state = state::AppState::new(config.database).await;
+    let app_state = state::AppState::new(config.clone()).await;
     let schema = build_schema(app_state.clone()).await;
 
     let app = Router::new()
-        // .route("/graphql", get(graphql_sandbox).post(graphql_handler))
+        .route("/graphql", get(graphql_sandbox).post(graphql_handler))
         .nest("/api/:version", api::ApiRouter::new())
         .fallback(handler_404)
+        .layer(middleware::from_fn_with_state(config.clone(), guard::guard))
         .layer(cors_layer)
         .layer(timeout_layer)
         .layer(trace_layer)
         .layer(Extension(schema))
-        .layer(middleware::from_fn(guard::guard))
+        .layer(Extension(config))
         .with_state(app_state);
 
     println!("Sandbox: http://localhost:8080/graphql");

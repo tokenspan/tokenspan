@@ -93,15 +93,15 @@ impl ParameterServiceExt for ParameterService {
             .repository
             .parameter
             .create(ParameterCreateEntity {
+                model_id: input.model_id,
                 name: input.name,
-                temperature: input.temperature,
+                temperature: 3f32,
                 max_tokens: input.max_tokens,
                 stop_sequences: input.stop_sequences,
-                top_p: input.top_p,
-                frequency_penalty: input.frequency_penalty,
-                presence_penalty: input.presence_penalty,
+                top_p: 3f32,
+                frequency_penalty: 3f32,
+                presence_penalty: 3f32,
                 extra: input.extra,
-                model_id: input.model_id,
             })
             .await
             .map_err(|_| ParameterError::UnableToCreateParameter)?;

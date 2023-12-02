@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProviderEntity {
-    pub id: ProviderId,
+    pub id: ObjectId,
     pub name: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -27,7 +27,7 @@ pub struct ProviderUpdateEntity {
 impl Repository<ProviderEntity> {
     pub async fn create(&self, doc: ProviderCreateEntity) -> Result<ProviderEntity> {
         let doc = ProviderEntity {
-            id: ProviderId::new(),
+            id: ObjectId::new(),
             name: doc.name,
             created_at: Utc::now(),
             updated_at: Utc::now(),

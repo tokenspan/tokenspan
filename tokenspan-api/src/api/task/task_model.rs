@@ -3,7 +3,7 @@ use std::fmt::Display;
 use async_graphql::{ComplexObject, Context, Result, Scalar, ScalarType, SimpleObject};
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
@@ -12,7 +12,7 @@ use crate::api::models::TaskVersion;
 use crate::api::services::TaskVersionServiceDyn;
 use crate::error::AppError;
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct TaskId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone, Serialize)]

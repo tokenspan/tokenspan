@@ -1,10 +1,17 @@
+use std::sync::Arc;
+
 use async_graphql::dataloader::DataLoader;
 use async_graphql::extensions::Tracing;
 use async_graphql::{EmptySubscription, Schema};
+use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::extract::Host;
 use axum::response::{IntoResponse, Redirect};
+use axum::Extension;
+use axum_extra::headers::HeaderMap;
 
+use crate::api::models::ParsedToken;
 use crate::api::{MutationRoot, QueryRoot};
+use crate::configs::AppConfig;
 use crate::loader::AppLoader;
 use crate::state::AppState;
 
@@ -49,15 +56,16 @@ pub async fn graphql_sandbox(Host(hostname): Host) -> impl IntoResponse {
     )
 }
 
-// pub async fn graphql_handler(
-//     Extension(schema): Extension<AppSchema>,
-//     Extension(token): Extension<Option<ParsedToken>>,
-//     Extension(headers): Extension<HeaderMap>,
-//     req: GraphQLRequest,
-// ) -> GraphQLResponse {
-//     let execute = schema
-//         .execute(req.into_inner().data(headers).data(token))
-//         .await;
-//
-//     execute.into()
-// }
+pub async fn graphql_handler(
+    Extension(schema): Extension<AppSchema>,
+    Extension(config): Extension<Arc<AppConfig>>,
+    Extension(token): Extension<Option<ParsedToken>>,
+    Extension(headers): Extension<HeaderMap>,
+    req: GraphQLRequest,
+) -> GraphQLResponse {
+    let execute = schema
+        .execute(req.into_inner().data(headers).data(token).data(config))
+        .await;
+
+    execute.into()
+}

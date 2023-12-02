@@ -10,7 +10,6 @@ use crate::api::models::UserId;
 use crate::api::repositories::UserCreateEntity;
 use crate::api::user::user_error::UserError;
 use crate::api::user::user_model::User;
-
 use crate::repository::RootRepository;
 
 #[async_trait::async_trait]
@@ -73,7 +72,7 @@ impl UserServiceExt for UserService {
                 salt,
             })
             .await
-            .unwrap();
+            .map_err(|e| UserError::UnableToCreateUser)?;
 
         Ok(created_user.into())
     }

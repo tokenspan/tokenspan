@@ -1,6 +1,5 @@
 use config::{Config, Environment, File};
 use serde::Deserialize;
-use tracing::info;
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 pub enum AppEnv {
@@ -26,11 +25,21 @@ pub struct LogConfig {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct AuthConfig {
+    pub secret: String,
+    pub iss: String,
+    pub aud: String,
+    pub token_exp: i64,
+    pub refresh_token_exp: i64,
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct AppConfig {
     pub env: AppEnv,
     pub server: ServerConfig,
     pub database: DatabaseConfig,
     pub log: LogConfig,
+    pub auth: AuthConfig,
 }
 
 impl AppConfig {
@@ -46,8 +55,6 @@ impl AppConfig {
             )
             .add_source(env_source)
             .build()?;
-
-        info!("Loaded configs: {:?}", s);
 
         s.try_deserialize()
     }

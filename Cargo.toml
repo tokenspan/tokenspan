@@ -5,8 +5,9 @@ members = [
     "tokenspan-api",
     "tokenspan-extra",
     "tokenspan-macros",
-    "tokenspan-utils"
+    "tokenspan-utils",
+    "tokenspan-sdk",
 ]
 
-[workspace.lints.rust]
+[workspace.lints.clippy]
 new_ret_no_self = "allow"

@@ -45,17 +45,17 @@ pub fn impl_tokenspan_id(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl TryFrom<String> for #name {
-            type Error = anyhow::Error;
-
-            fn try_from(value: String) -> Result<Self, Self::Error> {
-                if let Ok(object_id) = mongodb::bson::oid::ObjectId::parse_str(&value) {
-                    return Ok(Self(object_id));
-                }
-
-                Err(anyhow::anyhow!("invalid id"))
-            }
-        }
+        // impl TryFrom<String> for #name {
+        //     type Error = anyhow::Error;
+        //
+        //     fn try_from(value: String) -> Result<Self, Self::Error> {
+        //         if let Ok(object_id) = mongodb::bson::oid::ObjectId::parse_str(&value) {
+        //             return Ok(Self(object_id));
+        //         }
+        //
+        //         Err(anyhow::anyhow!("invalid id"))
+        //     }
+        // }
 
         impl From<#name> for String {
             fn from(value: #name) -> Self {
@@ -63,8 +63,28 @@ pub fn impl_tokenspan_id(input: TokenStream) -> TokenStream {
             }
         }
 
+        impl From<String> for #name {
+            fn from(value: String) -> Self {
+                let oid = mongodb::bson::oid::ObjectId::parse_str(&value).unwrap();
+                Self(oid)
+            }
+        }
+
+        impl From<&str> for #name {
+            fn from(value: &str) -> Self {
+                let oid = mongodb::bson::oid::ObjectId::parse_str(&value).unwrap();
+                Self(oid)
+            }
+        }
+
         impl From<#name> for mongodb::bson::oid::ObjectId {
             fn from(value: #name) -> Self {
+                value.0
+            }
+        }
+
+        impl From<&#name> for mongodb::bson::oid::ObjectId {
+            fn from(value: &#name) -> Self {
                 value.0
             }
         }
@@ -75,27 +95,25 @@ pub fn impl_tokenspan_id(input: TokenStream) -> TokenStream {
             }
         }
 
-
-        impl serde::Serialize for #name {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: serde::Serializer,
-            {
-                serializer.serialize_str(&self.0.to_string())
-            }
-        }
-
-        impl<'de> serde::Deserialize<'de> for #name {
-            fn deserialize<D>(deserializer: D) -> Result<#name, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                let s = String::deserialize(deserializer)?;
-                let id = #name::try_from(s).map_err(|e| serde::de::Error::custom(e.to_string()))?;
-                Ok(id)
-            }
-        }
-
+        // impl serde::Serialize for #name {
+        //     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        //     where
+        //         S: serde::Serializer,
+        //     {
+        //         serializer.serialize_str(&self.0.to_string())
+        //     }
+        // }
+        //
+        // impl<'de> serde::Deserialize<'de> for #name {
+        //     fn deserialize<D>(deserializer: D) -> Result<#name, D::Error>
+        //     where
+        //         D: serde::Deserializer<'de>,
+        //     {
+        //         let s = String::deserialize(deserializer)?;
+        //         let id = #name::try_from(s).map_err(|e| serde::de::Error::custom(e.to_string()))?;
+        //         Ok(id)
+        //     }
+        // }
     };
 
     gen.into()

@@ -1,7 +1,7 @@
+use bson::oid::ObjectId;
 use bson::serde_helpers::chrono_datetime_as_bson_datetime;
 use chrono::{DateTime, Utc};
 use mongodb::bson::doc;
-use mongodb::bson::oid::ObjectId;
 use mongodb::error::{Error, Result};
 use openai_api_rust::Role;
 use serde::{Deserialize, Serialize};

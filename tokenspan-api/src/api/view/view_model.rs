@@ -4,6 +4,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::{ComplexObject, Context, Result, Scalar, ScalarType, SimpleObject};
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
@@ -13,7 +14,7 @@ use crate::api::user::user_error::UserError;
 use crate::error::AppError;
 use crate::loader::AppLoader;
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ViewId(ObjectId);
 
 #[derive(SimpleObject, Debug, Clone)]

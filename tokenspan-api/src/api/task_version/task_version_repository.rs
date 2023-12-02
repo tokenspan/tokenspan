@@ -3,10 +3,10 @@ use bson::doc;
 use bson::serde_helpers::chrono_datetime_as_bson_datetime;
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
-use mongodb::bson::oid::ObjectId;
 use mongodb::error::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+use bson::oid::ObjectId;
 
 use crate::api::models::{TaskId, TaskVersionId, UserId};
 use crate::repository::Repository;
@@ -54,7 +54,7 @@ impl ScalarType for TaskVersionStatus {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TaskVersionEntity {
     #[serde(rename = "_id")]
-    pub id: TaskVersionId,
+    pub id: ObjectId,
     pub task_id: TaskId,
     pub owner_id: UserId,
     pub version: String,
@@ -96,7 +96,7 @@ pub struct TaskVersionUpdateEntity {
 impl Repository<TaskVersionEntity> {
     pub async fn create(&self, doc: TaskVersionCreateEntity) -> Result<TaskVersionEntity> {
         let doc = TaskVersionEntity {
-            id: TaskVersionId::new(),
+            id: ObjectId::new(),
             task_id: doc.task_id,
             owner_id: doc.owner_id,
             version: doc.version,

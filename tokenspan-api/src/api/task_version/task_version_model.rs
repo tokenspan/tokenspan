@@ -3,11 +3,12 @@ use std::fmt::Display;
 use async_graphql::{Scalar, ScalarType, SimpleObject};
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct TaskVersionId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone)]
@@ -32,7 +33,7 @@ impl CursorExt<Cursor> for TaskVersion {
 impl From<super::task_version_repository::TaskVersionEntity> for TaskVersion {
     fn from(value: super::task_version_repository::TaskVersionEntity) -> Self {
         Self {
-            id: value.id,
+            id: TaskVersionId::from(value.id),
             version: value.version,
             release_note: value.release_note,
             description: value.description,

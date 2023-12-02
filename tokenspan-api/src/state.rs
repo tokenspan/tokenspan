@@ -1,7 +1,8 @@
-use crate::api::services::*;
-use crate::configs::DatabaseConfig;
-use crate::repository::RootRepository;
 use std::sync::Arc;
+
+use crate::api::services::*;
+use crate::configs::AppConfig;
+use crate::repository::RootRepository;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -19,12 +20,15 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new(database_config: DatabaseConfig) -> Self {
-        let repository = RootRepository::new_with_uri(database_config.url).await;
+    pub async fn new(app_config: Arc<AppConfig>) -> Self {
+        let url = app_config.database.url.clone();
+
+        let repository = RootRepository::new_with_uri(url).await;
         let repository = Arc::new(repository);
 
         let user_service: UserServiceDyn = UserService::new(repository.clone()).into();
-        let auth_service: AuthServiceDyn = AuthService::new(user_service.clone()).into();
+        let auth_service: AuthServiceDyn =
+            AuthService::new(user_service.clone(), app_config.auth.clone()).into();
         let api_key_service: ApiKeyServiceDyn = ApiKeyService::new(repository.clone()).into();
         let provider_service: ProviderServiceDyn = ProviderService::new(repository.clone()).into();
         let model_service: ModelServiceDyn = ModelService::new(repository.clone()).into();

@@ -14,7 +14,7 @@ use crate::api::models::{Model, ModelId};
 use crate::error::AppError;
 use crate::loader::AppLoader;
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ParameterId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone, Serialize, Deserialize)]
@@ -22,12 +22,12 @@ pub struct ParameterId(pub ObjectId);
 pub struct Parameter {
     pub id: ParameterId,
     pub name: String,
-    pub temperature: f64,
+    pub temperature: f32,
     pub max_tokens: u32,
     pub stop_sequences: Vec<String>,
-    pub top_p: f64,
-    pub frequency_penalty: f64,
-    pub presence_penalty: f64,
+    pub top_p: f32,
+    pub frequency_penalty: f32,
+    pub presence_penalty: f32,
     pub extra: Option<serde_json::Value>,
     pub model_id: ModelId,
     pub created_at: DateTime<Utc>,

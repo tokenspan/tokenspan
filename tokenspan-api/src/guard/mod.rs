@@ -1,15 +1,21 @@
 use async_graphql::{Context, Guard};
-use axum::extract::Request;
+use axum::extract::{Request, State};
 use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::Response;
 use axum_extra::headers::authorization::Bearer;
 use axum_extra::headers::{Authorization, HeaderMapExt};
+use std::sync::Arc;
 
 use crate::api::models::{ParsedToken, Role};
 use crate::api::services::AuthService;
+use crate::configs::AppConfig;
 
-pub async fn guard(mut req: Request, next: Next) -> Result<Response, StatusCode> {
+pub async fn guard(
+    State(config): State<Arc<AppConfig>>,
+    mut req: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
     let token = req
         .headers()
         .typed_get::<Authorization<Bearer>>()
@@ -19,7 +25,12 @@ pub async fn guard(mut req: Request, next: Next) -> Result<Response, StatusCode>
     req.extensions_mut().insert(headers);
 
     if let Some(jwt) = token {
-        let parsed_token = AuthService::decode_token(&jwt, "secret".as_ref());
+        let parsed_token = AuthService::decode_token(
+            &jwt,
+            config.auth.secret.as_ref(),
+            config.auth.iss.clone(),
+            config.auth.aud.clone(),
+        );
 
         if let Ok(parsed_token) = parsed_token {
             req.extensions_mut().insert(Some(parsed_token));

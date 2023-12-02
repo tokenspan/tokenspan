@@ -78,9 +78,8 @@ where
         T: Send + Sync,
         ObjectId: From<T>,
     {
-        let a = ObjectId::from(id);
         let filter = doc! {
-            "_id": a,
+            "_id": ObjectId::from(id),
         };
 
         self.collection.find_one(filter, None).await
