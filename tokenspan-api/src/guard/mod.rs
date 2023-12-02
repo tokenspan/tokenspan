@@ -1,14 +1,15 @@
 use async_graphql::{Context, Guard};
-use axum::headers::authorization::Bearer;
-use axum::headers::{Authorization, HeaderMapExt};
-use axum::http::{Request, StatusCode};
+use axum::extract::Request;
+use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::Response;
+use axum_extra::headers::authorization::Bearer;
+use axum_extra::headers::{Authorization, HeaderMapExt};
 
 use crate::api::models::{ParsedToken, Role};
 use crate::api::services::AuthService;
 
-pub async fn guard<T>(mut req: Request<T>, next: Next<T>) -> Result<Response, StatusCode> {
+pub async fn guard(mut req: Request, next: Next) -> Result<Response, StatusCode> {
     let token = req
         .headers()
         .typed_get::<Authorization<Bearer>>()
@@ -49,11 +50,11 @@ impl Guard for RoleGuard {
                     Role::Admin if parsed_token.role == Role::Admin => Ok(()),
                     Role::User if parsed_token.role == Role::Admin => Ok(()),
                     Role::User if parsed_token.role == Role::User => Ok(()),
-                    _ => Err("Forbidden".into()),
+                    _ => Err(async_graphql::Error::new("Forbidden")),
                 };
             }
         }
 
-        Err("Forbidden".into())
+        Err(async_graphql::Error::new("Forbidden"))
     }
 }

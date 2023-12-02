@@ -4,8 +4,8 @@ use axum::Router;
 use axum_macros::debug_handler;
 
 use crate::api::task::handler::execute_task_v1;
+use crate::extractor::versioning::Version;
 use crate::state::AppState;
-use crate::version::Version;
 
 #[debug_handler]
 async fn execute_task(version: Version) -> impl IntoResponse {

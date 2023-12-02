@@ -1,10 +1,10 @@
 use async_trait::async_trait;
-use axum::body::HttpBody;
 use axum::extract::rejection::JsonRejection;
 use axum::extract::FromRequest;
-use axum::http::{Request, StatusCode};
+use axum::extract::Request;
+use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::{BoxError, Json};
+use axum::Json;
 use serde::de::DeserializeOwned;
 use thiserror::Error;
 use validator::{Validate, ValidationErrors};
@@ -49,17 +49,15 @@ impl IntoResponse for ValidJsonError {
 }
 
 #[async_trait]
-impl<S, B, T> FromRequest<S, B> for ValidJson<T>
+impl<S, T> FromRequest<S> for ValidJson<T>
 where
+    Json<T>: FromRequest<S, Rejection = JsonRejection>,
     T: DeserializeOwned + Validate,
-    S: Send + Sync + 'static,
-    B: HttpBody + Send + 'static,
-    B::Data: Send,
-    B::Error: Into<BoxError>,
+    S: Send + Sync,
 {
     type Rejection = ValidJsonError;
 
-    async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
         let inner = Json::<T>::from_request(req, state).await?;
         inner.0.validate()?;
 

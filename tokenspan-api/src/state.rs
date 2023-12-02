@@ -1,4 +1,5 @@
 use crate::api::services::*;
+use crate::configs::DatabaseConfig;
 use crate::repository::RootRepository;
 use std::sync::Arc;
 
@@ -18,9 +19,8 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn init() -> Self {
-        let mongo_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-        let repository = RootRepository::new_with_uri(mongo_url).await;
+    pub async fn new(database_config: DatabaseConfig) -> Self {
+        let repository = RootRepository::new_with_uri(database_config.url).await;
         let repository = Arc::new(repository);
 
         let user_service: UserServiceDyn = UserService::new(repository.clone()).into();

@@ -1,0 +1,9 @@
+[server]
+port = 8080
+
+[database]
+url = "mongodb://mongo1:30001/tokenspan?replicaSet=local-replica-set"
+
+[log]
+level = "info"
+filter = "tokenspan_api=info,tower_http::trace::on_response=info,axum::rejection=trace"

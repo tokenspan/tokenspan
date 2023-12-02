@@ -3,6 +3,7 @@ resolver = "2"
 
 members = [
     "tokenspan-api",
+    "tokenspan-extra",
     "tokenspan-macros",
     "tokenspan-utils"
 ]
