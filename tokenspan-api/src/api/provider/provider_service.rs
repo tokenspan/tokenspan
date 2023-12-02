@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
 use async_graphql::Result;
-use prisma_client_rust::Direction;
 
 use crate::api::models::ProviderId;
-use crate::api::provider::dto::{CreateProviderInput, ProviderArgs, UpdateProviderInput};
+use crate::api::provider::dto::{ProviderArgs, ProviderCreateInput, ProviderUpdateInput};
 use crate::api::provider::provider_error::ProviderError;
 use crate::api::provider::provider_model::Provider;
-use crate::prisma::{provider, PrismaClient};
+use crate::api::repositories::{ProviderCreateEntity, ProviderUpdateEntity};
+use crate::repository::RootRepository;
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
 #[async_trait::async_trait]
@@ -15,64 +15,46 @@ pub trait ProviderServiceExt {
     async fn get_providers(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>>;
     async fn get_provider_by_id(&self, id: ProviderId) -> Result<Option<Provider>>;
     async fn get_providers_by_ids(&self, ids: Vec<ProviderId>) -> Result<Vec<Provider>>;
-    async fn count_providers(&self) -> Result<i64>;
-    async fn create_provider(&self, input: CreateProviderInput) -> Result<Provider>;
-    async fn update_provider(&self, id: ProviderId, input: UpdateProviderInput)
-        -> Result<Provider>;
-    async fn delete_provider(&self, id: ProviderId) -> Result<Provider>;
+    async fn count_providers(&self) -> Result<u64>;
+    async fn create_provider(&self, input: ProviderCreateInput) -> Result<Provider>;
+    async fn update_provider(
+        &self,
+        id: ProviderId,
+        input: ProviderUpdateInput,
+    ) -> Result<Option<Provider>>;
+    async fn delete_provider(&self, id: ProviderId) -> Result<Option<Provider>>;
 }
 
 pub type ProviderServiceDyn = Arc<dyn ProviderServiceExt + Send + Sync>;
 
 pub struct ProviderService {
-    prisma: Arc<PrismaClient>,
+    repository: Arc<RootRepository>,
 }
 
 impl ProviderService {
-    pub fn new(prisma: Arc<PrismaClient>) -> Self {
-        Self { prisma }
+    pub fn new(repository: Arc<RootRepository>) -> Self {
+        Self { repository }
     }
 }
 
 #[async_trait::async_trait]
 impl ProviderServiceExt for ProviderService {
     async fn get_providers(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>> {
-        let take = args.take.unwrap_or(1);
-
-        let builder = self
-            .prisma
-            .provider()
-            .find_many(vec![])
-            .take(take + 1)
-            .order_by(provider::id::order(Direction::Desc));
-
-        let builder = match (&args.before, &args.after) {
-            (Some(cursor), None) => builder
-                .take((take + 2) * -1)
-                .cursor(provider::id::equals(cursor.id.clone())),
-            (None, Some(cursor)) => builder
-                .take(take + 2)
-                .cursor(provider::id::equals(cursor.id.clone())),
-            _ => builder,
-        };
-
-        let items = builder
-            .exec()
+        let paginated = self
+            .repository
+            .provider
+            .paginate::<Provider>(args.take, args.before, args.after)
             .await
-            .map_err(|_| ProviderError::UnableToGetProviders)?
-            .into_iter()
-            .map(|data| data.into())
-            .collect::<Vec<_>>();
+            .map_err(|_| ProviderError::UnableToGetProviders)?;
 
-        Ok(Pagination::new(items, args.before, args.after, take))
+        Ok(paginated)
     }
 
     async fn get_provider_by_id(&self, id: ProviderId) -> Result<Option<Provider>> {
         let provider = self
-            .prisma
-            .provider()
-            .find_unique(provider::id::equals(id.into()))
-            .exec()
+            .repository
+            .provider
+            .find_by_id(id)
             .await
             .map_err(|_| ProviderError::UnableToGetProvider)?
             .map(|provider| provider.into());
@@ -81,15 +63,10 @@ impl ProviderServiceExt for ProviderService {
     }
 
     async fn get_providers_by_ids(&self, ids: Vec<ProviderId>) -> Result<Vec<Provider>> {
-        let ids = ids
-            .into_iter()
-            .map(|id| provider::id::equals(id.into()))
-            .collect();
         let providers = self
-            .prisma
-            .provider()
-            .find_many(ids)
-            .exec()
+            .repository
+            .provider
+            .find_many_by_ids(ids)
             .await
             .map_err(|_| ProviderError::UnableToGetProviders)?
             .into_iter()
@@ -99,24 +76,22 @@ impl ProviderServiceExt for ProviderService {
         Ok(providers)
     }
 
-    async fn count_providers(&self) -> Result<i64> {
+    async fn count_providers(&self) -> Result<u64> {
         let count = self
-            .prisma
-            .provider()
-            .count(vec![])
-            .exec()
+            .repository
+            .provider
+            .count()
             .await
             .map_err(|_| ProviderError::UnableToCountProviders)?;
 
         Ok(count)
     }
 
-    async fn create_provider(&self, input: CreateProviderInput) -> Result<Provider> {
+    async fn create_provider(&self, input: ProviderCreateInput) -> Result<Provider> {
         let created_provider = self
-            .prisma
-            .provider()
-            .create(input.name, vec![])
-            .exec()
+            .repository
+            .provider
+            .create(ProviderCreateEntity { name: input.name })
             .await
             .map_err(|_| ProviderError::UnableToCreateProvider)?;
 
@@ -126,29 +101,29 @@ impl ProviderServiceExt for ProviderService {
     async fn update_provider(
         &self,
         id: ProviderId,
-        input: UpdateProviderInput,
-    ) -> Result<Provider> {
+        input: ProviderUpdateInput,
+    ) -> Result<Option<Provider>> {
         let updated_provider = self
-            .prisma
-            .provider()
-            .update(provider::id::equals(id.into()), input.into())
-            .exec()
+            .repository
+            .provider
+            .update_by_id(id, ProviderUpdateEntity { name: input.name })
             .await
-            .map_err(|_| ProviderError::UnableToUpdateProvider)?;
+            .map_err(|_| ProviderError::UnableToUpdateProvider)?
+            .map(|provider| provider.into());
 
-        Ok(updated_provider.into())
+        Ok(updated_provider)
     }
 
-    async fn delete_provider(&self, id: ProviderId) -> Result<Provider> {
+    async fn delete_provider(&self, id: ProviderId) -> Result<Option<Provider>> {
         let deleted_provider = self
-            .prisma
-            .provider()
-            .delete(provider::id::equals(id.into()))
-            .exec()
+            .repository
+            .provider
+            .delete_by_id(id)
             .await
-            .map_err(|_| ProviderError::UnableToDeleteProvider)?;
+            .map_err(|_| ProviderError::UnableToDeleteProvider)?
+            .map(|provider| provider.into());
 
-        Ok(deleted_provider.into())
+        Ok(deleted_provider)
     }
 }
 

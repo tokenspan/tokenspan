@@ -7,4 +7,5 @@ mod task_version_loader;
 pub mod task_version_model;
 mod task_version_mutation;
 mod task_version_query;
+pub mod task_version_repository;
 pub mod task_version_service;

@@ -1,82 +1,61 @@
 use std::sync::Arc;
 
 use async_graphql::Result;
-use prisma_client_rust::Direction;
 
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
 use crate::api::models::ParameterId;
-use crate::api::parameter::dto::{CreateParameterInput, ParameterArgs, UpdateParameterInput};
+use crate::api::parameter::dto::{ParameterArgs, ParameterCreateInput, ParameterUpdateInput};
 use crate::api::parameter::parameter_error::ParameterError;
 use crate::api::parameter::parameter_model::Parameter;
-use crate::prisma::{model, parameter, PrismaClient};
+use crate::api::repositories::{ParameterCreateEntity, ParameterUpdateEntity};
+use crate::repository::RootRepository;
 
 #[async_trait::async_trait]
 pub trait ParameterServiceExt {
     async fn get_parameters(&self, args: ParameterArgs) -> Result<Pagination<Cursor, Parameter>>;
     async fn get_parameter_by_id(&self, id: ParameterId) -> Result<Option<Parameter>>;
     async fn get_parameters_by_ids(&self, ids: Vec<ParameterId>) -> Result<Vec<Parameter>>;
-    async fn count_parameters(&self) -> Result<i64>;
-    async fn create_parameter(&self, input: CreateParameterInput) -> Result<Parameter>;
+    async fn count_parameters(&self) -> Result<u64>;
+    async fn create_parameter(&self, input: ParameterCreateInput) -> Result<Parameter>;
     async fn update_parameter(
         &self,
         id: ParameterId,
-        input: UpdateParameterInput,
-    ) -> Result<Parameter>;
-    async fn delete_parameter(&self, id: ParameterId) -> Result<Parameter>;
+        input: ParameterUpdateInput,
+    ) -> Result<Option<Parameter>>;
+    async fn delete_parameter(&self, id: ParameterId) -> Result<Option<Parameter>>;
 }
 
 pub type ParameterServiceDyn = Arc<dyn ParameterServiceExt + Send + Sync>;
 
 pub struct ParameterService {
-    prisma: Arc<PrismaClient>,
+    repository: Arc<RootRepository>,
 }
 
 impl ParameterService {
-    pub fn new(prisma: Arc<PrismaClient>) -> Self {
-        Self { prisma }
+    pub fn new(repository: Arc<RootRepository>) -> Self {
+        Self { repository }
     }
 }
 
 #[async_trait::async_trait]
 impl ParameterServiceExt for ParameterService {
     async fn get_parameters(&self, args: ParameterArgs) -> Result<Pagination<Cursor, Parameter>> {
-        let take = args.take.unwrap_or(1);
-
-        let builder = self
-            .prisma
-            .parameter()
-            .find_many(vec![])
-            .take(take + 1)
-            .order_by(parameter::id::order(Direction::Desc));
-
-        let builder = match (&args.before, &args.after) {
-            (Some(cursor), None) => builder
-                .take((take + 2) * -1)
-                .cursor(parameter::id::equals(cursor.id.clone())),
-            (None, Some(cursor)) => builder
-                .take(take + 2)
-                .cursor(parameter::id::equals(cursor.id.clone())),
-            _ => builder,
-        };
-
-        let items = builder
-            .exec()
+        let paginated = self
+            .repository
+            .parameter
+            .paginate::<Parameter>(args.take, args.before, args.after)
             .await
-            .map_err(|_| ParameterError::UnableToGetParameters)?
-            .into_iter()
-            .map(|data| data.into())
-            .collect::<Vec<_>>();
+            .map_err(|_| ParameterError::UnableToGetParameters)?;
 
-        Ok(Pagination::new(items, args.before, args.after, take))
+        Ok(paginated)
     }
 
     async fn get_parameter_by_id(&self, id: ParameterId) -> Result<Option<Parameter>> {
         let parameter = self
-            .prisma
-            .parameter()
-            .find_unique(parameter::id::equals(id.into()))
-            .exec()
+            .repository
+            .parameter
+            .find_by_id(id)
             .await
             .map_err(|_| ParameterError::UnableToGetParameter)?
             .map(|parameter| parameter.into());
@@ -85,15 +64,10 @@ impl ParameterServiceExt for ParameterService {
     }
 
     async fn get_parameters_by_ids(&self, ids: Vec<ParameterId>) -> Result<Vec<Parameter>> {
-        let ids = ids
-            .into_iter()
-            .map(|id| parameter::id::equals(id.into()))
-            .collect();
         let parameters = self
-            .prisma
-            .parameter()
-            .find_many(ids)
-            .exec()
+            .repository
+            .parameter
+            .find_many_by_ids(ids)
             .await
             .map_err(|_| ParameterError::UnableToGetParameters)?
             .into_iter()
@@ -103,33 +77,32 @@ impl ParameterServiceExt for ParameterService {
         Ok(parameters)
     }
 
-    async fn count_parameters(&self) -> Result<i64> {
+    async fn count_parameters(&self) -> Result<u64> {
         let count = self
-            .prisma
-            .parameter()
-            .count(vec![])
-            .exec()
+            .repository
+            .parameter
+            .count()
             .await
             .map_err(|_| ParameterError::UnableToCountParameters)?;
 
         Ok(count)
     }
 
-    async fn create_parameter(&self, input: CreateParameterInput) -> Result<Parameter> {
+    async fn create_parameter(&self, input: ParameterCreateInput) -> Result<Parameter> {
         let created_parameter = self
-            .prisma
-            .parameter()
-            .create(
-                model::id::equals(input.model_id.into()),
-                input.name,
-                input.temperature,
-                input.max_tokens,
-                input.top_p,
-                input.frequency_penalty,
-                input.presence_penalty,
-                vec![],
-            )
-            .exec()
+            .repository
+            .parameter
+            .create(ParameterCreateEntity {
+                model_id: input.model_id,
+                name: input.name,
+                temperature: 3f32,
+                max_tokens: input.max_tokens,
+                stop_sequences: input.stop_sequences,
+                top_p: 3f32,
+                frequency_penalty: 3f32,
+                presence_penalty: 3f32,
+                extra: input.extra,
+            })
             .await
             .map_err(|_| ParameterError::UnableToCreateParameter)?;
 
@@ -139,29 +112,41 @@ impl ParameterServiceExt for ParameterService {
     async fn update_parameter(
         &self,
         id: ParameterId,
-        input: UpdateParameterInput,
-    ) -> Result<Parameter> {
+        input: ParameterUpdateInput,
+    ) -> Result<Option<Parameter>> {
         let updated_parameter = self
-            .prisma
-            .parameter()
-            .update(parameter::id::equals(id.into()), input.into())
-            .exec()
+            .repository
+            .parameter
+            .update_by_id(
+                id,
+                ParameterUpdateEntity {
+                    name: input.name,
+                    temperature: input.temperature,
+                    max_tokens: input.max_tokens,
+                    stop_sequences: input.stop_sequences,
+                    top_p: input.top_p,
+                    frequency_penalty: input.frequency_penalty,
+                    presence_penalty: input.presence_penalty,
+                    extra: input.extra,
+                },
+            )
             .await
-            .map_err(|_| ParameterError::UnableToUpdateParameter)?;
+            .map_err(|_| ParameterError::UnableToUpdateParameter)?
+            .map(|parameter| parameter.into());
 
-        Ok(updated_parameter.into())
+        Ok(updated_parameter)
     }
 
-    async fn delete_parameter(&self, id: ParameterId) -> Result<Parameter> {
+    async fn delete_parameter(&self, id: ParameterId) -> Result<Option<Parameter>> {
         let deleted_parameter = self
-            .prisma
-            .parameter()
-            .delete(parameter::id::equals(id.into()))
-            .exec()
+            .repository
+            .parameter
+            .delete_by_id(id)
             .await
-            .map_err(|_| ParameterError::UnableToDeleteParameter)?;
+            .map_err(|_| ParameterError::UnableToDeleteParameter)?
+            .map(|parameter| parameter.into());
 
-        Ok(deleted_parameter.into())
+        Ok(deleted_parameter)
     }
 }
 

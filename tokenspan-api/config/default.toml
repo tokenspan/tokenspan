@@ -1,0 +1,20 @@
+env = "development"
+
+[server]
+port = 8080
+
+[database]
+url = "mongodb://mongo1:30001/tokenspan?replicaSet=local-replica-set"
+
+[log]
+level = "info"
+filter = "tokenspan_api=info,tower_http::trace::on_response=info,axum::rejection=trace"
+
+[auth]
+iss = "tokenspan"
+aud = "tokenspan-api"
+secret = "secret"
+# 1 hour
+token_exp = 3600
+# 30 days
+refresh_token_exp = 2592000

@@ -127,7 +127,7 @@ where
             match item_size {
                 0 => (false, false),
                 // if size - 1 is greater than 2, it means we have a next page and no previous page
-                size if size - 1 >= self.take as usize => (false, true),
+                size if size > self.take as usize => (false, true),
                 // otherwise, it means we have no next page and no previous page
                 _ => (false, false),
             }
@@ -154,11 +154,14 @@ where
                     // if size is less than or equal to take and before is present, then we need to skip the last item
                     // before: (check previous)[A] <- (B) <- (cursor)[C]
                     size if size - 1 <= value.take as usize => {
+                        println!("after: {}", value.after.is_some());
                         let matcher = if value.after.is_some() {
                             0
                         } else {
                             item_size - 1
                         };
+                        println!("matcher: {}", matcher);
+
                         if index == matcher {
                             continue;
                         }
@@ -184,7 +187,7 @@ where
                         }
                     }
                 }
-            } else if item_size - 1 >= value.take as usize {
+            } else if item_size > value.take as usize {
                 // if size is greater than take, then we need to skip the last item
                 // (A) -> (B) -> (C) -> (D) -> [E](check next)
                 if index == item_size - 1 {

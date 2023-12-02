@@ -8,4 +8,7 @@ pub enum UserError {
 
     #[error("invalid iterations")]
     InvalidIterations,
+
+    #[error("unable to create user")]
+    UnableToCreateUser,
 }

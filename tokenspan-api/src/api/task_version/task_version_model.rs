@@ -1,15 +1,15 @@
 use std::fmt::Display;
 
-use async_graphql::{InputValueError, InputValueResult, Scalar, ScalarType, SimpleObject, Value};
-use chrono::{DateTime, FixedOffset};
+use async_graphql::{Scalar, ScalarType, SimpleObject};
+use bson::oid::ObjectId;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
-use tokenspan_macros::TeraId;
+use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
 
-use crate::prisma::{task_version, TaskStatus};
-
-#[derive(TeraId, Clone, Debug, Eq, PartialEq, Hash)]
-pub struct TaskVersionId(pub String);
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+pub struct TaskVersionId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone)]
 pub struct TaskVersion {
@@ -19,10 +19,9 @@ pub struct TaskVersion {
     pub description: Option<String>,
     pub document: Option<String>,
     pub messages: Vec<serde_json::Value>,
-    pub status: TaskStatus,
     pub task_id: String,
-    pub created_at: DateTime<FixedOffset>,
-    pub updated_at: DateTime<FixedOffset>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl CursorExt<Cursor> for TaskVersion {
@@ -31,17 +30,16 @@ impl CursorExt<Cursor> for TaskVersion {
     }
 }
 
-impl From<task_version::Data> for TaskVersion {
-    fn from(value: task_version::Data) -> Self {
+impl From<super::task_version_repository::TaskVersionEntity> for TaskVersion {
+    fn from(value: super::task_version_repository::TaskVersionEntity) -> Self {
         Self {
-            id: TaskVersionId(value.id),
+            id: TaskVersionId::from(value.id),
             version: value.version,
             release_note: value.release_note,
             description: value.description,
             document: value.document,
             messages: value.messages,
-            status: value.status,
-            task_id: value.task_id,
+            task_id: value.task_id.to_string(),
             created_at: value.created_at,
             updated_at: value.updated_at,
         }

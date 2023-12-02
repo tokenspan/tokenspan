@@ -7,4 +7,5 @@ mod provider_loader;
 pub mod provider_model;
 mod provider_mutation;
 mod provider_query;
+pub mod provider_repository;
 pub mod provider_service;

@@ -1,32 +1,24 @@
 use crate::api::models::{ApiKeyId, ParameterId, TaskVersionId};
 use async_graphql::InputObject;
-
-use crate::prisma::task;
+use serde::Deserialize;
+use validator::Validate;
 
 #[derive(InputObject)]
-pub struct CreateTaskInput {
+pub struct TaskCreateInput {
     pub name: String,
     pub slug: String,
+    pub private: bool,
 }
 
 #[derive(InputObject)]
-pub struct UpdateTaskInput {
+pub struct TaskUpdateInput {
     pub name: Option<String>,
+    pub private: Option<bool>,
 }
 
-impl From<UpdateTaskInput> for Vec<task::SetParam> {
-    fn from(value: UpdateTaskInput) -> Self {
-        let mut params = Vec::new();
-        if let Some(name) = value.name {
-            params.push(task::name::set(name));
-        }
-
-        params
-    }
-}
-
-#[derive(InputObject)]
-pub struct ExecuteTaskInput {
+#[derive(InputObject, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct TaskExecuteInput {
     pub task_version_id: TaskVersionId,
     pub parameter_id: ParameterId,
     pub api_key_id: ApiKeyId,

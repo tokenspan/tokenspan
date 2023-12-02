@@ -1,7 +1,7 @@
 use async_graphql::{Context, Object, Result};
 
 use crate::api::models::{ProviderId, Role};
-use crate::api::provider::dto::{CreateProviderInput, UpdateProviderInput};
+use crate::api::provider::dto::{ProviderCreateInput, ProviderUpdateInput};
 use crate::api::provider::provider_model::Provider;
 use crate::api::services::ProviderServiceDyn;
 use crate::error::AppError;
@@ -16,7 +16,7 @@ impl ProviderMutation {
     pub async fn create_provider<'a>(
         &self,
         ctx: &Context<'a>,
-        input: CreateProviderInput,
+        input: ProviderCreateInput,
     ) -> Result<Provider> {
         let provider_service = ctx
             .data::<ProviderServiceDyn>()
@@ -30,8 +30,8 @@ impl ProviderMutation {
         &self,
         ctx: &Context<'a>,
         id: ProviderId,
-        input: UpdateProviderInput,
-    ) -> Result<Provider> {
+        input: ProviderUpdateInput,
+    ) -> Result<Option<Provider>> {
         let provider_service = ctx
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -40,7 +40,11 @@ impl ProviderMutation {
     }
 
     #[graphql(guard = "RoleGuard::new(Role::Admin)")]
-    pub async fn delete_provider<'a>(&self, ctx: &Context<'a>, id: ProviderId) -> Result<Provider> {
+    pub async fn delete_provider<'a>(
+        &self,
+        ctx: &Context<'a>,
+        id: ProviderId,
+    ) -> Result<Option<Provider>> {
         let provider_service = ctx
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

@@ -1,14 +1,15 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
+use bson::oid::ObjectId;
 
-use crate::api::models::{ExecutionHistory, ModelId, ParsedToken, Role, TaskId};
-use crate::api::parameter::dto::CreateParameterInput;
+use crate::api::models::{Execution, ModelId, ParsedToken, Role, TaskId};
+use crate::api::parameter::dto::ParameterCreateInput;
+use crate::api::repositories::TaskVersionStatus;
 use crate::api::services::{ParameterServiceDyn, TaskServiceDyn, TaskVersionServiceDyn};
-use crate::api::task::dto::{CreateTaskInput, ExecuteTaskInput, UpdateTaskInput};
+use crate::api::task::dto::{TaskCreateInput, TaskExecuteInput, TaskUpdateInput};
 use crate::api::task::task_model::Task;
-use crate::api::task_version::dto::CreateTaskVersionInput;
+use crate::api::task_version::dto::TaskVersionCreateInput;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
-use crate::prisma::TaskStatus;
 
 #[derive(Default)]
 pub struct TaskMutation;
@@ -16,7 +17,7 @@ pub struct TaskMutation;
 #[Object]
 impl TaskMutation {
     #[graphql(guard = "RoleGuard::new(Role::User)")]
-    pub async fn create_task<'a>(&self, ctx: &Context<'a>, input: CreateTaskInput) -> Result<Task> {
+    pub async fn create_task<'a>(&self, ctx: &Context<'a>, input: TaskCreateInput) -> Result<Task> {
         let task_service = ctx
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -39,29 +40,30 @@ impl TaskMutation {
             .create_task(input, parsed_token.user_id.clone())
             .await?;
 
-        let create_task_version_input = CreateTaskVersionInput {
+        let create_task_version_input = TaskVersionCreateInput {
             task_id: created_task.id.clone(),
             version: "0.0.0".to_string(),
             release_note: None,
             description: None,
             document: None,
             messages: Vec::new(),
-            status: TaskStatus::Draft,
+            status: TaskVersionStatus::Draft,
         };
         let created_task_version = task_version_service
             .create_task_version(create_task_version_input, &parsed_token.user_id)
             .await?;
 
-        let gpt3_5_turbo_model_id = ModelId("65617fc7b35c48147687a83c".to_string());
-        let create_parameter_input = CreateParameterInput {
+        let gpt3_5_turbo_model_id =
+            ModelId::from(ObjectId::parse_str("65617fc7b35c48147687a83c").unwrap());
+        let create_parameter_input = ParameterCreateInput {
             task_version_id: created_task_version.id.clone(),
             model_id: gpt3_5_turbo_model_id,
             name: "untitled".to_string(),
-            temperature: 1f64,
-            presence_penalty: 0f64,
-            frequency_penalty: 0f64,
-            max_tokens: 64,
-            top_p: 1f64,
+            temperature: 1f32,
+            presence_penalty: 0f32,
+            frequency_penalty: 0f32,
+            max_tokens: 32,
+            top_p: 1f32,
             stop_sequences: Vec::new(),
             extra: None,
         };
@@ -77,8 +79,8 @@ impl TaskMutation {
         &self,
         ctx: &Context<'a>,
         id: TaskId,
-        input: UpdateTaskInput,
-    ) -> Result<Task> {
+        input: TaskUpdateInput,
+    ) -> Result<Option<Task>> {
         let task_service = ctx
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -87,7 +89,7 @@ impl TaskMutation {
     }
 
     #[graphql(guard = "RoleGuard::new(Role::Admin)")]
-    pub async fn delete_task<'a>(&self, ctx: &Context<'a>, id: TaskId) -> Result<Task> {
+    pub async fn delete_task<'a>(&self, ctx: &Context<'a>, id: TaskId) -> Result<Option<Task>> {
         let task_service = ctx
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -100,8 +102,8 @@ impl TaskMutation {
         &self,
         ctx: &Context<'a>,
         _id: TaskId,
-        input: ExecuteTaskInput,
-    ) -> Result<ExecutionHistory> {
+        input: TaskExecuteInput,
+    ) -> Result<Execution> {
         let task_service = ctx
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

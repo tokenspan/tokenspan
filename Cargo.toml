@@ -3,7 +3,11 @@ resolver = "2"
 
 members = [
     "tokenspan-api",
-    "prisma-cli",
+    "tokenspan-extra",
     "tokenspan-macros",
-    "tokenspan-utils"
+    "tokenspan-utils",
+    "tokenspan-sdk",
 ]
+
+[workspace.lints.clippy]
+new_ret_no_self = "allow"
