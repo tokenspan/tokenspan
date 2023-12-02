@@ -13,4 +13,5 @@ syn = { version = "2.0.39", features = ["full", "extra-traits"] }
 async-graphql = "6.0"
 bson = { version = "2.0" }
 anyhow = "1.0.75"
+serde = { version = "1.0" }
 tokenspan-utils = { path = "../tokenspan-utils" }

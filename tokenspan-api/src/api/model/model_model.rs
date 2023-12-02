@@ -3,14 +3,13 @@ use std::fmt::Display;
 use async_graphql::{Scalar, ScalarType, SimpleObject};
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 
 use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
 
 use crate::api::models::ProviderId;
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct ModelId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone)]

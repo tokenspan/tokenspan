@@ -31,3 +31,7 @@ futures = "0.3"
 config = "0.13.1"
 tokenspan-macros = { path = "../tokenspan-macros" }
 tokenspan-utils = { path = "../tokenspan-utils" }
+
+
+[lints]
+workspace = true

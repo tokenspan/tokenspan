@@ -7,3 +7,6 @@ members = [
     "tokenspan-macros",
     "tokenspan-utils"
 ]
+
+[workspace.lints.rust]
+new_ret_no_self = "allow"

@@ -53,7 +53,7 @@ impl ScalarType for Role {
     }
 }
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct UserId(ObjectId);
 
 #[derive(SimpleObject, Clone, Debug)]

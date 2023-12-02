@@ -28,6 +28,7 @@ where
             db,
         }
     }
+
     pub async fn paginate<TNode: CursorExt<Cursor> + From<TData>>(
         &self,
         take: Option<i64>,

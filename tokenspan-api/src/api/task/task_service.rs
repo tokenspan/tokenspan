@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use async_graphql::Result;
+use axum::extract::FromRef;
 use openai_api_rust::chat::{ChatApi, ChatBody};
 use openai_api_rust::{Auth, Message, OpenAI, Role};
 use tracing::info;
@@ -20,6 +21,7 @@ use crate::api::task::dto::{TaskArgs, TaskCreateInput, TaskExecuteInput, TaskUpd
 use crate::api::task::task_error::TaskError;
 use crate::api::task::task_model::Task;
 use crate::repository::RootRepository;
+use crate::state::AppState;
 
 #[async_trait::async_trait]
 pub trait TaskServiceExt {
@@ -38,6 +40,12 @@ pub trait TaskServiceExt {
 }
 
 pub type TaskServiceDyn = Arc<dyn TaskServiceExt + Send + Sync>;
+
+impl FromRef<AppState> for TaskServiceDyn {
+    fn from_ref(input: &AppState) -> Self {
+        input.task_service.clone()
+    }
+}
 
 pub struct TaskService {
     repository: Arc<RootRepository>,

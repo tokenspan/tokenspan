@@ -3,10 +3,15 @@ use axum::Json;
 use chrono::Utc;
 use tracing::info;
 
+use crate::api::services::TaskServiceDyn;
+use crate::api::task::dto::TaskExecuteInput;
 use crate::api::task::task_error::TaskError;
 use crate::api::task::task_model::Task;
 
-pub async fn execute_task_v1() -> Result<Json<Task>, TaskError> {
+pub async fn execute_task_v1(
+    task_service: TaskServiceDyn,
+    input: TaskExecuteInput,
+) -> Result<Json<Task>, TaskError> {
     info!("Executing task");
     let id = TaskId::new();
     info!("Created task id: {}", id);

@@ -14,7 +14,7 @@ use crate::api::models::{Model, ModelId};
 use crate::error::AppError;
 use crate::loader::AppLoader;
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct ParameterId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone, Serialize, Deserialize)]
