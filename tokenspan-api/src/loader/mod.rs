@@ -10,7 +10,7 @@ pub struct AppLoader {
     pub task_service: TaskServiceDyn,
     pub api_key_service: ApiKeyServiceDyn,
     pub view_service: ViewServiceDyn,
-    pub execution_history_service: ExecutionHistoryServiceDyn,
+    pub execution_service: ExecutionServiceDyn,
 }
 
 impl From<AppState> for AppLoader {
@@ -24,7 +24,7 @@ impl From<AppState> for AppLoader {
             task_service: state.task_service,
             api_key_service: state.api_key_service,
             view_service: state.view_service,
-            execution_history_service: state.execution_history_service,
+            execution_service: state.execution_service,
         }
     }
 }

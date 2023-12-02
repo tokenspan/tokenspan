@@ -3,27 +3,33 @@ name = "tokenspan_api"
 version = "0.1.0"
 edition = "2021"
 
-
 [dependencies]
 tokio = { version = "1", features = ["full"] }
-axum = { version = "0.6", features = [] }
-tower-http = { version = "0.4.0", features = ["trace", "timeout", "cors"] }
-async-graphql = { version = "6.0", features = ["tokio", "chrono", "dataloader", "tracing"] }
-async-graphql-axum = "6.0"
-prisma-client-rust = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.9" }
+axum = { version = "0.7.1" }
+axum-extra = { version = "0.9.0", features = ["typed-header"] }
+axum-macros = "0.4.0"
+tower-http = { version = "0.5.0", features = ["trace", "timeout", "cors"] }
+async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7", features = ["tokio", "chrono", "dataloader", "tracing"] }
+async-graphql-axum = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 jsonwebtoken = "9"
 anyhow = "1.0.75"
 thiserror = "1.0.50"
 async-trait = "0.1.74"
-axum-macros = "0.3.8"
-chrono = "0.4.31"
+openai_api_rust = "0.1.8"
+chrono = { version = "0.4.31", features = ["serde"] }
 ring = "0.17.5"
 data-encoding = "2.4.0"
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "ansi"] }
 validator = { version = "0.16", features = ["derive"] }
-openai_api_rust = "0.1.8"
+mongodb = { version = "2.0", features = ["tokio-runtime"] }
+bson = { version = "2.0", features = ["chrono-0_4"] }
+futures = "0.3"
+config = "0.13.1"
 tokenspan-macros = { path = "../tokenspan-macros" }
 tokenspan-utils = { path = "../tokenspan-utils" }
+
+[lints]
+workspace = true

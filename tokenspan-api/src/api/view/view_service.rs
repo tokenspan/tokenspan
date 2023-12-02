@@ -1,13 +1,14 @@
 use std::sync::Arc;
 
 use async_graphql::Result;
-use prisma_client_rust::Direction;
 
 use crate::api::models::{UserId, ViewId};
-use crate::api::view::dto::{CreateViewInput, UpdateViewInput, ViewArgs};
+use crate::api::repositories::{ViewCreateEntity, ViewUpdateEntity};
+use crate::api::view::dto::{ViewArgs, ViewCreateInput, ViewUpdateInput};
 use crate::api::view::view_error::ViewError;
 use crate::api::view::view_model::View;
-use crate::prisma::{user, view, PrismaClient};
+
+use crate::repository::RootRepository;
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
 #[async_trait::async_trait]
@@ -15,63 +16,42 @@ pub trait ViewServiceExt {
     async fn get_views(&self, args: ViewArgs) -> Result<Pagination<Cursor, View>>;
     async fn get_view_by_id(&self, id: ViewId) -> Result<Option<View>>;
     async fn get_views_by_ids(&self, ids: Vec<ViewId>) -> Result<Vec<View>>;
-    async fn count_views(&self) -> Result<i64>;
-    async fn create_view(&self, input: CreateViewInput, owner_id: UserId) -> Result<View>;
-    async fn update_view(&self, id: ViewId, input: UpdateViewInput) -> Result<View>;
-    async fn delete_view(&self, id: ViewId) -> Result<View>;
+    async fn count_views(&self) -> Result<u64>;
+    async fn create_view(&self, input: ViewCreateInput, owner_id: UserId) -> Result<View>;
+    async fn update_view(&self, id: ViewId, input: ViewUpdateInput) -> Result<Option<View>>;
+    async fn delete_view(&self, id: ViewId) -> Result<Option<View>>;
 }
 
 pub type ViewServiceDyn = Arc<dyn ViewServiceExt + Send + Sync>;
 
 pub struct ViewService {
-    prisma: Arc<PrismaClient>,
+    repository: Arc<RootRepository>,
 }
 
 impl ViewService {
-    pub fn new(prisma: Arc<PrismaClient>) -> Self {
-        Self { prisma }
+    pub fn new(repository: Arc<RootRepository>) -> Self {
+        Self { repository }
     }
 }
 
 #[async_trait::async_trait]
 impl ViewServiceExt for ViewService {
     async fn get_views(&self, args: ViewArgs) -> Result<Pagination<Cursor, View>> {
-        let take = args.take.unwrap_or(1);
-
-        let builder = self
-            .prisma
-            .view()
-            .find_many(vec![])
-            .take(take + 1)
-            .order_by(view::id::order(Direction::Desc));
-
-        let builder = match (&args.before, &args.after) {
-            (Some(cursor), None) => builder
-                .take((take + 2) * -1)
-                .cursor(view::id::equals(cursor.id.clone())),
-            (None, Some(cursor)) => builder
-                .take(take + 2)
-                .cursor(view::id::equals(cursor.id.clone())),
-            _ => builder,
-        };
-
-        let items = builder
-            .exec()
+        let paginated = self
+            .repository
+            .view
+            .paginate::<View>(args.take, args.before, args.after)
             .await
-            .map_err(|_| ViewError::UnableToGetViews)?
-            .into_iter()
-            .map(|data| data.into())
-            .collect::<Vec<_>>();
+            .map_err(|_| ViewError::UnableToGetViews)?;
 
-        Ok(Pagination::new(items, args.before, args.after, take))
+        Ok(paginated)
     }
 
     async fn get_view_by_id(&self, id: ViewId) -> Result<Option<View>> {
         let view = self
-            .prisma
-            .view()
-            .find_unique(view::id::equals(id.into()))
-            .exec()
+            .repository
+            .view
+            .find_by_id(id)
             .await
             .map_err(|_| ViewError::UnableToGetView)?
             .map(|view| view.into());
@@ -80,15 +60,10 @@ impl ViewServiceExt for ViewService {
     }
 
     async fn get_views_by_ids(&self, ids: Vec<ViewId>) -> Result<Vec<View>> {
-        let ids = ids
-            .into_iter()
-            .map(|id| view::id::equals(id.into()))
-            .collect();
         let views = self
-            .prisma
-            .view()
-            .find_many(ids)
-            .exec()
+            .repository
+            .view
+            .find_many_by_ids(ids)
             .await
             .map_err(|_| ViewError::UnableToGetViews)?
             .into_iter()
@@ -98,56 +73,60 @@ impl ViewServiceExt for ViewService {
         Ok(views)
     }
 
-    async fn count_views(&self) -> Result<i64> {
+    async fn count_views(&self) -> Result<u64> {
         let count = self
-            .prisma
-            .view()
-            .count(vec![])
-            .exec()
+            .repository
+            .view
+            .count()
             .await
             .map_err(|_| ViewError::UnableToCountViews)?;
 
         Ok(count)
     }
 
-    async fn create_view(&self, input: CreateViewInput, owner_id: UserId) -> Result<View> {
+    async fn create_view(&self, input: ViewCreateInput, owner_id: UserId) -> Result<View> {
         let created_view = self
-            .prisma
-            .view()
-            .create(
-                user::id::equals(owner_id.into()),
-                input.name,
-                vec![view::config::set(input.config)],
-            )
-            .exec()
+            .repository
+            .view
+            .create(ViewCreateEntity {
+                owner_id,
+                name: input.name,
+                config: input.config,
+            })
             .await
             .map_err(|_| ViewError::UnableToCreateView)?;
 
         Ok(created_view.into())
     }
 
-    async fn update_view(&self, id: ViewId, input: UpdateViewInput) -> Result<View> {
+    async fn update_view(&self, id: ViewId, input: ViewUpdateInput) -> Result<Option<View>> {
         let updated_view = self
-            .prisma
-            .view()
-            .update(view::id::equals(id.into()), input.into())
-            .exec()
+            .repository
+            .view
+            .update_by_id(
+                id,
+                ViewUpdateEntity {
+                    name: input.name,
+                    config: input.config,
+                },
+            )
             .await
-            .map_err(|_| ViewError::UnableToUpdateView)?;
+            .map_err(|_| ViewError::UnableToUpdateView)?
+            .map(|view| view.into());
 
-        Ok(updated_view.into())
+        Ok(updated_view)
     }
 
-    async fn delete_view(&self, id: ViewId) -> Result<View> {
+    async fn delete_view(&self, id: ViewId) -> Result<Option<View>> {
         let deleted_view = self
-            .prisma
-            .view()
-            .delete(view::id::equals(id.into()))
-            .exec()
+            .repository
+            .view
+            .delete_by_id(id)
             .await
-            .map_err(|_| ViewError::UnableToDeleteView)?;
+            .map_err(|_| ViewError::UnableToDeleteView)?
+            .map(|view| view.into());
 
-        Ok(deleted_view.into())
+        Ok(deleted_view)
     }
 }
 

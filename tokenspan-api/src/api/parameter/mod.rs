@@ -7,4 +7,5 @@ mod parameter_loader;
 pub mod parameter_model;
 mod parameter_mutation;
 mod parameter_query;
+pub mod parameter_repository;
 pub mod parameter_service;

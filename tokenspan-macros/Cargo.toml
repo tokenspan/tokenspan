@@ -10,5 +10,8 @@ proc-macro = true
 proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0.39", features = ["full", "extra-traits"] }
-async-graphql = "6.0"
+async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7", features = ["tokio", "chrono", "dataloader", "tracing"] }
+bson = { version = "2.0" }
+anyhow = "1.0.75"
+serde = { version = "1.0" }
 tokenspan-utils = { path = "../tokenspan-utils" }

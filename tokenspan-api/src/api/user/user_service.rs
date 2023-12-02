@@ -7,31 +7,32 @@ use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2, rand};
 
 use crate::api::models::UserId;
+use crate::api::repositories::UserCreateEntity;
 use crate::api::user::user_error::UserError;
 use crate::api::user::user_model::User;
-use crate::prisma::{user, PrismaClient};
+use crate::repository::RootRepository;
 
 #[async_trait::async_trait]
 pub trait UserServiceExt {
     async fn create_user(&self, email: String, username: String, password: String) -> Result<User>;
     async fn get_user_by_id(&self, id: UserId) -> Result<Option<User>>;
     async fn get_users_by_ids(&self, ids: Vec<UserId>) -> Result<Vec<User>>;
-    async fn get_user_by_username(&self, email: String) -> Result<Option<User>>;
+    async fn get_user_by_email(&self, email: String) -> Result<Option<User>>;
     fn verify_password(&self, password: &str, salt: &str, hash_password: &str) -> Result<()>;
 }
 
 pub type UserServiceDyn = Arc<dyn UserServiceExt + Send + Sync>;
 
 pub struct UserService {
-    prisma: Arc<PrismaClient>,
+    repository: Arc<RootRepository>,
 }
 
 impl UserService {
     const CREDENTIAL_LEN: usize = digest::SHA512_OUTPUT_LEN;
     const ITERATIONS: u32 = 100_000;
 
-    pub fn new(prisma: Arc<PrismaClient>) -> Self {
-        Self { prisma }
+    pub fn new(repository: Arc<RootRepository>) -> Self {
+        Self { repository }
     }
 
     fn derive_password(&self, password: String) -> Result<([u8; 64], [u8; 64])> {
@@ -62,22 +63,25 @@ impl UserServiceExt for UserService {
         let salt = HEXUPPER.encode(&salt);
 
         let created_user = self
-            .prisma
-            .user()
-            .create(email, hash_password, salt, username, vec![])
-            .exec()
+            .repository
+            .user
+            .create(UserCreateEntity {
+                email,
+                username,
+                password: hash_password,
+                salt,
+            })
             .await
-            .map_err(|_| UserError::UserNotFound(None))?;
+            .map_err(|e| UserError::UnableToCreateUser)?;
 
         Ok(created_user.into())
     }
 
     async fn get_user_by_id(&self, id: UserId) -> Result<Option<User>> {
         let user = self
-            .prisma
-            .user()
-            .find_unique(user::id::equals(id.0))
-            .exec()
+            .repository
+            .user
+            .find_by_id(id)
             .await
             .map_err(|_| UserError::UserNotFound(None))?
             .map(|user| user.into());
@@ -86,12 +90,10 @@ impl UserServiceExt for UserService {
     }
 
     async fn get_users_by_ids(&self, ids: Vec<UserId>) -> Result<Vec<User>> {
-        let ids = ids.into_iter().map(|id| user::id::equals(id.0)).collect();
         let users = self
-            .prisma
-            .user()
-            .find_many(ids)
-            .exec()
+            .repository
+            .user
+            .find_many_by_ids(ids)
             .await
             .map_err(|_| UserError::UserNotFound(None))?
             .into_iter()
@@ -101,12 +103,11 @@ impl UserServiceExt for UserService {
         Ok(users)
     }
 
-    async fn get_user_by_username(&self, email: String) -> Result<Option<User>> {
+    async fn get_user_by_email(&self, email: String) -> Result<Option<User>> {
         let user = self
-            .prisma
-            .user()
-            .find_unique(user::email::equals(email))
-            .exec()
+            .repository
+            .user
+            .find_by_email(email)
             .await
             .map_err(|_| UserError::UserNotFound(None))?
             .map(|user| user.into());

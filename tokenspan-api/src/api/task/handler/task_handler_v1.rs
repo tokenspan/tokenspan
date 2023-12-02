@@ -1,16 +1,24 @@
 use crate::api::models::TaskId;
 use axum::Json;
+use chrono::Utc;
 use tracing::info;
 
+use crate::api::services::TaskServiceDyn;
+use crate::api::task::dto::TaskExecuteInput;
 use crate::api::task::task_error::TaskError;
 use crate::api::task::task_model::Task;
 
-pub async fn execute_task_v1() -> Result<Json<Task>, TaskError> {
+pub async fn execute_task_v1(
+    task_service: TaskServiceDyn,
+    input: TaskExecuteInput,
+) -> Result<Json<Task>, TaskError> {
     info!("Executing task");
+    let id = TaskId::new();
+    info!("Created task id: {}", id);
     Ok(Json(Task {
-        id: TaskId("65615337edae9e611f87f993".to_string()),
+        id: TaskId::new(),
         name: "test".to_string(),
-        created_at: chrono::DateTime::parse_from_rfc3339("2021-09-30T12:34:56.789+00:00").unwrap(),
-        updated_at: chrono::DateTime::parse_from_rfc3339("2021-09-30T12:34:56.789+00:00").unwrap(),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
     }))
 }

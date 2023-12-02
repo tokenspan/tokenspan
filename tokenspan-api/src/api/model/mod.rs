@@ -7,4 +7,5 @@ mod model_loader;
 pub mod model_model;
 mod model_mutation;
 mod model_query;
+pub mod model_repository;
 pub mod model_service;

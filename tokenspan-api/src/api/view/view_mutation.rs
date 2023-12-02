@@ -1,19 +1,17 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 
-use crate::api::models::{ParsedToken, Role, ViewId};
+use crate::api::models::{ParsedToken, ViewId};
 use crate::api::services::ViewServiceDyn;
-use crate::api::view::dto::{CreateViewInput, UpdateViewInput};
+use crate::api::view::dto::{ViewCreateInput, ViewUpdateInput};
 use crate::api::view::view_model::View;
 use crate::error::AppError;
-use crate::guard::RoleGuard;
 
 #[derive(Default)]
 pub struct ViewMutation;
 
 #[Object]
 impl ViewMutation {
-    #[graphql(guard = "RoleGuard::new(Role::Admin)")]
-    pub async fn create_view<'a>(&self, ctx: &Context<'a>, input: CreateViewInput) -> Result<View> {
+    pub async fn create_view<'a>(&self, ctx: &Context<'a>, input: ViewCreateInput) -> Result<View> {
         let view_service = ctx
             .data::<ViewServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -29,13 +27,12 @@ impl ViewMutation {
             .await
     }
 
-    #[graphql(guard = "RoleGuard::new(Role::Admin)")]
     pub async fn update_view<'a>(
         &self,
         ctx: &Context<'a>,
         id: ViewId,
-        input: UpdateViewInput,
-    ) -> Result<View> {
+        input: ViewUpdateInput,
+    ) -> Result<Option<View>> {
         let view_service = ctx
             .data::<ViewServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -43,8 +40,7 @@ impl ViewMutation {
         view_service.update_view(id, input).await
     }
 
-    #[graphql(guard = "RoleGuard::new(Role::Admin)")]
-    pub async fn delete_view<'a>(&self, ctx: &Context<'a>, id: ViewId) -> Result<View> {
+    pub async fn delete_view<'a>(&self, ctx: &Context<'a>, id: ViewId) -> Result<Option<View>> {
         let view_service = ctx
             .data::<ViewServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

@@ -1,16 +1,19 @@
 use std::sync::Arc;
 
 use async_graphql::Result;
-use prisma_client_rust::Direction;
+
+use tokenspan_utils::pagination::{Cursor, Pagination};
 
 use crate::api::models::{TaskId, TaskVersionId, UserId};
+use crate::api::repositories::{
+    TaskVersionCreateEntity, TaskVersionStatus, TaskVersionUpdateEntity,
+};
 use crate::api::task_version::dto::{
-    CreateTaskVersionInput, TaskVersionArgs, UpdateTaskVersionInput,
+    TaskVersionArgs, TaskVersionCreateInput, TaskVersionUpdateInput,
 };
 use crate::api::task_version::task_version_error::TaskVersionError;
 use crate::api::task_version::task_version_model::TaskVersion;
-use crate::prisma::{task, task_version, user, PrismaClient};
-use tokenspan_utils::pagination::{Cursor, Pagination};
+use crate::repository::RootRepository;
 
 #[async_trait::async_trait]
 pub trait TaskVersionServiceExt {
@@ -21,30 +24,30 @@ pub trait TaskVersionServiceExt {
     async fn get_task_version_by_id(&self, id: TaskVersionId) -> Result<Option<TaskVersion>>;
     async fn get_task_versions_by_ids(&self, ids: Vec<TaskVersionId>) -> Result<Vec<TaskVersion>>;
     async fn get_task_versions_by_task_id(&self, task_id: TaskId) -> Result<Vec<TaskVersion>>;
-    async fn count_task_versions(&self) -> Result<i64>;
+    async fn count_task_versions(&self) -> Result<u64>;
     async fn create_task_version(
         &self,
-        input: CreateTaskVersionInput,
+        input: TaskVersionCreateInput,
         owner: &UserId,
     ) -> Result<TaskVersion>;
     async fn update_task_version(
         &self,
         id: TaskVersionId,
-        input: UpdateTaskVersionInput,
-    ) -> Result<TaskVersion>;
-    async fn delete_task_version(&self, id: TaskVersionId) -> Result<TaskVersion>;
+        input: TaskVersionUpdateInput,
+    ) -> Result<Option<TaskVersion>>;
+    async fn delete_task_version(&self, id: TaskVersionId) -> Result<Option<TaskVersion>>;
     async fn release_task_version(&self, id: TaskVersionId) -> Result<TaskVersion>;
 }
 
 pub type TaskVersionServiceDyn = Arc<dyn TaskVersionServiceExt + Send + Sync>;
 
 pub struct TaskVersionService {
-    prisma: Arc<PrismaClient>,
+    repository: Arc<RootRepository>,
 }
 
 impl TaskVersionService {
-    pub fn new(prisma: Arc<PrismaClient>) -> Self {
-        Self { prisma }
+    pub fn new(repository: Arc<RootRepository>) -> Self {
+        Self { repository }
     }
 }
 
@@ -54,42 +57,21 @@ impl TaskVersionServiceExt for TaskVersionService {
         &self,
         args: TaskVersionArgs,
     ) -> Result<Pagination<Cursor, TaskVersion>> {
-        let take = args.take.unwrap_or(1);
-
-        let builder = self
-            .prisma
-            .task_version()
-            .find_many(vec![])
-            .take(take + 1)
-            .order_by(task_version::id::order(Direction::Desc));
-
-        let builder = match (&args.before, &args.after) {
-            (Some(cursor), None) => builder
-                .take((take + 2) * -1)
-                .cursor(task_version::id::equals(cursor.id.clone())),
-            (None, Some(cursor)) => builder
-                .take(take + 2)
-                .cursor(task_version::id::equals(cursor.id.clone())),
-            _ => builder,
-        };
-
-        let items = builder
-            .exec()
+        let paginated = self
+            .repository
+            .task_version
+            .paginate::<TaskVersion>(args.take, args.before, args.after)
             .await
-            .map_err(|_| TaskVersionError::UnableToGetTaskVersions)?
-            .into_iter()
-            .map(|data| data.into())
-            .collect::<Vec<_>>();
+            .map_err(|_| TaskVersionError::UnableToCountTaskVersions)?;
 
-        Ok(Pagination::new(items, args.before, args.after, take))
+        Ok(paginated)
     }
 
     async fn get_task_version_by_id(&self, id: TaskVersionId) -> Result<Option<TaskVersion>> {
         let task_version = self
-            .prisma
-            .task_version()
-            .find_unique(task_version::id::equals(id.into()))
-            .exec()
+            .repository
+            .task_version
+            .find_by_id(id)
             .await
             .map_err(|_| TaskVersionError::UnableToGetTaskVersion)?
             .map(|task_version| task_version.into());
@@ -98,15 +80,10 @@ impl TaskVersionServiceExt for TaskVersionService {
     }
 
     async fn get_task_versions_by_ids(&self, ids: Vec<TaskVersionId>) -> Result<Vec<TaskVersion>> {
-        let ids = ids
-            .into_iter()
-            .map(|id| task_version::id::equals(id.into()))
-            .collect();
         let task_versions = self
-            .prisma
-            .task_version()
-            .find_many(ids)
-            .exec()
+            .repository
+            .task_version
+            .find_many_by_ids(ids)
             .await
             .map_err(|_| TaskVersionError::UnableToGetTaskVersions)?
             .into_iter()
@@ -118,10 +95,9 @@ impl TaskVersionServiceExt for TaskVersionService {
 
     async fn get_task_versions_by_task_id(&self, task_id: TaskId) -> Result<Vec<TaskVersion>> {
         let task_versions = self
-            .prisma
-            .task_version()
-            .find_many(vec![task_version::task_id::equals(task_id.into())])
-            .exec()
+            .repository
+            .task_version
+            .find_by_task_id(task_id)
             .await
             .map_err(|_| TaskVersionError::UnableToGetTaskVersions)?
             .into_iter()
@@ -131,12 +107,11 @@ impl TaskVersionServiceExt for TaskVersionService {
         Ok(task_versions)
     }
 
-    async fn count_task_versions(&self) -> Result<i64> {
+    async fn count_task_versions(&self) -> Result<u64> {
         let count = self
-            .prisma
-            .task_version()
-            .count(vec![])
-            .exec()
+            .repository
+            .task_version
+            .count()
             .await
             .map_err(|_| TaskVersionError::UnableToCountTaskVersions)?;
 
@@ -145,25 +120,23 @@ impl TaskVersionServiceExt for TaskVersionService {
 
     async fn create_task_version(
         &self,
-        input: CreateTaskVersionInput,
+        input: TaskVersionCreateInput,
         owner: &UserId,
     ) -> Result<TaskVersion> {
         let created_task_version = self
-            .prisma
-            .task_version()
-            .create(
-                user::id::equals(owner.to_string()),
-                task::id::equals(input.task_id.into()),
-                input.version,
-                vec![
-                    task_version::release_note::set(input.release_note),
-                    task_version::description::set(input.description),
-                    task_version::document::set(input.document),
-                    task_version::messages::set(input.messages),
-                    task_version::status::set(input.status),
-                ],
-            )
-            .exec()
+            .repository
+            .task_version
+            .create(TaskVersionCreateEntity {
+                task_id: input.task_id,
+                owner_id: owner.clone(),
+                version: input.version,
+                release_note: input.release_note,
+                description: input.description,
+                document: input.document,
+                parameters: vec![],
+                messages: input.messages,
+                status: TaskVersionStatus::Draft,
+            })
             .await
             .map_err(|_| TaskVersionError::UnableToCreateTaskVersion)?;
 
@@ -173,29 +146,38 @@ impl TaskVersionServiceExt for TaskVersionService {
     async fn update_task_version(
         &self,
         id: TaskVersionId,
-        input: UpdateTaskVersionInput,
-    ) -> Result<TaskVersion> {
+        input: TaskVersionUpdateInput,
+    ) -> Result<Option<TaskVersion>> {
         let updated_task_version = self
-            .prisma
-            .task_version()
-            .update(task_version::id::equals(id.into()), input.into())
-            .exec()
+            .repository
+            .task_version
+            .update_by_id(
+                id,
+                TaskVersionUpdateEntity {
+                    status: input.status,
+                    release_note: input.release_note,
+                    description: input.description,
+                    document: input.document,
+                    messages: input.messages,
+                },
+            )
             .await
-            .map_err(|_| TaskVersionError::UnableToUpdateTaskVersion)?;
+            .map_err(|_| TaskVersionError::UnableToUpdateTaskVersion)?
+            .map(|task_version| task_version.into());
 
-        Ok(updated_task_version.into())
+        Ok(updated_task_version)
     }
 
-    async fn delete_task_version(&self, id: TaskVersionId) -> Result<TaskVersion> {
+    async fn delete_task_version(&self, id: TaskVersionId) -> Result<Option<TaskVersion>> {
         let deleted_task_version = self
-            .prisma
-            .task_version()
-            .delete(task_version::id::equals(id.into()))
-            .exec()
+            .repository
+            .task_version
+            .delete_by_id(id)
             .await
-            .map_err(|_| TaskVersionError::UnableToDeleteTaskVersion)?;
+            .map_err(|_| TaskVersionError::UnableToDeleteTaskVersion)?
+            .map(|task_version| task_version.into());
 
-        Ok(deleted_task_version.into())
+        Ok(deleted_task_version)
     }
 
     async fn release_task_version(&self, _id: TaskVersionId) -> Result<TaskVersion> {

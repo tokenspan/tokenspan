@@ -1,39 +1,37 @@
+use bson::oid::ObjectId;
+use std::fmt::Display;
+
+use async_graphql::dataloader::DataLoader;
+use async_graphql::{ComplexObject, Context, Result, Scalar, ScalarType, SimpleObject};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+
+use tokenspan_macros::ID;
+use tokenspan_utils::pagination::{Cursor, CursorExt};
+
 use crate::api::model::model_error::ModelError;
 use crate::api::models::{Model, ModelId};
 use crate::error::AppError;
 use crate::loader::AppLoader;
-use async_graphql::dataloader::DataLoader;
-use async_graphql::{
-    ComplexObject, Context, InputValueError, InputValueResult, Result, Scalar, ScalarType,
-    SimpleObject, Value,
-};
-use chrono::{DateTime, FixedOffset};
-use serde::{Deserialize, Serialize};
-use std::fmt::Display;
-use tokenspan_macros::TeraId;
-use tokenspan_utils::pagination::{Cursor, CursorExt};
 
-use crate::prisma::{parameter, ParameterStatus};
-
-#[derive(TeraId, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub struct ParameterId(pub String);
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+pub struct ParameterId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone, Serialize, Deserialize)]
 #[graphql(complex)]
 pub struct Parameter {
     pub id: ParameterId,
     pub name: String,
-    pub temperature: f64,
-    pub max_tokens: i32,
+    pub temperature: f32,
+    pub max_tokens: u32,
     pub stop_sequences: Vec<String>,
-    pub top_p: f64,
-    pub frequency_penalty: f64,
-    pub presence_penalty: f64,
-    pub status: ParameterStatus,
+    pub top_p: f32,
+    pub frequency_penalty: f32,
+    pub presence_penalty: f32,
     pub extra: Option<serde_json::Value>,
     pub model_id: ModelId,
-    pub created_at: DateTime<FixedOffset>,
-    pub updated_at: DateTime<FixedOffset>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[ComplexObject]
@@ -58,10 +56,10 @@ impl CursorExt<Cursor> for Parameter {
     }
 }
 
-impl From<parameter::Data> for Parameter {
-    fn from(value: parameter::Data) -> Self {
+impl From<super::parameter_repository::ParameterEntity> for Parameter {
+    fn from(value: super::parameter_repository::ParameterEntity) -> Self {
         Self {
-            id: ParameterId(value.id),
+            id: value.id,
             name: value.name,
             temperature: value.temperature,
             max_tokens: value.max_tokens,
@@ -69,9 +67,8 @@ impl From<parameter::Data> for Parameter {
             top_p: value.top_p,
             frequency_penalty: value.frequency_penalty,
             presence_penalty: value.presence_penalty,
-            status: value.status,
             extra: value.extra,
-            model_id: ModelId(value.model_id),
+            model_id: value.model_id,
             created_at: value.created_at,
             updated_at: value.updated_at,
         }

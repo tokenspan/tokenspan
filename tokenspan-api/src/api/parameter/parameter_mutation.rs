@@ -1,12 +1,11 @@
 use async_graphql::{Context, Object, Result};
 
 use crate::api::models::{ParameterId, Role};
-use crate::api::parameter::dto::{CreateParameterInput, UpdateParameterInput};
+use crate::api::parameter::dto::{ParameterCreateInput, ParameterUpdateInput};
 use crate::api::parameter::parameter_model::Parameter;
 use crate::api::services::ParameterServiceDyn;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
-
 #[derive(Default)]
 pub struct ParameterMutation;
 
@@ -16,7 +15,7 @@ impl ParameterMutation {
     pub async fn create_parameter<'a>(
         &self,
         ctx: &Context<'a>,
-        input: CreateParameterInput,
+        input: ParameterCreateInput,
     ) -> Result<Parameter> {
         let parameter_service = ctx
             .data::<ParameterServiceDyn>()
@@ -30,8 +29,8 @@ impl ParameterMutation {
         &self,
         ctx: &Context<'a>,
         id: ParameterId,
-        input: UpdateParameterInput,
-    ) -> Result<Parameter> {
+        input: ParameterUpdateInput,
+    ) -> Result<Option<Parameter>> {
         let parameter_service = ctx
             .data::<ParameterServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -44,7 +43,7 @@ impl ParameterMutation {
         &self,
         ctx: &Context<'a>,
         id: ParameterId,
-    ) -> Result<Parameter> {
+    ) -> Result<Option<Parameter>> {
         let parameter_service = ctx
             .data::<ParameterServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

@@ -46,8 +46,9 @@ impl IntoResponse for ValidQueryError {
 }
 
 #[async_trait]
-impl<T, S> FromRequestParts<S> for ValidQuery<T>
+impl<S, T> FromRequestParts<S> for ValidQuery<T>
 where
+    Query<T>: FromRequestParts<S, Rejection = QueryRejection>,
     T: DeserializeOwned + Validate,
     S: Send + Sync,
 {

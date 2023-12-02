@@ -5,7 +5,7 @@ use crate::state::AppState;
 
 mod api_key;
 mod auth;
-mod execution_history;
+mod execution;
 mod model;
 mod parameter;
 mod provider;
@@ -14,10 +14,21 @@ mod task_version;
 mod user;
 mod view;
 
+pub mod repositories {
+    pub use super::api_key::api_key_repository::*;
+    pub use super::execution::execution_repository::*;
+    pub use super::model::model_repository::*;
+    pub use super::parameter::parameter_repository::*;
+    pub use super::provider::provider_repository::*;
+    pub use super::task::task_repository::*;
+    pub use super::task_version::task_version_repository::*;
+    pub use super::user::user_repository::*;
+    pub use super::view::view_repository::*;
+}
 pub mod services {
     pub use super::api_key::api_key_service::*;
     pub use super::auth::auth_service::*;
-    pub use super::execution_history::execution_history_service::*;
+    pub use super::execution::execution_service::*;
     pub use super::model::model_service::*;
     pub use super::parameter::parameter_service::*;
     pub use super::provider::provider_service::*;
@@ -30,7 +41,7 @@ pub mod services {
 pub mod models {
     pub use super::api_key::api_key_model::*;
     pub use super::auth::auth_model::*;
-    pub use super::execution_history::execution_history_model::*;
+    pub use super::execution::execution_model::*;
     pub use super::model::model_model::*;
     pub use super::parameter::parameter_model::*;
     pub use super::provider::provider_model::*;
@@ -51,7 +62,7 @@ pub struct QueryRoot(
     pub parameter::ParameterQuery,
     pub task_version::TaskVersionQuery,
     pub view::ViewQuery,
-    pub execution_history::ExecutionHistoryQuery,
+    pub execution::ExecutionQuery,
 );
 
 #[derive(MergedObject, Default)]
