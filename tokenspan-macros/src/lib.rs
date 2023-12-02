@@ -35,7 +35,7 @@ pub fn impl_tokenspan_id(input: TokenStream) -> TokenStream {
             }
 
             fn to_value(&self) -> async_graphql::Value {
-                async_graphql::Value::String(self.0.to_string())
+                async_graphql::Value::String(self.to_string())
             }
         }
 

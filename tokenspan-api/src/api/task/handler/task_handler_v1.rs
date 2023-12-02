@@ -8,6 +8,8 @@ use crate::api::task::task_model::Task;
 
 pub async fn execute_task_v1() -> Result<Json<Task>, TaskError> {
     info!("Executing task");
+    let id = TaskId::new();
+    info!("Created task id: {}", id);
     Ok(Json(Task {
         id: TaskId::new(),
         name: "test".to_string(),

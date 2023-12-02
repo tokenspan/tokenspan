@@ -12,8 +12,17 @@ use crate::api::models::TaskVersion;
 use crate::api::services::TaskVersionServiceDyn;
 use crate::error::AppError;
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Deserialize)]
 pub struct TaskId(pub ObjectId);
+
+impl Serialize for TaskId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.0.to_string())
+    }
+}
 
 #[derive(SimpleObject, Debug, Clone, Serialize)]
 #[graphql(complex)]
