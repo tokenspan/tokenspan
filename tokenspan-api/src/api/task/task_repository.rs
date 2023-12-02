@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TaskEntity {
-    pub id: ObjectId,
+    pub id: TaskId,
     pub owner_id: UserId,
     pub name: String,
     pub slug: String,
@@ -35,7 +35,7 @@ pub struct TaskUpdateEntity {
 impl Repository<TaskEntity> {
     pub async fn create(&self, doc: TaskCreateEntity) -> Result<TaskEntity> {
         let doc = TaskEntity {
-            id: ObjectId::new(),
+            id: TaskId::new(),
             owner_id: doc.owner_id,
             name: doc.name,
             slug: doc.slug,
