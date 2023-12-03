@@ -26,6 +26,11 @@ use crate::state::AppState;
 #[async_trait::async_trait]
 pub trait TaskServiceExt {
     async fn get_tasks(&self, args: TaskArgs) -> Result<Pagination<Cursor, Task>>;
+    async fn get_tasks_by_owner(
+        &self,
+        user_id: UserId,
+        args: TaskArgs,
+    ) -> Result<Pagination<Cursor, Task>>;
     async fn get_task_by_id(&self, id: TaskId) -> Result<Option<Task>>;
     async fn get_tasks_by_ids(&self, ids: Vec<TaskId>) -> Result<Vec<Task>>;
     async fn count_tasks(&self) -> Result<u64>;
@@ -79,7 +84,22 @@ impl TaskServiceExt for TaskService {
         let paginated = self
             .repository
             .task
-            .paginate::<Task>(args.take, args.before, args.after)
+            .paginate::<Task>(args.into())
+            .await
+            .map_err(|_| TaskError::UnableToCreateTask)?;
+
+        Ok(paginated)
+    }
+
+    async fn get_tasks_by_owner(
+        &self,
+        user_id: UserId,
+        args: TaskArgs,
+    ) -> Result<Pagination<Cursor, Task>> {
+        let paginated = self
+            .repository
+            .task
+            .paginate_by_owner::<Task>(user_id, args.into())
             .await
             .map_err(|_| TaskError::UnableToCreateTask)?;
 

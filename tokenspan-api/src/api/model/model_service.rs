@@ -40,7 +40,7 @@ impl ModelServiceExt for ModelService {
         let paginated = self
             .repository
             .model
-            .paginate::<Model>(args.take, args.before, args.after)
+            .paginate::<Model>(args.into())
             .await
             .map_err(|_| ModelError::UnableToGetModels)?;
 

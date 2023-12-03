@@ -60,7 +60,7 @@ impl TaskVersionServiceExt for TaskVersionService {
         let paginated = self
             .repository
             .task_version
-            .paginate::<TaskVersion>(args.take, args.before, args.after)
+            .paginate::<TaskVersion>(args.into())
             .await
             .map_err(|_| TaskVersionError::UnableToCountTaskVersions)?;
 

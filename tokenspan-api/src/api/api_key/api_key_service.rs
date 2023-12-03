@@ -44,7 +44,7 @@ impl ApiKeyServiceExt for ApiKeyService {
         let paginated = self
             .repository
             .api_key
-            .paginate::<ApiKey>(args.take, args.before, args.after)
+            .paginate::<ApiKey>(args.into())
             .await
             .map_err(|_| ApiKeyError::UnableToGetApiKeys)?;
 
