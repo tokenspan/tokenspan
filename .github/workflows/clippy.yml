@@ -7,6 +7,9 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+permissions:
+  actions: write
+
 jobs:
   clippy:
     runs-on: ubuntu-latest
