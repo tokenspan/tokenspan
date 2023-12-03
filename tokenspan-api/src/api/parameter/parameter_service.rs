@@ -44,7 +44,7 @@ impl ParameterServiceExt for ParameterService {
         let paginated = self
             .repository
             .parameter
-            .paginate::<Parameter>(args.take, args.before, args.after)
+            .paginate::<Parameter>(args.into())
             .await
             .map_err(|_| ParameterError::UnableToGetParameters)?;
 

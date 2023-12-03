@@ -41,7 +41,7 @@ impl ExecutionServiceExt for ExecutionService {
         let paginated = self
             .repository
             .execution
-            .paginate::<Execution>(args.take, args.before, args.after)
+            .paginate::<Execution>(args.into())
             .await
             .map_err(|_| ExecutionError::UnableToGetExecutions)?;
 

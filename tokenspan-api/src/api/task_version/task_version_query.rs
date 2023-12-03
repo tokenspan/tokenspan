@@ -6,7 +6,7 @@ use crate::api::services::TaskVersionServiceDyn;
 use crate::api::task_version::dto::TaskVersionArgs;
 use crate::api::task_version::task_version_model::TaskVersion;
 use crate::error::AppError;
-use tokenspan_utils::pagination::Cursor;
+use tokenspan_utils::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct TaskVersionQuery;
@@ -17,7 +17,7 @@ impl TaskVersionQuery {
         &self,
         ctx: &Context<'a>,
         args: TaskVersionArgs,
-    ) -> Result<Connection<Cursor, TaskVersion>> {
+    ) -> Result<Connection<Cursor, TaskVersion, AdditionalFields>> {
         let task_version_service = ctx
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

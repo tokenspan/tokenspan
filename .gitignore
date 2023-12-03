@@ -21,3 +21,4 @@ db-data
 .idea
 schema.graphql
 tokenspan-api/src/prisma/db.rs
+.env

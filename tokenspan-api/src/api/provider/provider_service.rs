@@ -43,7 +43,7 @@ impl ProviderServiceExt for ProviderService {
         let paginated = self
             .repository
             .provider
-            .paginate::<Provider>(args.take, args.before, args.after)
+            .paginate::<Provider>(args.into())
             .await
             .map_err(|_| ProviderError::UnableToGetProviders)?;
 

@@ -1,10 +1,13 @@
-use crate::api::models::{TaskId, UserId};
-use crate::repository::Repository;
 use bson::doc;
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use mongodb::error::{Error, Result};
 use serde::{Deserialize, Serialize};
+
+use tokenspan_utils::pagination::{Cursor, CursorExt, Pagination};
+
+use crate::api::models::{TaskId, UserId};
+use crate::repository::{PaginateArgs, Repository};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TaskEntity {
@@ -75,5 +78,19 @@ impl Repository<TaskEntity> {
         self.collection
             .find_one_and_update(filter, update, None)
             .await
+    }
+
+    pub async fn paginate_by_owner<TNode: CursorExt<Cursor> + From<TaskEntity>>(
+        &self,
+        owner_id: UserId,
+        args: PaginateArgs,
+    ) -> Result<Pagination<Cursor, TNode>> {
+        self.paginate_with_filter::<TNode>(
+            doc! {
+                "owner_id": ObjectId::from(owner_id),
+            },
+            args,
+        )
+        .await
     }
 }

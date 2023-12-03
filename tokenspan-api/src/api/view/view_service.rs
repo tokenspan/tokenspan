@@ -40,7 +40,7 @@ impl ViewServiceExt for ViewService {
         let paginated = self
             .repository
             .view
-            .paginate::<View>(args.take, args.before, args.after)
+            .paginate::<View>(args.into())
             .await
             .map_err(|_| ViewError::UnableToGetViews)?;
 

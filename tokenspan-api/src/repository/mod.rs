@@ -1,5 +1,5 @@
-use bson::doc;
 use bson::oid::ObjectId;
+use bson::{doc, Document};
 use futures::TryStreamExt;
 use mongodb::options::FindOptions;
 use mongodb::Client;
@@ -8,6 +8,12 @@ use serde::de::DeserializeOwned;
 use tokenspan_utils::pagination::{Cursor, CursorExt, Pagination};
 
 use crate::api::repositories::*;
+
+pub struct PaginateArgs {
+    pub take: Option<i64>,
+    pub before: Option<Cursor>,
+    pub after: Option<Cursor>,
+}
 
 #[derive(Clone)]
 pub struct Repository<TData> {
@@ -31,27 +37,36 @@ where
 
     pub async fn paginate<TNode: CursorExt<Cursor> + From<TData>>(
         &self,
-        take: Option<i64>,
-        before: Option<Cursor>,
-        after: Option<Cursor>,
+        args: PaginateArgs,
     ) -> mongodb::error::Result<Pagination<Cursor, TNode>> {
-        let take = take.unwrap_or(1);
+        self.paginate_with_filter(doc! {}, args).await
+    }
+
+    pub async fn paginate_with_filter<TNode: CursorExt<Cursor> + From<TData>>(
+        &self,
+        filter: Document,
+        args: PaginateArgs,
+    ) -> mongodb::error::Result<Pagination<Cursor, TNode>> {
+        let take = args.take.unwrap_or(1);
         let limit = take
-            + if after.is_some() || before.is_some() {
+            + if args.after.is_some() || args.before.is_some() {
                 2
             } else {
                 1
             };
 
-        let filter = after
+        let mut default_filter = args
+            .after
             .clone()
             .map(|cursor| doc! { "_id": { "$lte": ObjectId::parse_str(cursor.id).unwrap() } })
             .or_else(|| {
-                before.clone().map(
+                args.before.clone().map(
                     |cursor| doc! { "_id": { "$gte": ObjectId::parse_str(cursor.id).unwrap() } },
                 )
             })
-            .unwrap_or(doc! {});
+            .unwrap_or_default();
+
+        default_filter.extend(filter);
 
         let options = FindOptions::builder()
             .sort(doc! {
@@ -60,17 +75,22 @@ where
             .limit(limit)
             .build();
 
-        let items = self
+        let count_fut = self
             .collection
-            .find(filter, Some(options))
-            .await?
+            .count_documents(default_filter.clone(), None);
+
+        let find_fut = self.collection.find(default_filter, Some(options));
+
+        let (count, cursor) =
+            tokio::try_join!(count_fut, find_fut).map_err(mongodb::error::Error::custom)?;
+        let items = cursor
             .try_collect::<Vec<TData>>()
             .await?
             .into_iter()
             .map(|doc| doc.into())
             .collect::<Vec<_>>();
 
-        Ok(Pagination::new(items, before, after, take))
+        Ok(Pagination::new(items, args.before, args.after, take, count))
     }
 
     pub async fn find_by_id<T>(&self, id: T) -> mongodb::error::Result<Option<TData>>
