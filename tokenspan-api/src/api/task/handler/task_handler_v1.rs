@@ -9,8 +9,8 @@ use crate::api::task::task_error::TaskError;
 use crate::api::task::task_model::Task;
 
 pub async fn execute_task_v1(
-    task_service: TaskServiceDyn,
-    input: TaskExecuteInput,
+    _task_service: TaskServiceDyn,
+    _input: TaskExecuteInput,
 ) -> Result<Json<Task>, TaskError> {
     info!("Executing task");
     let id = TaskId::new();

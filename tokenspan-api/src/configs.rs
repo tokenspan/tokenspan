@@ -44,15 +44,18 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn new() -> Result<Self, config::ConfigError> {
-        let rust_env = std::env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
+        let rust_env = std::env::var("APP__ENV").unwrap_or_else(|_| "development".to_string());
 
-        let env_source = Environment::with_prefix("APP").separator("__");
+        let env_source = Environment::with_prefix("APP")
+            .prefix_separator("__")
+            .separator("__");
 
         let s = Config::builder()
             .add_source(File::with_name("tokenspan-api/config/default"))
             .add_source(
                 File::with_name(&format!("tokenspan-api/config/{}", rust_env)).required(false),
             )
+            .add_source(File::with_name("tokenspan-api/.env").required(false))
             .add_source(env_source)
             .build()?;
 

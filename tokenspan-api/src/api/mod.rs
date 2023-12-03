@@ -6,6 +6,7 @@ use crate::state::AppState;
 mod api_key;
 mod auth;
 mod execution;
+mod health;
 mod model;
 mod parameter;
 mod provider;
@@ -82,6 +83,8 @@ pub struct ApiRouter;
 
 impl ApiRouter {
     pub fn new() -> Router<AppState> {
-        Router::new().nest("/tasks", task::TaskRouter::new())
+        Router::new()
+            .nest("/tasks", task::TaskRouter::new())
+            .merge(health::HealthRouter::new())
     }
 }
