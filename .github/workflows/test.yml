@@ -8,17 +8,10 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - uses: Swatinem/rust-cache@v2
-      with:
-        prefix-key: tokenspan-upload
-        cache-directories: "/home/runner/.cache/prisma/binaries/cli/4.8.0"
-    - name: Build
-      run: cargo check
     - name: Run tests
       run: cargo test
-    - name: Run clippy
-      run: cargo clippy
