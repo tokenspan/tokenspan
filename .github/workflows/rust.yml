@@ -17,7 +17,7 @@ jobs:
         prefix-key: tokenspan-upload
         cache-directories: "/home/runner/.cache/prisma/binaries/cli/4.8.0"
     - name: Build
-      run: cargo check --locked
+      run: cargo check
     - name: Run tests
       run: cargo test
     - name: Run clippy
