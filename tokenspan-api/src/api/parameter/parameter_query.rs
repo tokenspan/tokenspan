@@ -6,7 +6,7 @@ use crate::api::parameter::dto::ParameterArgs;
 use crate::api::parameter::parameter_model::Parameter;
 use crate::api::services::ParameterServiceDyn;
 use crate::error::AppError;
-use tokenspan_utils::pagination::Cursor;
+use tokenspan_utils::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct ParameterQuery;
@@ -17,7 +17,7 @@ impl ParameterQuery {
         &self,
         ctx: &Context<'a>,
         args: ParameterArgs,
-    ) -> Result<Connection<Cursor, Parameter>> {
+    ) -> Result<Connection<Cursor, Parameter, AdditionalFields>> {
         let parameter_service = ctx
             .data::<ParameterServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

@@ -6,7 +6,7 @@ use crate::api::execution::dto::ExecutionArgs;
 use crate::api::execution::execution_model::Execution;
 use crate::api::services::ExecutionServiceDyn;
 use crate::error::AppError;
-use tokenspan_utils::pagination::Cursor;
+use tokenspan_utils::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct ExecutionQuery;
@@ -17,7 +17,7 @@ impl ExecutionQuery {
         &self,
         ctx: &Context<'a>,
         args: ExecutionArgs,
-    ) -> Result<Connection<Cursor, Execution>> {
+    ) -> Result<Connection<Cursor, Execution, AdditionalFields>> {
         let execution_service = ctx
             .data::<ExecutionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

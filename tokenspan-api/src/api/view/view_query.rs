@@ -6,7 +6,7 @@ use crate::api::services::ViewServiceDyn;
 use crate::api::view::dto::ViewArgs;
 use crate::api::view::view_model::View;
 use crate::error::AppError;
-use tokenspan_utils::pagination::Cursor;
+use tokenspan_utils::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct ViewQuery;
@@ -17,7 +17,7 @@ impl ViewQuery {
         &self,
         ctx: &Context<'a>,
         args: ViewArgs,
-    ) -> Result<Connection<Cursor, View>> {
+    ) -> Result<Connection<Cursor, View, AdditionalFields>> {
         let view_service = ctx
             .data::<ViewServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

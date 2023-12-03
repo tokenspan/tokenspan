@@ -6,7 +6,7 @@ use crate::api::api_key::api_key_model::ApiKey;
 use crate::api::api_key::dto::ApiKeyArgs;
 use crate::api::services::ApiKeyServiceDyn;
 use crate::error::AppError;
-use tokenspan_utils::pagination::Cursor;
+use tokenspan_utils::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct ApiKeyQuery;
@@ -17,7 +17,7 @@ impl ApiKeyQuery {
         &self,
         ctx: &Context<'a>,
         args: ApiKeyArgs,
-    ) -> Result<Connection<Cursor, ApiKey>> {
+    ) -> Result<Connection<Cursor, ApiKey, AdditionalFields>> {
         let api_key_service = ctx
             .data::<ApiKeyServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

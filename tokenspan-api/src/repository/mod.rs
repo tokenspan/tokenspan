@@ -75,17 +75,22 @@ where
             .limit(limit)
             .build();
 
-        let items = self
+        let count_fut = self
             .collection
-            .find(default_filter, Some(options))
-            .await?
+            .count_documents(default_filter.clone(), None);
+
+        let find_fut = self.collection.find(default_filter, Some(options));
+
+        let (count, cursor) =
+            tokio::try_join!(count_fut, find_fut).map_err(mongodb::error::Error::custom)?;
+        let items = cursor
             .try_collect::<Vec<TData>>()
             .await?
             .into_iter()
             .map(|doc| doc.into())
             .collect::<Vec<_>>();
 
-        Ok(Pagination::new(items, args.before, args.after, take))
+        Ok(Pagination::new(items, args.before, args.after, take, count))
     }
 
     pub async fn find_by_id<T>(&self, id: T) -> mongodb::error::Result<Option<TData>>
