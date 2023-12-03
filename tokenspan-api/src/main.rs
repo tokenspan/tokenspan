@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::configs::AppEnv;
-use axum::http::StatusCode;
+use axum::extract::MatchedPath;
+use axum::http::{Request, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::{middleware, Extension, Json, Router};
@@ -12,10 +12,11 @@ use tower_http::cors::CorsLayer;
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace;
 use tower_http::trace::TraceLayer;
-use tracing::Level;
+use tracing::{info, info_span, Level};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
+use crate::configs::AppEnv;
 use crate::graphql::*;
 
 mod api;
@@ -62,7 +63,20 @@ async fn main() {
     register_tracing(config.clone());
 
     let trace_layer = TraceLayer::new_for_http()
-        .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
+        .make_span_with(|request: &Request<_>| {
+            // Log the matched route's path (with placeholders not filled in).
+            // Use request.uri() or OriginalUri if you want the real path.
+            let path = request
+                .extensions()
+                .get::<MatchedPath>()
+                .map(MatchedPath::as_str);
+
+            info_span!(
+                "http_request",
+                method = ?request.method(),
+                path,
+            )
+        })
         .on_response(trace::DefaultOnResponse::new().level(Level::INFO));
 
     let cors_layer = CorsLayer::permissive();
@@ -83,7 +97,7 @@ async fn main() {
         .layer(Extension(config))
         .with_state(app_state);
 
-    println!("Sandbox: http://localhost:8080/graphql");
+    info!("Sandbox: http://localhost:8080/graphql");
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.unwrap();
     axum::serve(listener, app.into_make_service())

@@ -7,11 +7,16 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+permissions: write-all
+
 jobs:
   clippy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - uses: Swatinem/rust-cache@v2
-    - name: Run clippy
-      run: cargo clippy
+    - uses: giraffate/clippy-action@v1
+      with:
+        reporter: 'github-pr-review'
+        clippy_flags: '-- -Dwarnings'
+        github_token: ${{ secrets.GITHUB_TOKEN }}

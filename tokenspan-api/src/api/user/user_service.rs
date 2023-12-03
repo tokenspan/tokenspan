@@ -72,7 +72,7 @@ impl UserServiceExt for UserService {
                 salt,
             })
             .await
-            .map_err(|e| UserError::UnableToCreateUser)?;
+            .map_err(|_| UserError::UnableToCreateUser)?;
 
         Ok(created_user.into())
     }
