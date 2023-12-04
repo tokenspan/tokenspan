@@ -59,7 +59,6 @@ pub fn register_tracing(config: Arc<configs::AppConfig>) {
 async fn main() {
     let config = configs::AppConfig::new().unwrap();
     let config = Arc::new(config);
-    println!("{:#?}", config);
 
     register_tracing(config.clone());
 
