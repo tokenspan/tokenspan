@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use async_graphql::{Context, Guard};
 use axum::extract::{Request, State};
 use axum::http::StatusCode;
@@ -5,10 +7,10 @@ use axum::middleware::Next;
 use axum::response::Response;
 use axum_extra::headers::authorization::Bearer;
 use axum_extra::headers::{Authorization, HeaderMapExt};
-use std::sync::Arc;
 
-use crate::api::models::{ParsedToken, Role};
+use crate::api::models::ParsedToken;
 use crate::api::services::AuthService;
+use crate::api::types::Role;
 use crate::configs::AppConfig;
 
 pub async fn guard(
@@ -55,15 +57,14 @@ impl Guard for RoleGuard {
     async fn check(&self, ctx: &Context<'_>) -> async_graphql::Result<()> {
         let parsed_token = ctx.data_opt::<Option<ParsedToken>>();
 
-        if let Some(parsed_token) = parsed_token {
-            if let Some(parsed_token) = parsed_token {
-                return match self.role {
-                    Role::Admin if parsed_token.role == Role::Admin => Ok(()),
-                    Role::User if parsed_token.role == Role::Admin => Ok(()),
-                    Role::User if parsed_token.role == Role::User => Ok(()),
-                    _ => Err(async_graphql::Error::new("Forbidden")),
-                };
-            }
+        if let Some(Some(parsed_token)) = parsed_token {
+            println!("parsed_token: {:?}", parsed_token);
+            return match self.role {
+                Role::Admin if parsed_token.role == Role::Admin => Ok(()),
+                Role::User if parsed_token.role == Role::Admin => Ok(()),
+                Role::User if parsed_token.role == Role::User => Ok(()),
+                _ => Err(async_graphql::Error::new("Forbidden")),
+            };
         }
 
         Err(async_graphql::Error::new("Forbidden"))

@@ -1,7 +1,9 @@
-use crate::api::models::{Role, UserId};
+use async_graphql::{Context, Object, Result};
+
+use crate::api::models::UserId;
+use crate::api::types::Role;
 use crate::api::user::dto::CreateUserInput;
 use crate::api::user::user_model::User;
-use async_graphql::{Context, Object, Result};
 
 #[derive(Default)]
 pub struct UserMutation;
@@ -12,6 +14,7 @@ impl UserMutation {
         Ok(User {
             id: UserId::new(),
             email: input.email,
+            username: input.username,
             password: input.password,
             salt: "".to_string(),
             role: Role::User,

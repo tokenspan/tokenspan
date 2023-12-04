@@ -7,14 +7,18 @@ port = 8080
 url = "mongodb://mongo1:30001/tokenspan?replicaSet=local-replica-set"
 
 [log]
-level = "info"
-filter = "tokenspan_api=info,tower_http::trace::on_response=info,axum::rejection=trace"
+filter = "tokenspan_api=debug,tower_http::trace::on_response=info,axum::rejection=trace"
 
 [auth]
 iss = "tokenspan"
 aud = "tokenspan-api"
-secret = "secret"
+# DO NOT USE THIS SECRET IN PRODUCTION
+secret = "ma8SUYC22nV2ciZ5GyZFe09nnlpeoYXAXFeriZOk3HwGtdHP2C"
 # 1 hour
 token_exp = 3600
 # 30 days
 refresh_token_exp = 2592000
+
+[encryption]
+# DO NOT USE THIS SECRET IN PRODUCTION
+secret = "UVCgyvCUAdzpgOSCfgpVQxAJBEQ8Oa36i0vIyGeYYdmDJHoR2M"

@@ -6,8 +6,9 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 
 use crate::api::auth::auth_error::AuthError;
 use crate::api::auth::auth_model::{AuthPayload, Claims, ParsedToken, SessionPayload};
-use crate::api::models::{RefreshPayload, Role, UserId};
+use crate::api::models::{RefreshPayload, UserId};
 use crate::api::services::UserServiceDyn;
+use crate::api::types::Role;
 use crate::configs::AuthConfig;
 
 #[async_trait::async_trait]

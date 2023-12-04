@@ -1,9 +1,10 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 
-use crate::api::models::{ParsedToken, Role, TaskVersionId};
+use crate::api::models::{ParsedToken, TaskVersionId};
 use crate::api::services::TaskVersionServiceDyn;
 use crate::api::task_version::dto::{TaskVersionCreateInput, TaskVersionUpdateInput};
 use crate::api::task_version::task_version_model::TaskVersion;
+use crate::api::types::Role;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
 

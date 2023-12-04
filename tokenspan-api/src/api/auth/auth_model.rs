@@ -1,7 +1,8 @@
 use async_graphql::SimpleObject;
 use serde::{Deserialize, Serialize};
 
-use crate::api::models::{Role, User, UserId};
+use crate::api::models::{User, UserId};
+use crate::api::types::Role;
 
 #[derive(SimpleObject)]
 pub struct AuthPayload {
