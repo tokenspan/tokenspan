@@ -1,9 +1,10 @@
 use async_graphql::{Context, Object, Result};
 
-use crate::api::models::{ProviderId, Role};
+use crate::api::models::ProviderId;
 use crate::api::provider::dto::{ProviderCreateInput, ProviderUpdateInput};
 use crate::api::provider::provider_model::Provider;
 use crate::api::services::ProviderServiceDyn;
+use crate::api::types::Role;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
 

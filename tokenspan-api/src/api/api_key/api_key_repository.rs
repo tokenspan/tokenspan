@@ -16,6 +16,7 @@ pub struct ApiKeyEntity {
     pub provider_id: ProviderId,
     pub name: String,
     pub key: String,
+    pub hint: String,
     #[serde(with = "chrono_datetime_as_bson_datetime")]
     pub created_at: DateTime<Utc>,
     #[serde(with = "chrono_datetime_as_bson_datetime")]
@@ -28,6 +29,7 @@ pub struct ApiKeyCreateEntity {
     pub provider_id: ProviderId,
     pub name: String,
     pub key: String,
+    pub hint: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -43,6 +45,7 @@ impl Repository<ApiKeyEntity> {
             provider_id: doc.provider_id,
             name: doc.name,
             key: doc.key,
+            hint: doc.hint,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };

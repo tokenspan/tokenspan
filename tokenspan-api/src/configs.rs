@@ -34,12 +34,18 @@ pub struct AuthConfig {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct EncryptionConfig {
+    pub secret: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct AppConfig {
     pub env: AppEnv,
     pub server: ServerConfig,
     pub database: DatabaseConfig,
     pub log: LogConfig,
     pub auth: AuthConfig,
+    pub encryption: EncryptionConfig,
 }
 
 impl AppConfig {

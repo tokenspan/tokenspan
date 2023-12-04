@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use async_graphql::Result;
+use magic_crypt::{new_magic_crypt, MagicCryptTrait};
 
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
@@ -9,6 +10,7 @@ use crate::api::api_key::api_key_model::ApiKey;
 use crate::api::api_key::dto::{ApiKeyArgs, ApiKeyCreateInput, ApiKeyUpdateInput};
 use crate::api::models::{ApiKeyId, UserId};
 use crate::api::repositories::{ApiKeyCreateEntity, ApiKeyUpdateEntity};
+use crate::configs::EncryptionConfig;
 use crate::repository::RootRepository;
 
 #[async_trait::async_trait]
@@ -30,11 +32,28 @@ pub type ApiKeyServiceDyn = Arc<dyn ApiKeyServiceExt + Send + Sync>;
 
 pub struct ApiKeyService {
     repository: Arc<RootRepository>,
+    encryption_config: EncryptionConfig,
 }
 
 impl ApiKeyService {
-    pub fn new(repository: Arc<RootRepository>) -> Self {
-        Self { repository }
+    const HINT_SIZE: usize = 4;
+    
+    pub fn new(repository: Arc<RootRepository>, encryption_config: EncryptionConfig) -> Self {
+        Self {
+            repository,
+            encryption_config,
+        }
+    }
+
+    fn create_hint(&self, key: String) -> String {
+        let mut hint = String::new();
+        let key_len = key.len();
+        let key_first = &key[0..Self::HINT_SIZE];
+        let key_last = &key[key_len - Self::HINT_SIZE..key_len];
+        hint.push_str(key_first);
+        hint.push_str("...");
+        hint.push_str(key_last);
+        hint
     }
 }
 
@@ -89,6 +108,10 @@ impl ApiKeyServiceExt for ApiKeyService {
     }
 
     async fn create_api_key(&self, input: ApiKeyCreateInput, owner_id: UserId) -> Result<ApiKey> {
+        let mc = new_magic_crypt!(self.encryption_config.secret.clone(), 256);
+        let encrypted_key = mc.encrypt_str_to_base64(input.key.as_str());
+        let hint = self.create_hint(input.key);
+
         let created_api_key = self
             .repository
             .api_key
@@ -96,7 +119,8 @@ impl ApiKeyServiceExt for ApiKeyService {
                 owner_id,
                 provider_id: input.provider_id,
                 name: input.name,
-                key: input.key,
+                key: encrypted_key,
+                hint,
             })
             .await
             .map_err(|_| ApiKeyError::UnableToCreateApiKey)?;

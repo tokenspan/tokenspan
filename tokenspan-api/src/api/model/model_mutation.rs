@@ -2,8 +2,9 @@ use async_graphql::{Context, Object, Result};
 
 use crate::api::model::dto::{ModelCreateInput, ModelUpdateInput};
 use crate::api::model::model_model::Model;
-use crate::api::models::{ModelId, Role};
+use crate::api::models::ModelId;
 use crate::api::services::ModelServiceDyn;
+use crate::api::types::Role;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
 

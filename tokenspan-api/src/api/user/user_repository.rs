@@ -3,10 +3,10 @@ use bson::serde_helpers::chrono_datetime_as_bson_datetime;
 use chrono::{DateTime, Utc};
 use mongodb::bson::doc;
 use mongodb::error::{Error, Result};
-use openai_api_rust::Role;
 use serde::{Deserialize, Serialize};
 
 use crate::api::models::UserId;
+use crate::api::user::user_type::Role;
 use crate::repository::Repository;
 
 #[derive(Debug, Serialize, Deserialize)]

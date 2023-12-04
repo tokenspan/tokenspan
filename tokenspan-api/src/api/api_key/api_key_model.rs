@@ -23,6 +23,8 @@ pub struct ApiKeyId(pub ObjectId);
 pub struct ApiKey {
     pub id: ApiKeyId,
     pub name: String,
+    pub hint: String,
+    #[graphql(skip)]
     pub key: String,
     pub owner_id: UserId,
     pub provider_id: ProviderId,
@@ -68,6 +70,7 @@ impl From<super::api_key_repository::ApiKeyEntity> for ApiKey {
             id: value.id,
             name: value.name,
             key: value.key,
+            hint: value.hint,
             owner_id: value.owner_id,
             provider_id: value.provider_id,
             created_at: value.created_at,

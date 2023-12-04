@@ -29,7 +29,8 @@ impl AppState {
         let user_service: UserServiceDyn = UserService::new(repository.clone()).into();
         let auth_service: AuthServiceDyn =
             AuthService::new(user_service.clone(), app_config.auth.clone()).into();
-        let api_key_service: ApiKeyServiceDyn = ApiKeyService::new(repository.clone()).into();
+        let api_key_service: ApiKeyServiceDyn =
+            ApiKeyService::new(repository.clone(), app_config.encryption.clone()).into();
         let provider_service: ProviderServiceDyn = ProviderService::new(repository.clone()).into();
         let model_service: ModelServiceDyn = ModelService::new(repository.clone()).into();
         let parameter_service: ParameterServiceDyn =

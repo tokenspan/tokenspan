@@ -1,13 +1,14 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 use bson::oid::ObjectId;
 
-use crate::api::models::{Execution, ModelId, ParsedToken, Role, TaskId};
+use crate::api::models::{Execution, ModelId, ParsedToken, TaskId};
 use crate::api::parameter::dto::ParameterCreateInput;
 use crate::api::repositories::TaskVersionStatus;
 use crate::api::services::{ParameterServiceDyn, TaskServiceDyn, TaskVersionServiceDyn};
 use crate::api::task::dto::{TaskCreateInput, TaskExecuteInput, TaskUpdateInput};
 use crate::api::task::task_model::Task;
 use crate::api::task_version::dto::TaskVersionCreateInput;
+use crate::api::types::Role;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
 

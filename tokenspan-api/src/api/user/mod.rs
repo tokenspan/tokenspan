@@ -9,3 +9,4 @@ mod user_mutation;
 mod user_query;
 pub mod user_repository;
 pub mod user_service;
+pub mod user_type;

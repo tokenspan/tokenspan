@@ -2,8 +2,9 @@ use async_graphql::{Context, ErrorExtensions, Object, Result};
 
 use crate::api::api_key::api_key_model::ApiKey;
 use crate::api::api_key::dto::{ApiKeyCreateInput, ApiKeyUpdateInput};
-use crate::api::models::{ApiKeyId, ParsedToken, Role};
+use crate::api::models::{ApiKeyId, ParsedToken};
 use crate::api::services::ApiKeyServiceDyn;
+use crate::api::types::Role;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
 

@@ -28,6 +28,7 @@ mongodb = { version = "2.0", features = ["tokio-runtime"] }
 bson = { version = "2.0", features = ["chrono-0_4"] }
 futures = "0.3"
 config = "0.13.1"
+magic-crypt = "3.1.13"
 tokenspan-macros = { path = "../tokenspan-macros" }
 tokenspan-utils = { path = "../tokenspan-utils" }
 

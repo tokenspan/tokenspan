@@ -52,6 +52,10 @@ pub mod models {
     pub use super::view::view_model::*;
 }
 
+pub mod types {
+    pub use super::user::user_type::*;
+}
+
 #[derive(MergedObject, Default)]
 pub struct QueryRoot(
     pub auth::AuthQuery,
