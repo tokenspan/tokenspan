@@ -1,11 +1,12 @@
 [package]
-name = "tokenspan_api"
+name = "tokenspan-api"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
-axum = { version = "0.7.1" }
+tokio-stream = "0.1.14"
+axum = { version = "0.7.1", features = ["ws"] }
 axum-extra = { version = "0.9.0", features = ["typed-header"] }
 axum-macros = "0.4.0"
 tower-http = { version = "0.5.0", features = ["trace", "timeout", "cors"] }
@@ -29,8 +30,13 @@ bson = { version = "2.0", features = ["chrono-0_4"] }
 futures = "0.3"
 config = "0.13.1"
 magic-crypt = "3.1.13"
+async-openai = "0.17.1"
+futures-util = "0.3.29"
+dotenv = "0.15.0"
+
 tokenspan-macros = { path = "../tokenspan-macros" }
 tokenspan-utils = { path = "../tokenspan-utils" }
+tokenspan-extra = { path = "../tokenspan-extra" }
 
 [lints]
 workspace = true

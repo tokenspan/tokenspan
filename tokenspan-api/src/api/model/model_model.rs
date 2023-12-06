@@ -9,9 +9,25 @@ use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
 
 use crate::api::models::ProviderId;
+use crate::api::repositories::{ModelEntity, PricingEntity};
 
 #[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ModelId(pub ObjectId);
+
+#[derive(SimpleObject, Debug, Clone)]
+pub struct Pricing {
+    pub price: f64,
+    pub currency: String,
+}
+
+impl From<PricingEntity> for Pricing {
+    fn from(value: PricingEntity) -> Self {
+        Self {
+            price: value.price,
+            currency: value.currency,
+        }
+    }
+}
 
 #[derive(SimpleObject, Debug, Clone)]
 pub struct Model {
@@ -19,7 +35,9 @@ pub struct Model {
     pub name: String,
     pub description: String,
     pub context: u32,
-    pub pricing: String,
+    pub input_pricing: Pricing,
+    pub output_pricing: Pricing,
+    pub training_at: DateTime<Utc>,
     pub provider_id: ProviderId,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -31,15 +49,17 @@ impl CursorExt<Cursor> for Model {
     }
 }
 
-impl From<super::model_repository::ModelEntity> for Model {
-    fn from(value: super::model_repository::ModelEntity) -> Self {
+impl From<ModelEntity> for Model {
+    fn from(value: ModelEntity) -> Self {
         Self {
             id: value.id,
             name: value.name,
             description: value.description,
             context: value.context,
-            pricing: value.pricing,
             provider_id: value.provider_id,
+            input_pricing: value.input_pricing.into(),
+            output_pricing: value.output_pricing.into(),
+            training_at: value.training_at,
             created_at: value.created_at,
             updated_at: value.updated_at,
         }

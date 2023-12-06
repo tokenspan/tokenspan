@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use async_graphql_axum::GraphQLSubscription;
 use axum::extract::MatchedPath;
 use axum::http::{Request, StatusCode};
 use axum::response::IntoResponse;
@@ -16,18 +17,10 @@ use tracing::{info, info_span, Level};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-use crate::configs::AppEnv;
-use crate::graphql::*;
+use tokenspan_api::graphql::*;
+use tokenspan_api::{api, configs, guard, state};
 
-mod api;
-mod configs;
-mod error;
-mod extractor;
-mod graphql;
-mod guard;
-mod loader;
-mod repository;
-mod state;
+use crate::configs::AppEnv;
 
 async fn handler_404() -> impl IntoResponse {
     (
@@ -59,6 +52,7 @@ pub fn register_tracing(config: Arc<configs::AppConfig>) {
 async fn main() {
     let config = configs::AppConfig::new().unwrap();
     let config = Arc::new(config);
+    println!("{:#?}", config);
 
     register_tracing(config.clone());
 
@@ -87,7 +81,9 @@ async fn main() {
 
     let app = Router::new()
         .route("/graphql", get(graphql_sandbox).post(graphql_handler))
+        .route("/graphiql", get(graphiql))
         .nest("/api/:version", api::ApiRouter::new())
+        .route_service("/ws", GraphQLSubscription::new(schema.clone()))
         .fallback(handler_404)
         .layer(middleware::from_fn_with_state(config.clone(), guard::guard))
         .layer(cors_layer)

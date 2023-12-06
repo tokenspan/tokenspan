@@ -15,3 +15,6 @@ bson = { version = "2.0" }
 anyhow = "1.0.75"
 serde = { version = "1.0" }
 tokenspan-utils = { path = "../tokenspan-utils" }
+
+[lints]
+workspace = true

@@ -4,6 +4,7 @@ use async_graphql::{ComplexObject, Context, Result, Scalar, ScalarType, SimpleOb
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use tokenspan_extra::serialize_oid;
 
 use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
@@ -18,6 +19,7 @@ pub struct TaskId(pub ObjectId);
 #[derive(SimpleObject, Debug, Clone, Serialize)]
 #[graphql(complex)]
 pub struct Task {
+    #[serde(serialize_with = "serialize_oid")]
     pub id: TaskId,
     pub name: String,
     pub created_at: DateTime<Utc>,

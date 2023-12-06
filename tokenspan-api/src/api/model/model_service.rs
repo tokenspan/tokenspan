@@ -93,7 +93,9 @@ impl ModelServiceExt for ModelService {
                 name: input.name,
                 description: input.description,
                 context: input.context,
-                pricing: input.pricing,
+                input_pricing: input.input_pricing.into(),
+                output_pricing: input.output_pricing.into(),
+                training_at: input.training_at,
             })
             .await
             .map_err(|_| ModelError::UnableToCreateModel)?;
@@ -111,7 +113,9 @@ impl ModelServiceExt for ModelService {
                     name: input.name,
                     description: input.description,
                     context: input.context,
-                    pricing: input.pricing,
+                    input_pricing: input.input_pricing.map(|pricing| pricing.into()),
+                    output_pricing: input.output_pricing.map(|pricing| pricing.into()),
+                    training_at: input.training_at,
                 },
             )
             .await

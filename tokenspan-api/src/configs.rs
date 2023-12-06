@@ -1,4 +1,5 @@
 use config::{Config, Environment, File};
+use dotenv::dotenv;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
@@ -50,6 +51,10 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn new() -> Result<Self, config::ConfigError> {
+        dotenv().ok();
+
+        let database_url = std::env::var("DATABASE_URL").ok();
+
         let rust_env = std::env::var("APP__ENV").unwrap_or_else(|_| "development".to_string());
 
         let env_source = Environment::with_prefix("APP")
@@ -57,12 +62,11 @@ impl AppConfig {
             .separator("__");
 
         let s = Config::builder()
-            .add_source(File::with_name("tokenspan-api/config/default"))
-            .add_source(
-                File::with_name(&format!("tokenspan-api/config/{}", rust_env)).required(false),
-            )
-            .add_source(File::with_name("tokenspan-api/.env").required(false))
+            .add_source(File::with_name("config/default"))
+            .add_source(File::with_name(&format!("config/{}", rust_env)).required(false))
+            .add_source(File::with_name(".env").required(false))
             .add_source(env_source)
+            .set_override_option("APP__DATABASE__URL", database_url)?
             .build()?;
 
         s.try_deserialize()

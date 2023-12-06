@@ -1,4 +1,4 @@
-use async_graphql::MergedObject;
+use async_graphql::{MergedObject, MergedSubscription};
 use axum::Router;
 
 use crate::state::AppState;
@@ -82,6 +82,9 @@ pub struct MutationRoot(
     pub task_version::TaskVersionMutation,
     pub view::ViewMutation,
 );
+
+#[derive(MergedSubscription, Default)]
+pub struct SubscriptionRoot(pub task::TaskSubscription);
 
 pub struct ApiRouter;
 
