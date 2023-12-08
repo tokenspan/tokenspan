@@ -60,12 +60,6 @@ pub struct SeedConfig {
 }
 
 impl SeedConfig {
-    pub fn total(&self) -> u64 {
-        (self.providers.len() + self.models.len() + self.users.len()) as u64
-    }
-}
-
-impl SeedConfig {
     pub fn new() -> Result<Self, config::ConfigError> {
         dotenv().ok();
 

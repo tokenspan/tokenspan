@@ -1,11 +1,13 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
+use std::fmt::Display;
 use std::sync::Arc;
 
+use comfy_table::Table;
+use console::{style, Emoji};
+use indicatif::{MultiProgress, ProgressBar};
 use tokio::sync::Mutex;
 use tokio_stream::StreamExt;
 
-use console::{style, Emoji};
-use indicatif::{MultiProgress, ProgressBar};
 use tokenspan_api::api::dto::ModelCreateInput;
 use tokenspan_api::api::models::{Model, Provider, User};
 use tokenspan_api::state::AppState;
@@ -17,9 +19,23 @@ mod configs;
 static CLIP: Emoji<'_, '_> = Emoji("🔗  ", "");
 
 enum CacheValue {
-    Provider(Provider),
-    Model(Model),
-    User(User),
+    Provider(Action, Provider),
+    Model(Action, Model),
+    User(Action, User),
+}
+
+enum Action {
+    Created,
+    Existed,
+}
+
+impl Display for Action {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Action::Created => write!(f, "Created"),
+            Action::Existed => write!(f, "Existed"),
+        }
+    }
 }
 
 #[tokio::main]
@@ -29,7 +45,7 @@ async fn main() {
 
     let seed_config = configs::SeedConfig::new().unwrap();
 
-    let cache = Arc::new(Mutex::new(HashMap::new()));
+    let cache = Arc::new(Mutex::new(BTreeMap::new()));
 
     let app_state = AppState::new(app_config).await;
 
@@ -51,17 +67,45 @@ async fn main() {
     .await;
     migrate_users(
         app_state.clone(),
-        cache,
+        cache.clone(),
         progress.clone(),
         seed_config.users,
     )
     .await;
     progress.clear().unwrap();
+    print_table(cache).await;
+}
+
+async fn print_table(cache: Arc<Mutex<BTreeMap<String, CacheValue>>>) {
+    let mut table = Table::new();
+    table.set_header(vec!["Collection", "Key", "Id", "Action"]);
+
+    for (key, value) in cache.lock().await.iter() {
+        match value {
+            CacheValue::Provider(action, provider) => table.add_row(vec![
+                "Provider",
+                key,
+                &provider.id.to_string(),
+                &action.to_string(),
+            ]),
+            CacheValue::Model(action, model) => table.add_row(vec![
+                "Model",
+                key,
+                &model.id.to_string(),
+                &action.to_string(),
+            ]),
+            CacheValue::User(action, user) => {
+                table.add_row(vec!["User", key, &user.id.to_string(), &action.to_string()])
+            }
+        };
+    }
+
+    println!("{table}");
 }
 
 async fn migrate_providers(
     app_state: AppState,
-    cache: Arc<Mutex<HashMap<String, CacheValue>>>,
+    cache: Arc<Mutex<BTreeMap<String, CacheValue>>>,
     progress: Arc<MultiProgress>,
     providers: Vec<ProviderSeed>,
 ) {
@@ -82,9 +126,8 @@ async fn migrate_providers(
             .await
             .unwrap();
 
-        let provider = if let Some(provider) = result {
-            // println!("found provider: {:?}", provider.id);
-            provider
+        let value = if let Some(provider) = result {
+            (Action::Existed, provider)
         } else {
             let provider = app_state
                 .provider_service
@@ -93,18 +136,17 @@ async fn migrate_providers(
                 })
                 .await
                 .unwrap();
-            // println!("created provider: {:?}", provider.id);
-            provider
+            (Action::Created, provider)
         };
 
-        cache.insert(provider_name, CacheValue::Provider(provider));
+        cache.insert(provider_name, CacheValue::Provider(value.0, value.1));
         pb.inc(1);
     }
 }
 
 async fn migrate_models(
     app_state: AppState,
-    cache: Arc<Mutex<HashMap<String, CacheValue>>>,
+    cache: Arc<Mutex<BTreeMap<String, CacheValue>>>,
     progress: Arc<MultiProgress>,
     models: Vec<ModelSeed>,
 ) {
@@ -115,7 +157,7 @@ async fn migrate_models(
 
     while let Some(model) = stream.next().await {
         let provider_name = model.provider.name;
-        let provider = if let CacheValue::Provider(provider) = cache
+        let provider = if let CacheValue::Provider(_, provider) = cache
             .get(&provider_name)
             .expect("provider should be in cache")
         {
@@ -127,13 +169,12 @@ async fn migrate_models(
         let model_name = model.name.clone();
         let result = app_state
             .model_service
-            .get_model_by_name(model_name)
+            .get_model_by_name(model_name.clone())
             .await
             .unwrap();
 
-        let model = if let Some(model) = result {
-            // println!("found model: {:?}", model.id);
-            model
+        let value = if let Some(model) = result {
+            (Action::Existed, model)
         } else {
             let model = app_state
                 .model_service
@@ -148,18 +189,17 @@ async fn migrate_models(
                 })
                 .await
                 .unwrap();
-            // println!("created model: {:?}", provider.id);
-            model
+            (Action::Created, model)
         };
 
-        cache.insert(model.name.clone(), CacheValue::Model(model));
+        cache.insert(model_name, CacheValue::Model(value.0, value.1));
         pb.inc(1);
     }
 }
 
 async fn migrate_users(
     app_state: AppState,
-    cache: Arc<Mutex<HashMap<String, CacheValue>>>,
+    cache: Arc<Mutex<BTreeMap<String, CacheValue>>>,
     progress: Arc<MultiProgress>,
     models: Vec<UserSeed>,
 ) {
@@ -176,20 +216,18 @@ async fn migrate_users(
             .await
             .unwrap();
 
-        let user = if let Some(user) = result {
-            // println!("found user: {:?}", user.id);
-            user
+        let value = if let Some(user) = result {
+            (Action::Existed, user)
         } else {
             let user = app_state
                 .user_service
                 .create_user_with_role(email.clone(), user.username, user.password, user.role)
                 .await
                 .unwrap();
-            // println!("created user: {:?}", user.id);
-            user
+            (Action::Created, user)
         };
 
-        cache.insert(email, CacheValue::User(user));
+        cache.insert(email, CacheValue::User(value.0, value.1));
         pb.inc(1);
     }
 }
