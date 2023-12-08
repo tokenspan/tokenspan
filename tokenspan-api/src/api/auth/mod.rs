@@ -6,4 +6,4 @@ pub mod auth_model;
 mod auth_mutation;
 mod auth_query;
 pub mod auth_service;
-mod dto;
+pub mod dto;

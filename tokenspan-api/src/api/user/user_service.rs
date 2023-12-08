@@ -109,7 +109,7 @@ impl UserServiceExt for UserService {
             .user
             .find_by_email(email)
             .await
-            .map_err(|e| UserError::UserNotFound(None))?
+            .map_err(|_| UserError::UserNotFound(None))?
             .map(|user| user.into());
 
         Ok(user)

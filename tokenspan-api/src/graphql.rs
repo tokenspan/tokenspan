@@ -2,20 +2,21 @@ use std::sync::Arc;
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::extensions::Tracing;
-use async_graphql::{EmptySubscription, Schema};
+use async_graphql::http::GraphiQLSource;
+use async_graphql::Schema;
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::extract::Host;
 use axum::response::{IntoResponse, Redirect};
-use axum::Extension;
+use axum::{response, Extension};
 use axum_extra::headers::HeaderMap;
 
 use crate::api::models::ParsedToken;
-use crate::api::{MutationRoot, QueryRoot};
+use crate::api::{MutationRoot, QueryRoot, SubscriptionRoot};
 use crate::configs::AppConfig;
 use crate::loader::AppLoader;
 use crate::state::AppState;
 
-pub type AppSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
+pub type AppSchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
 
 pub async fn build_schema(app_state: AppState) -> AppSchema {
     let loader = DataLoader::new(AppLoader::from(app_state.clone()), tokio::spawn);
@@ -23,7 +24,7 @@ pub async fn build_schema(app_state: AppState) -> AppSchema {
     Schema::build(
         QueryRoot::default(),
         MutationRoot::default(),
-        EmptySubscription,
+        SubscriptionRoot::default(),
     )
     .extension(Tracing)
     .data(app_state.user_service)
@@ -39,8 +40,15 @@ pub async fn build_schema(app_state: AppState) -> AppSchema {
     .data(loader)
     .finish()
 }
+pub async fn graphiql() -> impl IntoResponse {
+    response::Html(
+        GraphiQLSource::build()
+            .endpoint("/graphql")
+            .subscription_endpoint("/ws")
+            .finish(),
+    )
+}
 
-#[allow(unused)]
 pub async fn graphql_sandbox(Host(hostname): Host) -> impl IntoResponse {
     let endpoint = if hostname.contains("localhost") {
         format!("http://{}graphql", hostname)

@@ -9,3 +9,6 @@ async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "su
 base64ct = { version = "1.6.0", features = ["alloc"] }
 thiserror = "1.0.50"
 bson = { version = "2.0" }
+
+[lints]
+workspace = true

@@ -14,6 +14,7 @@ use tokenspan_utils::pagination::{Cursor, Pagination};
 pub trait ProviderServiceExt {
     async fn get_providers(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>>;
     async fn get_provider_by_id(&self, id: ProviderId) -> Result<Option<Provider>>;
+    async fn get_provider_by_name(&self, name: String) -> Result<Option<Provider>>;
     async fn get_providers_by_ids(&self, ids: Vec<ProviderId>) -> Result<Vec<Provider>>;
     async fn count_providers(&self) -> Result<u64>;
     async fn create_provider(&self, input: ProviderCreateInput) -> Result<Provider>;
@@ -55,6 +56,18 @@ impl ProviderServiceExt for ProviderService {
             .repository
             .provider
             .find_by_id(id)
+            .await
+            .map_err(|_| ProviderError::UnableToGetProvider)?
+            .map(|provider| provider.into());
+
+        Ok(provider)
+    }
+
+    async fn get_provider_by_name(&self, name: String) -> Result<Option<Provider>> {
+        let provider = self
+            .repository
+            .provider
+            .find_by_name(name)
             .await
             .map_err(|_| ProviderError::UnableToGetProvider)?
             .map(|provider| provider.into());

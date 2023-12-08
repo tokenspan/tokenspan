@@ -1,14 +1,11 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+use bson::oid::ObjectId;
+use serde::Serializer;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub fn serialize_oid<S: Serializer>(
+    oid: impl Into<ObjectId>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    let val: ObjectId = oid.into();
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+    serializer.serialize_str(val.to_hex().as_str())
 }
