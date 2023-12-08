@@ -10,6 +10,7 @@ use crate::repository::Repository;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PricingEntity {
     pub price: f64,
+    pub tokens: u32,
     pub currency: String,
 }
 

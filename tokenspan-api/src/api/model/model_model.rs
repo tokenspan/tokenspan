@@ -17,6 +17,7 @@ pub struct ModelId(pub ObjectId);
 #[derive(SimpleObject, Debug, Clone)]
 pub struct Pricing {
     pub price: f64,
+    pub tokens: u32,
     pub currency: String,
 }
 
@@ -24,6 +25,7 @@ impl From<PricingEntity> for Pricing {
     fn from(value: PricingEntity) -> Self {
         Self {
             price: value.price,
+            tokens: value.tokens,
             currency: value.currency,
         }
     }

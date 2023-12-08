@@ -56,6 +56,19 @@ pub mod types {
     pub use super::user::user_type::*;
 }
 
+pub mod dto {
+    pub use super::api_key::dto::*;
+    pub use super::auth::dto::*;
+    pub use super::execution::dto::*;
+    pub use super::model::dto::*;
+    pub use super::parameter::dto::*;
+    pub use super::provider::dto::*;
+    pub use super::task::dto::*;
+    pub use super::task_version::dto::*;
+    pub use super::user::dto::*;
+    pub use super::view::dto::*;
+}
+
 #[derive(MergedObject, Default)]
 pub struct QueryRoot(
     pub auth::AuthQuery,

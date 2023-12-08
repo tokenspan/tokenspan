@@ -7,6 +7,7 @@ use crate::api::repositories::PricingEntity;
 #[derive(InputObject)]
 pub struct PricingInput {
     pub price: f64,
+    pub tokens: u32,
     pub currency: String,
 }
 
@@ -14,6 +15,7 @@ impl From<PricingInput> for PricingEntity {
     fn from(value: PricingInput) -> Self {
         Self {
             price: value.price,
+            tokens: value.tokens,
             currency: value.currency,
         }
     }

@@ -64,4 +64,12 @@ impl Repository<ProviderEntity> {
             .find_one_and_update(filter, update, None)
             .await
     }
+
+    pub async fn find_by_name(&self, name: String) -> Result<Option<ProviderEntity>> {
+        let filter = doc! {
+            "name": name,
+        };
+
+        self.collection.find_one(filter, None).await
+    }
 }
