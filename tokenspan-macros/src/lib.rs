@@ -95,25 +95,11 @@ pub fn impl_tokenspan_id(input: TokenStream) -> TokenStream {
             }
         }
 
-        // impl serde::Serialize for #name {
-        //     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        //     where
-        //         S: serde::Serializer,
-        //     {
-        //         serializer.serialize_str(&self.0.to_string())
-        //     }
-        // }
-        //
-        // impl<'de> serde::Deserialize<'de> for #name {
-        //     fn deserialize<D>(deserializer: D) -> Result<#name, D::Error>
-        //     where
-        //         D: serde::Deserializer<'de>,
-        //     {
-        //         let s = String::deserialize(deserializer)?;
-        //         let id = #name::try_from(s).map_err(|e| serde::de::Error::custom(e.to_string()))?;
-        //         Ok(id)
-        //     }
-        // }
+        impl std::fmt::Debug for #name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", &self.0.to_hex())
+            }
+        }
     };
 
     gen.into()

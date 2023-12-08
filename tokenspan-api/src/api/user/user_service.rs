@@ -8,6 +8,7 @@ use ring::{digest, pbkdf2, rand};
 
 use crate::api::models::UserId;
 use crate::api::repositories::UserCreateEntity;
+use crate::api::types::Role;
 use crate::api::user::user_error::UserError;
 use crate::api::user::user_model::User;
 use crate::repository::RootRepository;
@@ -15,6 +16,13 @@ use crate::repository::RootRepository;
 #[async_trait::async_trait]
 pub trait UserServiceExt {
     async fn create_user(&self, email: String, username: String, password: String) -> Result<User>;
+    async fn create_user_with_role(
+        &self,
+        email: String,
+        username: String,
+        password: String,
+        role: Role,
+    ) -> Result<User>;
     async fn get_user_by_id(&self, id: UserId) -> Result<Option<User>>;
     async fn get_users_by_ids(&self, ids: Vec<UserId>) -> Result<Vec<User>>;
     async fn get_user_by_email(&self, email: String) -> Result<Option<User>>;
@@ -58,6 +66,17 @@ impl UserService {
 #[async_trait::async_trait]
 impl UserServiceExt for UserService {
     async fn create_user(&self, email: String, username: String, password: String) -> Result<User> {
+        self.create_user_with_role(email, username, password, Role::User)
+            .await
+    }
+
+    async fn create_user_with_role(
+        &self,
+        email: String,
+        username: String,
+        password: String,
+        role: Role,
+    ) -> Result<User> {
         let (hash_password, salt) = self.derive_password(password.clone()).unwrap();
         let hash_password = HEXUPPER.encode(&hash_password);
         let salt = HEXUPPER.encode(&salt);
@@ -70,6 +89,7 @@ impl UserServiceExt for UserService {
                 username,
                 password: hash_password,
                 salt,
+                role,
             })
             .await
             .map_err(|_| UserError::UnableToCreateUser)?;

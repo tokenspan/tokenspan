@@ -15,7 +15,7 @@ use crate::api::user::user_error::UserError;
 use crate::error::AppError;
 use crate::loader::AppLoader;
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ApiKeyId(pub ObjectId);
 
 #[derive(SimpleObject, Clone)]

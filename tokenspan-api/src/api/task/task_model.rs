@@ -13,7 +13,7 @@ use crate::api::models::TaskVersion;
 use crate::api::services::TaskVersionServiceDyn;
 use crate::error::AppError;
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct TaskId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone, Serialize)]

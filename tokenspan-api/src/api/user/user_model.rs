@@ -8,7 +8,7 @@ use tokenspan_macros::ID;
 
 use crate::api::user::user_type::Role;
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct UserId(ObjectId);
 
 #[derive(SimpleObject, Clone, Debug)]

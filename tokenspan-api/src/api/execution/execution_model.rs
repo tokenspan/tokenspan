@@ -11,7 +11,7 @@ use tokenspan_utils::pagination::{Cursor, CursorExt};
 use crate::api::execution::execution_repository::{Endpoint, ExecutionStatus};
 use crate::api::models::{TaskVersionId, UserId};
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ExecutionId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone)]

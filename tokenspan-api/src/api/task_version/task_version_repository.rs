@@ -1,17 +1,17 @@
 use async_graphql::{InputValueError, InputValueResult, Scalar, ScalarType, Value};
 use bson::doc;
+use bson::oid::ObjectId;
 use bson::serde_helpers::chrono_datetime_as_bson_datetime;
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use mongodb::error::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-use bson::oid::ObjectId;
 
 use crate::api::models::{TaskId, TaskVersionId, UserId};
 use crate::repository::Repository;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TaskVersionStatus {
     Draft,
     Published,
