@@ -3,7 +3,6 @@ use bson::oid::ObjectId;
 
 use crate::api::models::{Execution, ModelId, ParsedToken, TaskId};
 use crate::api::parameter::dto::ParameterCreateInput;
-use crate::api::repositories::TaskVersionStatus;
 use crate::api::services::{ParameterServiceDyn, TaskServiceDyn, TaskVersionServiceDyn};
 use crate::api::task::dto::{TaskCreateInput, TaskExecuteInput, TaskUpdateInput};
 use crate::api::task::task_model::Task;
@@ -48,7 +47,6 @@ impl TaskMutation {
             description: None,
             document: None,
             messages: Vec::new(),
-            status: TaskVersionStatus::Draft,
         };
         let created_task_version = task_version_service
             .create_task_version(create_task_version_input, &parsed_token.user_id)
@@ -75,7 +73,7 @@ impl TaskMutation {
         Ok(created_task)
     }
 
-    #[graphql(guard = "RoleGuard::new(Role::Admin)")]
+    #[graphql(guard = "RoleGuard::new(Role::User)")]
     pub async fn update_task<'a>(
         &self,
         ctx: &Context<'a>,

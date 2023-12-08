@@ -5,10 +5,12 @@ use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::api::models::TaskId;
+use crate::api::repositories::TaskVersionStatus;
 use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct TaskVersionId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone)]
@@ -19,7 +21,8 @@ pub struct TaskVersion {
     pub description: Option<String>,
     pub document: Option<String>,
     pub messages: Vec<serde_json::Value>,
-    pub task_id: String,
+    pub status: TaskVersionStatus,
+    pub task_id: TaskId,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -39,7 +42,8 @@ impl From<super::task_version_repository::TaskVersionEntity> for TaskVersion {
             description: value.description,
             document: value.document,
             messages: value.messages,
-            task_id: value.task_id.to_string(),
+            status: value.status,
+            task_id: value.task_id,
             created_at: value.created_at,
             updated_at: value.updated_at,
         }

@@ -30,6 +30,7 @@ pub struct UserCreateEntity {
     pub username: String,
     pub password: String,
     pub salt: String,
+    pub role: Role,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -46,7 +47,7 @@ impl Repository<UserEntity> {
             username: input.username,
             password: input.password,
             salt: input.salt,
-            role: Role::User,
+            role: input.role,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };

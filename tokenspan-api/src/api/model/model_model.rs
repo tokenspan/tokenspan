@@ -11,7 +11,7 @@ use tokenspan_utils::pagination::{Cursor, CursorExt};
 use crate::api::models::ProviderId;
 use crate::api::repositories::{ModelEntity, PricingEntity};
 
-#[derive(ID, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ModelId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone)]

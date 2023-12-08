@@ -10,7 +10,6 @@ pub struct TaskVersionCreateInput {
     pub description: Option<String>,
     pub document: Option<String>,
     pub messages: Vec<serde_json::Value>,
-    pub status: TaskVersionStatus,
     pub task_id: TaskId,
 }
 

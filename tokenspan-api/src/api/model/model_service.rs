@@ -16,6 +16,7 @@ pub trait ModelServiceExt {
     async fn get_models(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>>;
     async fn get_model_by_id(&self, id: ModelId) -> Result<Option<Model>>;
     async fn get_models_by_ids(&self, ids: Vec<ModelId>) -> Result<Vec<Model>>;
+    async fn get_model_by_name(&self, name: String) -> Result<Option<Model>>;
     async fn count_models(&self) -> Result<u64>;
     async fn create_model(&self, input: ModelCreateInput) -> Result<Model>;
     async fn update_model(&self, id: ModelId, input: ModelUpdateInput) -> Result<Option<Model>>;
@@ -71,6 +72,18 @@ impl ModelServiceExt for ModelService {
             .collect();
 
         Ok(models)
+    }
+
+    async fn get_model_by_name(&self, name: String) -> Result<Option<Model>> {
+        let model = self
+            .repository
+            .model
+            .find_by_name(name)
+            .await
+            .map_err(|_| ModelError::UnableToGetModel)?
+            .map(|model| model.into());
+
+        Ok(model)
     }
 
     async fn count_models(&self) -> Result<u64> {
