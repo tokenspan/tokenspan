@@ -64,9 +64,9 @@ impl SeedConfig {
         dotenv().ok();
 
         let s = Config::builder()
-            .add_source(File::with_name("tokenspan-migrations/seed/providers"))
-            .add_source(File::with_name("tokenspan-migrations/seed/models"))
-            .add_source(File::with_name("tokenspan-migrations/seed/users"))
+            .add_source(File::with_name("seed/providers"))
+            .add_source(File::with_name("seed/models"))
+            .add_source(File::with_name("seed/users"))
             .build()?;
 
         s.try_deserialize()
