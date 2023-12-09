@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
-async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7", features = ["tokio", "chrono", "dataloader", "tracing"] }
+async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom", features = ["tokio", "chrono", "dataloader", "tracing"] }
 base64ct = { version = "1.6.0", features = ["alloc"] }
 thiserror = "1.0.50"
 bson = { version = "2.0" }

@@ -6,19 +6,18 @@ edition = "2021"
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 tokio-stream = "0.1.14"
-axum = { version = "0.7.1", features = ["ws"] }
+axum = { git = "https://github.com/linrium/axum", branch = "feat/support-custom-sse-event", features = ["ws"] }
 axum-extra = { version = "0.9.0", features = ["typed-header"] }
 axum-macros = "0.4.0"
 tower-http = { version = "0.5.0", features = ["trace", "timeout", "cors"] }
-async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7", features = ["tokio", "chrono", "dataloader", "tracing"] }
-async-graphql-axum = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7" }
+async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom", features = ["tokio", "chrono", "dataloader", "tracing"] }
+async-graphql-axum = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 jsonwebtoken = "9"
 anyhow = "1.0.75"
 thiserror = "1.0.50"
 async-trait = "0.1.74"
-openai_api_rust = "0.1.8"
 chrono = { version = "0.4.31", features = ["serde"] }
 ring = "0.17.5"
 data-encoding = "2.4.0"
@@ -33,6 +32,8 @@ magic-crypt = "3.1.13"
 async-openai = "0.17.1"
 futures-util = "0.3.29"
 dotenv = "0.15.0"
+async-stream = "0.3.5"
+bytes = { version = "1.5.0" }
 
 tokenspan-macros = { path = "../tokenspan-macros" }
 tokenspan-utils = { path = "../tokenspan-utils" }

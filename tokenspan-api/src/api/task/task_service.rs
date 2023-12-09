@@ -2,9 +2,6 @@ use std::sync::Arc;
 
 use async_graphql::Result;
 use axum::extract::FromRef;
-use openai_api_rust::chat::{ChatApi, ChatBody};
-use openai_api_rust::{Auth, Message, OpenAI, Role};
-use tracing::info;
 
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
@@ -37,11 +34,11 @@ pub trait TaskServiceExt {
     async fn create_task(&self, input: TaskCreateInput, owner: UserId) -> Result<Task>;
     async fn update_task(&self, id: TaskId, input: TaskUpdateInput) -> Result<Option<Task>>;
     async fn delete_task(&self, id: TaskId) -> Result<Option<Task>>;
-    async fn execute_task(
-        &self,
-        input: TaskExecuteInput,
-        execution_by_id: UserId,
-    ) -> Result<Execution>;
+    // async fn execute_task(
+    //     &self,
+    //     input: TaskExecuteInput,
+    //     execution_by_id: UserId,
+    // ) -> Result<Execution>;
 }
 
 pub type TaskServiceDyn = Arc<dyn TaskServiceExt + Send + Sync>;
@@ -190,72 +187,48 @@ impl TaskServiceExt for TaskService {
         Ok(deleted_task)
     }
 
-    async fn execute_task(
-        &self,
-        input: TaskExecuteInput,
-        execution_by_id: UserId,
-    ) -> Result<Execution> {
-        let parameter = self
-            .parameter_service
-            .get_parameter_by_id(input.parameter_id)
-            .await?
-            .ok_or(ParameterError::UnableToGetParameter)?;
-
-        let model = self
-            .model_service
-            .get_model_by_id(parameter.model_id.clone())
-            .await?
-            .ok_or(ModelError::UnableToGetModel)?;
-
-        let api_key = self
-            .api_key_service
-            .get_api_key_by_id(input.api_key_id)
-            .await?
-            .ok_or(ApiKeyError::UnableToCreateApiKey)?;
-
-        let auth = Auth::new(api_key.key.as_str());
-        let openai = OpenAI::new(auth, "https://api.openai.com/v1/");
-        let body = ChatBody {
-            model: model.name,
-            max_tokens: Some(parameter.max_tokens as i32),
-            temperature: Some(parameter.temperature),
-            top_p: Some(parameter.top_p),
-            n: Some(2),
-            stream: Some(false),
-            stop: None,
-            presence_penalty: None,
-            frequency_penalty: None,
-            logit_bias: None,
-            user: None,
-            messages: vec![Message {
-                role: Role::User,
-                content: "Hello!".to_string(),
-            }],
-        };
-        let rs = openai.chat_completion_create(&body);
-        let choices = rs.unwrap().choices;
-        info!("choices: {:?}", choices);
-        let _message = &choices[0].message.as_ref().unwrap();
-
-        let parameter = serde_json::to_value(&parameter).unwrap();
-
-        let execution_input = ExecutionCreateInput {
-            task_id: TaskId::new(),
-            task_version_id: input.task_version_id,
-            endpoint: Endpoint::Studio,
-            elapsed_ms: 0,
-            status: ExecutionStatus::Success,
-            messages: vec![],
-            parameter,
-            output: None,
-            error: None,
-            usage: Default::default(),
-        };
-
-        self.execution_service
-            .create_execution(execution_input, execution_by_id)
-            .await
-    }
+    // async fn execute_task(
+    //     &self,
+    //     input: TaskExecuteInput,
+    //     execution_by_id: UserId,
+    // ) -> Result<Execution> {
+    //     let parameter = self
+    //         .parameter_service
+    //         .get_parameter_by_id(input.parameter_id)
+    //         .await?
+    //         .ok_or(ParameterError::UnableToGetParameter)?;
+    //
+    //     let model = self
+    //         .model_service
+    //         .get_model_by_id(parameter.model_id.clone())
+    //         .await?
+    //         .ok_or(ModelError::UnableToGetModel)?;
+    //
+    //     let api_key = self
+    //         .api_key_service
+    //         .get_api_key_by_id(input.api_key_id)
+    //         .await?
+    //         .ok_or(ApiKeyError::UnableToCreateApiKey)?;
+    //
+    //     let parameter = serde_json::to_value(&parameter).unwrap();
+    //
+    //     let execution_input = ExecutionCreateInput {
+    //         task_id: TaskId::new(),
+    //         task_version_id: input.task_version_id,
+    //         endpoint: Endpoint::Studio,
+    //         elapsed_ms: 0,
+    //         status: ExecutionStatus::Success,
+    //         messages: vec![],
+    //         parameter,
+    //         output: None,
+    //         error: None,
+    //         usage: Default::default(),
+    //     };
+    //
+    //     self.execution_service
+    //         .create_execution(execution_input, execution_by_id)
+    //         .await
+    // }
 }
 
 impl From<TaskService> for TaskServiceDyn {
