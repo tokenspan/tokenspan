@@ -5,16 +5,12 @@ use axum::extract::FromRef;
 
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
-use crate::api::api_key::api_key_error::ApiKeyError;
-use crate::api::execution::dto::ExecutionCreateInput;
-use crate::api::model::model_error::ModelError;
-use crate::api::models::{Execution, TaskId, UserId};
-use crate::api::parameter::parameter_error::ParameterError;
-use crate::api::repositories::{Endpoint, ExecutionStatus, TaskCreateEntity, TaskUpdateEntity};
+use crate::api::models::{TaskId, UserId};
+use crate::api::repositories::{TaskCreateEntity, TaskUpdateEntity};
 use crate::api::services::{
     ApiKeyServiceDyn, ExecutionServiceDyn, ModelServiceDyn, ParameterServiceDyn,
 };
-use crate::api::task::dto::{TaskArgs, TaskCreateInput, TaskExecuteInput, TaskUpdateInput};
+use crate::api::task::dto::{TaskArgs, TaskCreateInput, TaskUpdateInput};
 use crate::api::task::task_error::TaskError;
 use crate::api::task::task_model::Task;
 use crate::repository::RootRepository;
