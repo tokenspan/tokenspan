@@ -1,7 +1,11 @@
 use std::convert::Infallible;
 
+use crate::api::dto::Role;
 use async_openai::config::OpenAIConfig;
-use async_openai::types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
+use async_openai::types::{
+    ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestSystemMessageArgs,
+    ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs,
+};
 use async_openai::Client;
 use axum::response::sse::EventExt;
 use axum::response::Sse;
@@ -45,14 +49,32 @@ pub async fn execute_task_v1(
     _task_service: TaskServiceDyn,
     input: TaskExecuteInput,
 ) -> Sse<impl Stream<Item = Result<TextEvent, Infallible>>, TextEvent> {
+    let messages = input
+        .messages
+        .into_iter()
+        .map(|message| match message.role {
+            Role::User => ChatCompletionRequestUserMessageArgs::default()
+                .content(message.content)
+                .build()
+                .unwrap()
+                .into(),
+            Role::System => ChatCompletionRequestSystemMessageArgs::default()
+                .content(message.content)
+                .build()
+                .unwrap()
+                .into(),
+            Role::Assistant => ChatCompletionRequestAssistantMessageArgs::default()
+                .content(message.content)
+                .build()
+                .unwrap()
+                .into(),
+        })
+        .collect::<Vec<_>>();
+
     let request = CreateChatCompletionRequestArgs::default()
         .model("gpt-3.5-turbo")
         .max_tokens(512u16)
-        .messages([ChatCompletionRequestUserMessageArgs::default()
-            .content(input.message)
-            .build()
-            .unwrap()
-            .into()])
+        .messages(messages)
         .build()
         .unwrap();
 
