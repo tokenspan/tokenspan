@@ -34,6 +34,7 @@ futures-util = "0.3.29"
 dotenv = "0.15.0"
 async-stream = "0.3.5"
 bytes = { version = "1.5.0" }
+openssl = { version = "0.10.59", features = ["vendored"] }
 
 tokenspan-macros = { path = "../tokenspan-macros" }
 tokenspan-utils = { path = "../tokenspan-utils" }
