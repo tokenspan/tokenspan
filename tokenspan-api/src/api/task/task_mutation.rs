@@ -1,10 +1,10 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 use bson::oid::ObjectId;
 
-use crate::api::models::{Execution, ModelId, ParsedToken, TaskId};
+use crate::api::models::{ModelId, ParsedToken, TaskId};
 use crate::api::parameter::dto::ParameterCreateInput;
 use crate::api::services::{ParameterServiceDyn, TaskServiceDyn, TaskVersionServiceDyn};
-use crate::api::task::dto::{TaskCreateInput, TaskExecuteInput, TaskUpdateInput};
+use crate::api::task::dto::{TaskCreateInput, TaskUpdateInput};
 use crate::api::task::task_model::Task;
 use crate::api::task_version::dto::TaskVersionCreateInput;
 use crate::api::types::Role;
@@ -94,27 +94,5 @@ impl TaskMutation {
             .map_err(|_| AppError::ContextExtractionError)?;
 
         task_service.delete_task(id).await
-    }
-
-    #[graphql(guard = "RoleGuard::new(Role::User)")]
-    pub async fn execute<'a>(
-        &self,
-        ctx: &Context<'a>,
-        _id: TaskId,
-        input: TaskExecuteInput,
-    ) -> Result<Execution> {
-        let task_service = ctx
-            .data::<TaskServiceDyn>()
-            .map_err(|_| AppError::ContextExtractionError)?;
-
-        let parsed_token = ctx
-            .data::<Option<ParsedToken>>()
-            .map_err(|_| AppError::ContextExtractionError.extend())?
-            .as_ref()
-            .ok_or(AppError::Unauthorized("no token".to_string()).extend())?;
-
-        task_service
-            .execute_task(input, parsed_token.user_id.clone())
-            .await
     }
 }
