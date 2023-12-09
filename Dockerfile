@@ -14,11 +14,11 @@ COPY --from=planner /app/recipe.json recipe.json
 # Build application
 RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
-RUN cargo build --release --bin tokenspan_api
+RUN cargo build --release --bin tokenspan-api
 
 
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
-COPY ./tokenspan-api/config ./tokenspan-api/config
-COPY --from=builder /app/target/release/tokenspan_api /usr/local/bin
-ENTRYPOINT ["/usr/local/bin/tokenspan_api"]
+COPY ./config ./config
+COPY --from=builder /app/target/release/tokenspan-api /usr/local/bin
+ENTRYPOINT ["/usr/local/bin/tokenspan-api"]
