@@ -16,7 +16,7 @@ pub struct TaskMutation;
 
 #[Object]
 impl TaskMutation {
-    #[graphql(guard = "RoleGuard::new(Role::User)")]
+    // #[graphql(guard = "RoleGuard::new(Role::User)")]
     pub async fn create_task<'a>(&self, ctx: &Context<'a>, input: TaskCreateInput) -> Result<Task> {
         let task_service = ctx
             .data::<TaskServiceDyn>()

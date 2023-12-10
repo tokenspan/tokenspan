@@ -159,4 +159,12 @@ impl Repository<TaskVersionEntity> {
 
         cursor.try_collect().await
     }
+
+    pub async fn find_by_version(&self, version: String) -> Result<Option<TaskVersionEntity>> {
+        let filter = doc! {
+            "version": version,
+        };
+
+        self.collection.find_one(filter, None).await
+    }
 }

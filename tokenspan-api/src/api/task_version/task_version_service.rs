@@ -22,6 +22,7 @@ pub trait TaskVersionServiceExt {
         args: TaskVersionArgs,
     ) -> Result<Pagination<Cursor, TaskVersion>>;
     async fn get_task_version_by_id(&self, id: TaskVersionId) -> Result<Option<TaskVersion>>;
+    async fn get_task_version_by_version(&self, version: String) -> Result<Option<TaskVersion>>;
     async fn get_task_versions_by_ids(&self, ids: Vec<TaskVersionId>) -> Result<Vec<TaskVersion>>;
     async fn get_task_versions_by_task_id(&self, task_id: TaskId) -> Result<Vec<TaskVersion>>;
     async fn count_task_versions(&self) -> Result<u64>;
@@ -72,6 +73,18 @@ impl TaskVersionServiceExt for TaskVersionService {
             .repository
             .task_version
             .find_by_id(id)
+            .await
+            .map_err(|_| TaskVersionError::UnableToGetTaskVersion)?
+            .map(|task_version| task_version.into());
+
+        Ok(task_version)
+    }
+
+    async fn get_task_version_by_version(&self, version: String) -> Result<Option<TaskVersion>> {
+        let task_version = self
+            .repository
+            .task_version
+            .find_by_version(version)
             .await
             .map_err(|_| TaskVersionError::UnableToGetTaskVersion)?
             .map(|task_version| task_version.into());

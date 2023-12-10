@@ -51,9 +51,9 @@ pub async fn graphiql() -> impl IntoResponse {
 
 pub async fn graphql_sandbox(Host(hostname): Host) -> impl IntoResponse {
     let endpoint = if hostname.contains("localhost") {
-        format!("http://{}graphql", hostname)
+        format!("http://{}/graphql", hostname)
     } else {
-        format!("https://{}graphql", hostname)
+        format!("https://{}/graphql", hostname)
     };
     Redirect::temporary(
         format!(
