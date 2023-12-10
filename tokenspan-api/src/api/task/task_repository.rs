@@ -11,6 +11,7 @@ use crate::repository::{PaginateArgs, Repository};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TaskEntity {
+    #[serde(rename = "_id")]
     pub id: TaskId,
     pub owner_id: UserId,
     pub name: String,
