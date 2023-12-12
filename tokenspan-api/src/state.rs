@@ -1,3 +1,4 @@
+use crate::api::api_key_cache::{ApiKeyCache, ApiKeyCacheDyn};
 use std::sync::Arc;
 
 use crate::api::services::*;
@@ -17,6 +18,8 @@ pub struct AppState {
     pub task_service: TaskServiceDyn,
     pub view_service: ViewServiceDyn,
     pub execution_service: ExecutionServiceDyn,
+
+    pub api_key_cache: ApiKeyCacheDyn,
 }
 
 impl AppState {
@@ -29,8 +32,13 @@ impl AppState {
         let user_service: UserServiceDyn = UserService::new(repository.clone()).into();
         let auth_service: AuthServiceDyn =
             AuthService::new(user_service.clone(), app_config.auth.clone()).into();
+
         let api_key_service: ApiKeyServiceDyn =
             ApiKeyService::new(repository.clone(), app_config.encryption.clone()).into();
+
+        let api_key_cache = ApiKeyCache::new(api_key_service.clone()).await.unwrap();
+        let api_key_cache = Arc::new(api_key_cache);
+
         let provider_service: ProviderServiceDyn = ProviderService::new(repository.clone()).into();
         let model_service: ModelServiceDyn = ModelService::new(repository.clone()).into();
         let parameter_service: ParameterServiceDyn =
@@ -42,9 +50,9 @@ impl AppState {
             ExecutionService::new(repository.clone()).into();
         let task_service: TaskServiceDyn = TaskService::new(
             repository.clone(),
+            api_key_cache.clone(),
             parameter_service.clone(),
             model_service.clone(),
-            api_key_service.clone(),
             execution_service.clone(),
             task_version_service.clone(),
         )
@@ -62,6 +70,8 @@ impl AppState {
             task_service,
             view_service,
             execution_service,
+
+            api_key_cache,
         }
     }
 }

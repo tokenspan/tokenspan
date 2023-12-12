@@ -10,15 +10,16 @@ use async_openai::Client;
 use axum::extract::FromRef;
 use serde_json::json;
 
+use crate::api::api_key::api_key_error::ApiKeyError;
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
+use crate::api::api_key_cache::ApiKeyCacheDyn;
 use crate::api::dto::{ElapsedInput, ExecutionCreateInput, TaskExecuteInput};
 use crate::api::model::model_error::ModelError;
 use crate::api::models::{Execution, Model, Parameter, TaskId, UserId};
 use crate::api::repositories::{TaskCreateEntity, TaskUpdateEntity};
 use crate::api::services::{
-    ApiKeyServiceDyn, ExecutionServiceDyn, ModelServiceDyn, ParameterServiceDyn,
-    TaskVersionServiceDyn,
+    ExecutionServiceDyn, ModelServiceDyn, ParameterServiceDyn, TaskVersionServiceDyn,
 };
 use crate::api::task::dto::{TaskArgs, TaskCreateInput, TaskUpdateInput};
 use crate::api::task::task_error::TaskError;
@@ -59,9 +60,10 @@ impl FromRef<AppState> for TaskServiceDyn {
 
 pub struct TaskService {
     repository: Arc<RootRepository>,
+    api_key_cache: ApiKeyCacheDyn,
+
     parameter_service: ParameterServiceDyn,
     model_service: ModelServiceDyn,
-    api_key_service: ApiKeyServiceDyn,
     execution_service: ExecutionServiceDyn,
     task_version_service: TaskVersionServiceDyn,
 }
@@ -69,9 +71,10 @@ pub struct TaskService {
 impl TaskService {
     pub fn new(
         repository: Arc<RootRepository>,
+        api_key_cache: ApiKeyCacheDyn,
+
         parameter_service: ParameterServiceDyn,
         model_service: ModelServiceDyn,
-        api_key_service: ApiKeyServiceDyn,
         execution_service: ExecutionServiceDyn,
         task_version_service: TaskVersionServiceDyn,
     ) -> Self {
@@ -79,7 +82,7 @@ impl TaskService {
             repository,
             parameter_service,
             model_service,
-            api_key_service,
+            api_key_cache,
             execution_service,
             task_version_service,
         }
@@ -242,7 +245,10 @@ impl TaskServiceExt for TaskService {
         execute_by_id: UserId,
     ) -> Result<Execution> {
         let start = Instant::now();
-        let api_key = std::env::var("OPENAI_API_KEY").unwrap();
+        let api_key = self
+            .api_key_cache
+            .get(input.api_key_id)
+            .ok_or(ApiKeyError::Unknown(anyhow::anyhow!("API key not found")))?;
         let parameter = self
             .parameter_service
             .get_parameter_by_id(input.parameter_id.clone())

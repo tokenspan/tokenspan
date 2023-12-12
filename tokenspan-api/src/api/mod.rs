@@ -70,6 +70,8 @@ pub mod dto {
     pub use super::view::dto::*;
 }
 
+pub use api_key::api_key_cache;
+
 #[derive(MergedObject, Default)]
 pub struct QueryRoot(
     pub auth::AuthQuery,
