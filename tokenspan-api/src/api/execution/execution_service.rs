@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
 use async_graphql::Result;
+use bson::doc;
+use bson::oid::ObjectId;
 
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
@@ -39,10 +41,16 @@ impl ExecutionService {
 #[async_trait::async_trait]
 impl ExecutionServiceExt for ExecutionService {
     async fn get_executions(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>> {
+        let task_id = ObjectId::from(args.task_id.clone());
         let paginated = self
             .repository
             .execution
-            .paginate::<Execution>(args.into())
+            .paginate_with_filter::<Execution>(
+                doc! {
+                    "task_id": task_id,
+                },
+                args.into(),
+            )
             .await
             .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?;
 

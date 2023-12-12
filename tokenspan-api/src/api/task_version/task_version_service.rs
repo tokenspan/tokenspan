@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
 use async_graphql::Result;
+use bson::doc;
+use bson::oid::ObjectId;
 
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
@@ -59,10 +61,16 @@ impl TaskVersionServiceExt for TaskVersionService {
         &self,
         args: TaskVersionArgs,
     ) -> Result<Pagination<Cursor, TaskVersion>> {
+        let task_id = ObjectId::from(args.task_id.clone());
         let paginated = self
             .repository
             .task_version
-            .paginate::<TaskVersion>(args.into())
+            .paginate_with_filter::<TaskVersion>(
+                doc! {
+                    "task_id": task_id,
+                },
+                args.into(),
+            )
             .await
             .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?;
 
