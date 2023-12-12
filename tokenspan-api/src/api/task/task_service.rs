@@ -1,18 +1,30 @@
 use std::sync::Arc;
+use std::time::Instant;
 
 use async_graphql::Result;
+use async_openai::config::OpenAIConfig;
+use async_openai::types::{
+    ChatCompletionRequestMessage, CreateChatCompletionRequestArgs, CreateChatCompletionResponse,
+};
+use async_openai::Client;
 use axum::extract::FromRef;
+use serde_json::json;
 
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
-use crate::api::models::{TaskId, UserId};
+use crate::api::dto::{ElapsedInput, ExecutionCreateInput, TaskExecuteInput};
+use crate::api::model::model_error::ModelError;
+use crate::api::models::{Execution, Model, Parameter, TaskId, UserId};
 use crate::api::repositories::{TaskCreateEntity, TaskUpdateEntity};
 use crate::api::services::{
     ApiKeyServiceDyn, ExecutionServiceDyn, ModelServiceDyn, ParameterServiceDyn,
+    TaskVersionServiceDyn,
 };
 use crate::api::task::dto::{TaskArgs, TaskCreateInput, TaskUpdateInput};
 use crate::api::task::task_error::TaskError;
 use crate::api::task::task_model::Task;
+use crate::api::types::{Endpoint, ExecutionStatus, Usage};
+use crate::prompt::ChatMessage;
 use crate::repository::RootRepository;
 use crate::state::AppState;
 
@@ -30,11 +42,11 @@ pub trait TaskServiceExt {
     async fn create_task(&self, input: TaskCreateInput, owner: UserId) -> Result<Task>;
     async fn update_task(&self, id: TaskId, input: TaskUpdateInput) -> Result<Option<Task>>;
     async fn delete_task(&self, id: TaskId) -> Result<Option<Task>>;
-    // async fn execute_task(
-    //     &self,
-    //     input: TaskExecuteInput,
-    //     execution_by_id: UserId,
-    // ) -> Result<Execution>;
+    async fn execute_task(
+        &self,
+        input: TaskExecuteInput,
+        execution_by_id: UserId,
+    ) -> Result<Execution>;
 }
 
 pub type TaskServiceDyn = Arc<dyn TaskServiceExt + Send + Sync>;
@@ -51,6 +63,7 @@ pub struct TaskService {
     model_service: ModelServiceDyn,
     api_key_service: ApiKeyServiceDyn,
     execution_service: ExecutionServiceDyn,
+    task_version_service: TaskVersionServiceDyn,
 }
 
 impl TaskService {
@@ -60,6 +73,7 @@ impl TaskService {
         model_service: ModelServiceDyn,
         api_key_service: ApiKeyServiceDyn,
         execution_service: ExecutionServiceDyn,
+        task_version_service: TaskVersionServiceDyn,
     ) -> Self {
         Self {
             repository,
@@ -67,7 +81,46 @@ impl TaskService {
             model_service,
             api_key_service,
             execution_service,
+            task_version_service,
         }
+    }
+
+    pub async fn chat_completion(
+        &self,
+        chat_messages: &[ChatMessage],
+        parameter: Parameter,
+        api_key: String,
+        model: Model,
+    ) -> anyhow::Result<(
+        CreateChatCompletionResponse,
+        Vec<ChatCompletionRequestMessage>,
+    )> {
+        let mut messages: Vec<ChatCompletionRequestMessage> = vec![];
+        for message in chat_messages.iter().cloned() {
+            messages.push(message.try_into()?);
+        }
+
+        let request = CreateChatCompletionRequestArgs::default()
+            .model(model.name.clone())
+            .max_tokens(parameter.max_tokens)
+            .temperature(parameter.temperature)
+            .top_p(parameter.top_p)
+            .frequency_penalty(parameter.frequency_penalty)
+            .presence_penalty(parameter.presence_penalty)
+            .stop(parameter.stop_sequences)
+            .messages(messages.clone())
+            .build()
+            .map_err(|e| anyhow::anyhow!(e))?;
+
+        let config = OpenAIConfig::new().with_api_key(api_key);
+        let client = Client::with_config(config);
+        let response = client
+            .chat()
+            .create(request)
+            .await
+            .map_err(|e| anyhow::anyhow!(e))?;
+
+        Ok((response, messages))
     }
 }
 
@@ -79,7 +132,7 @@ impl TaskServiceExt for TaskService {
             .task
             .paginate::<Task>(args.into())
             .await
-            .map_err(|_| TaskError::UnableToCreateTask)?;
+            .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(paginated)
     }
@@ -94,7 +147,7 @@ impl TaskServiceExt for TaskService {
             .task
             .paginate_by_owner::<Task>(user_id, args.into())
             .await
-            .map_err(|_| TaskError::UnableToCreateTask)?;
+            .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(paginated)
     }
@@ -105,7 +158,7 @@ impl TaskServiceExt for TaskService {
             .task
             .find_by_id(id)
             .await
-            .map_err(|_| TaskError::UnableToGetTask)?
+            .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?
             .map(|task| task.into());
 
         Ok(task)
@@ -117,7 +170,7 @@ impl TaskServiceExt for TaskService {
             .task
             .find_many_by_ids(ids)
             .await
-            .map_err(|_| TaskError::UnableToGetTasks)?
+            .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
             .map(|task| task.into())
             .collect();
@@ -131,7 +184,7 @@ impl TaskServiceExt for TaskService {
             .task
             .count()
             .await
-            .map_err(|_| TaskError::UnableToCountTasks)?;
+            .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(count)
     }
@@ -147,7 +200,7 @@ impl TaskServiceExt for TaskService {
                 private: input.private,
             })
             .await
-            .map_err(|_| TaskError::UnableToCreateTask)?;
+            .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(created_task.into())
     }
@@ -165,7 +218,7 @@ impl TaskServiceExt for TaskService {
                 },
             )
             .await
-            .map_err(|_| TaskError::UnableToUpdateTask)?
+            .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?
             .map(|task| task.into());
 
         Ok(updated_task)
@@ -177,54 +230,102 @@ impl TaskServiceExt for TaskService {
             .task
             .delete_by_id(id)
             .await
-            .map_err(|_| TaskError::UnableToDeleteTask)?
+            .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?
             .map(|task| task.into());
 
         Ok(deleted_task)
     }
 
-    // async fn execute_task(
-    //     &self,
-    //     input: TaskExecuteInput,
-    //     execution_by_id: UserId,
-    // ) -> Result<Execution> {
-    //     let parameter = self
-    //         .parameter_service
-    //         .get_parameter_by_id(input.parameter_id)
-    //         .await?
-    //         .ok_or(ParameterError::UnableToGetParameter)?;
-    //
-    //     let model = self
-    //         .model_service
-    //         .get_model_by_id(parameter.model_id.clone())
-    //         .await?
-    //         .ok_or(ModelError::UnableToGetModel)?;
-    //
-    //     let api_key = self
-    //         .api_key_service
-    //         .get_api_key_by_id(input.api_key_id)
-    //         .await?
-    //         .ok_or(ApiKeyError::UnableToCreateApiKey)?;
-    //
-    //     let parameter = serde_json::to_value(&parameter).unwrap();
-    //
-    //     let execution_input = ExecutionCreateInput {
-    //         task_id: TaskId::new(),
-    //         task_version_id: input.task_version_id,
-    //         endpoint: Endpoint::Studio,
-    //         elapsed_ms: 0,
-    //         status: ExecutionStatus::Success,
-    //         messages: vec![],
-    //         parameter,
-    //         output: None,
-    //         error: None,
-    //         usage: Default::default(),
-    //     };
-    //
-    //     self.execution_service
-    //         .create_execution(execution_input, execution_by_id)
-    //         .await
-    // }
+    async fn execute_task(
+        &self,
+        input: TaskExecuteInput,
+        execute_by_id: UserId,
+    ) -> Result<Execution> {
+        let start = Instant::now();
+        let api_key = std::env::var("OPENAI_API_KEY").unwrap();
+        let parameter = self
+            .parameter_service
+            .get_parameter_by_id(input.parameter_id.clone())
+            .await?
+            .ok_or(TaskError::Unknown(anyhow::anyhow!("Parameter not found")))?;
+
+        let model = self
+            .model_service
+            .get_model_by_id(parameter.model_id.clone())
+            .await?
+            .ok_or(ModelError::Unknown(anyhow::anyhow!("Model not found")))?;
+
+        let task_version = self
+            .task_version_service
+            .get_task_version_by_id(input.task_version_id.clone())
+            .await?
+            .ok_or(TaskError::Unknown(anyhow::anyhow!(
+                "Task version not found"
+            )))?;
+        let pre_elapsed = start.elapsed();
+
+        let start = Instant::now();
+        let messages: Vec<ChatMessage> = task_version
+            .messages
+            .into_iter()
+            .map(|message| message.into())
+            .collect();
+        let response = self
+            .chat_completion(&messages, parameter.clone(), api_key, model)
+            .await;
+        let elapsed = start.elapsed();
+
+        let start = Instant::now();
+        let (status, output, usage, messages, error) = match response {
+            Err(e) => (
+                ExecutionStatus::Failure,
+                None,
+                None,
+                vec![],
+                Some(json!(e.to_string())),
+            ),
+            Ok(response) => (
+                ExecutionStatus::Success,
+                Some(json!(response.0)),
+                response.0.usage,
+                response.1.iter().map(|message| json!(message)).collect(),
+                None,
+            ),
+        };
+
+        let usage = usage.map(|usage| Usage {
+            input_tokens: usage.prompt_tokens,
+            output_tokens: usage.completion_tokens,
+            total_tokens: usage.total_tokens,
+        });
+        let parameter = json!(parameter);
+        let post_elapsed = start.elapsed();
+
+        let execution = self
+            .execution_service
+            .create_execution(
+                ExecutionCreateInput {
+                    task_id: task_version.task_id,
+                    task_version_id: input.task_version_id,
+                    endpoint: Endpoint::Http,
+                    elapsed: ElapsedInput {
+                        pre_elapsed: pre_elapsed.as_secs_f64(),
+                        elapsed: elapsed.as_secs_f64(),
+                        post_elapsed: post_elapsed.as_secs_f64(),
+                    },
+                    parameter,
+                    status,
+                    output,
+                    error,
+                    messages,
+                    usage,
+                },
+                execute_by_id,
+            )
+            .await?;
+
+        Ok(execution)
+    }
 }
 
 impl From<TaskService> for TaskServiceDyn {

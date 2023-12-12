@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use async_graphql::Result;
+use axum::extract::FromRef;
 
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
@@ -10,6 +11,7 @@ use crate::api::model::model_model::Model;
 use crate::api::models::ModelId;
 use crate::api::repositories::{ModelCreateEntity, ModelUpdateEntity};
 use crate::repository::RootRepository;
+use crate::state::AppState;
 
 #[async_trait::async_trait]
 pub trait ModelServiceExt {
@@ -24,6 +26,12 @@ pub trait ModelServiceExt {
 }
 
 pub type ModelServiceDyn = Arc<dyn ModelServiceExt + Send + Sync>;
+
+impl FromRef<AppState> for ModelServiceDyn {
+    fn from_ref(input: &AppState) -> Self {
+        input.model_service.clone()
+    }
+}
 
 pub struct ModelService {
     repository: Arc<RootRepository>,
@@ -43,7 +51,7 @@ impl ModelServiceExt for ModelService {
             .model
             .paginate::<Model>(args.into())
             .await
-            .map_err(|_| ModelError::UnableToGetModels)?;
+            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(paginated)
     }
@@ -54,7 +62,7 @@ impl ModelServiceExt for ModelService {
             .model
             .find_by_id(id)
             .await
-            .map_err(|_| ModelError::UnableToGetModel)?
+            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
             .map(|model| model.into());
 
         Ok(model)
@@ -66,7 +74,7 @@ impl ModelServiceExt for ModelService {
             .model
             .find_many_by_ids(ids)
             .await
-            .map_err(|_| ModelError::UnableToGetModels)?
+            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
             .map(|model| model.into())
             .collect();
@@ -80,7 +88,7 @@ impl ModelServiceExt for ModelService {
             .model
             .find_by_name(name)
             .await
-            .map_err(|_| ModelError::UnableToGetModel)?
+            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
             .map(|model| model.into());
 
         Ok(model)
@@ -92,7 +100,7 @@ impl ModelServiceExt for ModelService {
             .model
             .count()
             .await
-            .map_err(|_| ModelError::UnableToCountModels)?;
+            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(count)
     }
@@ -111,7 +119,7 @@ impl ModelServiceExt for ModelService {
                 training_at: input.training_at,
             })
             .await
-            .map_err(|_| ModelError::UnableToCreateModel)?;
+            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(created_model.into())
     }
@@ -132,7 +140,7 @@ impl ModelServiceExt for ModelService {
                 },
             )
             .await
-            .map_err(|_| ModelError::UnableToUpdateModel)?
+            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
             .map(|model| model.into());
 
         Ok(updated_model)
@@ -144,7 +152,7 @@ impl ModelServiceExt for ModelService {
             .model
             .delete_by_id(id)
             .await
-            .map_err(|_| ModelError::UnableToDeleteModel)?
+            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
             .map(|model| model.into());
 
         Ok(deleted_model)

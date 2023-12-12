@@ -16,7 +16,7 @@ impl TaskVersionQuery {
     pub async fn task_versions<'a>(
         &self,
         ctx: &Context<'a>,
-        args: TaskVersionArgs,
+        #[graphql(default)] args: TaskVersionArgs,
     ) -> Result<Connection<Cursor, TaskVersion, AdditionalFields>> {
         let task_version_service = ctx
             .data::<TaskVersionServiceDyn>()

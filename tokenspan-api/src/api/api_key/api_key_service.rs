@@ -37,7 +37,7 @@ pub struct ApiKeyService {
 
 impl ApiKeyService {
     const HINT_SIZE: usize = 4;
-    
+
     pub fn new(repository: Arc<RootRepository>, encryption_config: EncryptionConfig) -> Self {
         Self {
             repository,
@@ -65,7 +65,7 @@ impl ApiKeyServiceExt for ApiKeyService {
             .api_key
             .paginate::<ApiKey>(args.into())
             .await
-            .map_err(|_| ApiKeyError::UnableToGetApiKeys)?;
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(paginated)
     }
@@ -76,7 +76,7 @@ impl ApiKeyServiceExt for ApiKeyService {
             .api_key
             .find_by_id(id)
             .await
-            .map_err(|_| ApiKeyError::UnableToGetApiKey)?
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
             .map(|api_key| api_key.into());
 
         Ok(api_key)
@@ -88,7 +88,7 @@ impl ApiKeyServiceExt for ApiKeyService {
             .api_key
             .find_many_by_ids(ids)
             .await
-            .map_err(|_| ApiKeyError::UnableToGetApiKeys)?
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
             .map(|api_key| api_key.into())
             .collect();
@@ -102,7 +102,7 @@ impl ApiKeyServiceExt for ApiKeyService {
             .api_key
             .count()
             .await
-            .map_err(|_| ApiKeyError::UnableToCountApiKeys)?;
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(count)
     }
@@ -123,7 +123,7 @@ impl ApiKeyServiceExt for ApiKeyService {
                 hint,
             })
             .await
-            .map_err(|_| ApiKeyError::UnableToCreateApiKey)?;
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(created_api_key.into())
     }
@@ -138,7 +138,7 @@ impl ApiKeyServiceExt for ApiKeyService {
             .api_key
             .update_by_id(id, ApiKeyUpdateEntity { name: input.name })
             .await
-            .map_err(|_| ApiKeyError::UnableToUpdateApiKey)?
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
             .map(|api_key| api_key.into());
 
         Ok(updated_api_key)
@@ -150,7 +150,7 @@ impl ApiKeyServiceExt for ApiKeyService {
             .api_key
             .delete_by_id(id)
             .await
-            .map_err(|_| ApiKeyError::UnableToDeleteApiKey)?
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
             .map(|api_key| api_key.into());
 
         Ok(deleted_api_key)

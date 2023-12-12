@@ -16,7 +16,7 @@ impl ProviderQuery {
     pub async fn providers<'a>(
         &self,
         ctx: &Context<'a>,
-        args: ProviderArgs,
+        #[graphql(default)] args: ProviderArgs,
     ) -> Result<Connection<Cursor, Provider, AdditionalFields>> {
         let provider_service = ctx
             .data::<ProviderServiceDyn>()

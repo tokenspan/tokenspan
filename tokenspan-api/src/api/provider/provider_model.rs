@@ -28,7 +28,7 @@ impl CursorExt<Cursor> for Provider {
 impl From<super::provider_repository::ProviderEntity> for Provider {
     fn from(value: super::provider_repository::ProviderEntity) -> Self {
         Self {
-            id: ProviderId::from(value.id),
+            id: value.id,
             name: value.name,
             updated_at: value.updated_at,
             created_at: value.created_at,

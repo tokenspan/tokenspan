@@ -42,7 +42,7 @@ impl ViewServiceExt for ViewService {
             .view
             .paginate::<View>(args.into())
             .await
-            .map_err(|_| ViewError::UnableToGetViews)?;
+            .map_err(|e| ViewError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(paginated)
     }
@@ -53,7 +53,7 @@ impl ViewServiceExt for ViewService {
             .view
             .find_by_id(id)
             .await
-            .map_err(|_| ViewError::UnableToGetView)?
+            .map_err(|e| ViewError::Unknown(anyhow::anyhow!(e)))?
             .map(|view| view.into());
 
         Ok(view)
@@ -65,7 +65,7 @@ impl ViewServiceExt for ViewService {
             .view
             .find_many_by_ids(ids)
             .await
-            .map_err(|_| ViewError::UnableToGetViews)?
+            .map_err(|e| ViewError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
             .map(|view| view.into())
             .collect();
@@ -79,7 +79,7 @@ impl ViewServiceExt for ViewService {
             .view
             .count()
             .await
-            .map_err(|_| ViewError::UnableToCountViews)?;
+            .map_err(|e| ViewError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(count)
     }
@@ -94,7 +94,7 @@ impl ViewServiceExt for ViewService {
                 config: input.config,
             })
             .await
-            .map_err(|_| ViewError::UnableToCreateView)?;
+            .map_err(|e| ViewError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(created_view.into())
     }
@@ -111,7 +111,7 @@ impl ViewServiceExt for ViewService {
                 },
             )
             .await
-            .map_err(|_| ViewError::UnableToUpdateView)?
+            .map_err(|e| ViewError::Unknown(anyhow::anyhow!(e)))?
             .map(|view| view.into());
 
         Ok(updated_view)
@@ -123,7 +123,7 @@ impl ViewServiceExt for ViewService {
             .view
             .delete_by_id(id)
             .await
-            .map_err(|_| ViewError::UnableToDeleteView)?
+            .map_err(|e| ViewError::Unknown(anyhow::anyhow!(e)))?
             .map(|view| view.into());
 
         Ok(deleted_view)

@@ -16,7 +16,7 @@ impl ApiKeyQuery {
     pub async fn api_keys<'a>(
         &self,
         ctx: &Context<'a>,
-        args: ApiKeyArgs,
+        #[graphql(default)] args: ApiKeyArgs,
     ) -> Result<Connection<Cursor, ApiKey, AdditionalFields>> {
         let api_key_service = ctx
             .data::<ApiKeyServiceDyn>()

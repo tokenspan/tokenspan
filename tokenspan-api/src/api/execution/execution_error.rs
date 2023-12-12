@@ -1,16 +1,7 @@
 use thiserror::Error;
 
-#[derive(Debug, Error, Clone)]
+#[derive(Debug, Error)]
 pub enum ExecutionError {
-    #[error("unable to create execution history")]
-    UnableToCreateExecution,
-
-    #[error("unable to get execution histories")]
-    UnableToGetExecutions,
-
-    #[error("unable to get api key")]
-    UnableToGetExecution,
-
-    #[error("unable to delete execution history")]
-    UnableToDeleteExecution,
+    #[error(transparent)]
+    Unknown(#[from] anyhow::Error),
 }

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use async_graphql::dataloader::Loader;
 
@@ -9,7 +10,7 @@ use crate::loader::AppLoader;
 #[async_trait::async_trait]
 impl Loader<ProviderId> for AppLoader {
     type Value = Provider;
-    type Error = ProviderError;
+    type Error = Arc<ProviderError>;
 
     async fn load(
         &self,
@@ -19,7 +20,7 @@ impl Loader<ProviderId> for AppLoader {
             .provider_service
             .get_providers_by_ids(keys.to_vec())
             .await
-            .map_err(|_| ProviderError::UnableToGetProviders)?
+            .map_err(|e| Arc::new(ProviderError::Unknown(anyhow::anyhow!(e.message))))?
             .into_iter()
             .map(|provider| (provider.id.clone(), provider))
             .collect();

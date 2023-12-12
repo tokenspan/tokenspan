@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::api::models::TaskId;
 use crate::api::repositories::TaskVersionStatus;
+use crate::prompt::ChatMessage;
 use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
 
@@ -20,7 +21,7 @@ pub struct TaskVersion {
     pub release_note: Option<String>,
     pub description: Option<String>,
     pub document: Option<String>,
-    pub messages: Vec<serde_json::Value>,
+    pub messages: Vec<ChatMessage>,
     pub status: TaskVersionStatus,
     pub task_id: TaskId,
     pub created_at: DateTime<Utc>,

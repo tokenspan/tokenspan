@@ -46,7 +46,7 @@ impl ProviderServiceExt for ProviderService {
             .provider
             .paginate::<Provider>(args.into())
             .await
-            .map_err(|_| ProviderError::UnableToGetProviders)?;
+            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(paginated)
     }
@@ -57,7 +57,7 @@ impl ProviderServiceExt for ProviderService {
             .provider
             .find_by_id(id)
             .await
-            .map_err(|_| ProviderError::UnableToGetProvider)?
+            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?
             .map(|provider| provider.into());
 
         Ok(provider)
@@ -69,7 +69,7 @@ impl ProviderServiceExt for ProviderService {
             .provider
             .find_by_name(name)
             .await
-            .map_err(|_| ProviderError::UnableToGetProvider)?
+            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?
             .map(|provider| provider.into());
 
         Ok(provider)
@@ -81,7 +81,7 @@ impl ProviderServiceExt for ProviderService {
             .provider
             .find_many_by_ids(ids)
             .await
-            .map_err(|_| ProviderError::UnableToGetProviders)?
+            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
             .map(|provider| provider.into())
             .collect();
@@ -95,7 +95,7 @@ impl ProviderServiceExt for ProviderService {
             .provider
             .count()
             .await
-            .map_err(|_| ProviderError::UnableToCountProviders)?;
+            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(count)
     }
@@ -106,7 +106,7 @@ impl ProviderServiceExt for ProviderService {
             .provider
             .create(ProviderCreateEntity { name: input.name })
             .await
-            .map_err(|_| ProviderError::UnableToCreateProvider)?;
+            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(created_provider.into())
     }
@@ -121,7 +121,7 @@ impl ProviderServiceExt for ProviderService {
             .provider
             .update_by_id(id, ProviderUpdateEntity { name: input.name })
             .await
-            .map_err(|_| ProviderError::UnableToUpdateProvider)?
+            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?
             .map(|provider| provider.into());
 
         Ok(updated_provider)
@@ -133,7 +133,7 @@ impl ProviderServiceExt for ProviderService {
             .provider
             .delete_by_id(id)
             .await
-            .map_err(|_| ProviderError::UnableToDeleteProvider)?
+            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?
             .map(|provider| provider.into());
 
         Ok(deleted_provider)

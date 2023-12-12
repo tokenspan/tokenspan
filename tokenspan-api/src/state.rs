@@ -46,6 +46,7 @@ impl AppState {
             model_service.clone(),
             api_key_service.clone(),
             execution_service.clone(),
+            task_version_service.clone(),
         )
         .into();
 

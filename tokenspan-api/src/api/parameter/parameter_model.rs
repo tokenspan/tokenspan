@@ -6,6 +6,7 @@ use async_graphql::{ComplexObject, Context, Result, Scalar, ScalarType, SimpleOb
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use tokenspan_extra::serialize_oid;
 use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
 
@@ -20,15 +21,17 @@ pub struct ParameterId(pub ObjectId);
 #[derive(SimpleObject, Debug, Clone, Serialize, Deserialize)]
 #[graphql(complex)]
 pub struct Parameter {
+    #[serde(serialize_with = "serialize_oid")]
     pub id: ParameterId,
     pub name: String,
     pub temperature: f32,
-    pub max_tokens: u32,
+    pub max_tokens: u16,
     pub stop_sequences: Vec<String>,
     pub top_p: f32,
     pub frequency_penalty: f32,
     pub presence_penalty: f32,
     pub extra: Option<serde_json::Value>,
+    #[serde(serialize_with = "serialize_oid")]
     pub model_id: ModelId,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -44,7 +47,7 @@ impl Parameter {
         let model = app_loader
             .load_one(self.model_id.clone())
             .await
-            .map_err(|_| ModelError::UnableToGetModel)?;
+            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(model)
     }

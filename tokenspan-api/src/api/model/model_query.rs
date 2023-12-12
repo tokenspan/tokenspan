@@ -17,7 +17,7 @@ impl ModelQuery {
     pub async fn models<'a>(
         &self,
         ctx: &Context<'a>,
-        args: ModelArgs,
+        #[graphql(default)] args: ModelArgs,
     ) -> Result<Connection<Cursor, Model, AdditionalFields>> {
         let model_service = ctx
             .data::<ModelServiceDyn>()

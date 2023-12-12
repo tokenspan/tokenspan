@@ -16,7 +16,7 @@ impl TaskQuery {
     pub async fn tasks<'a>(
         &self,
         ctx: &Context<'a>,
-        args: TaskArgs,
+        #[graphql(default)] args: TaskArgs,
     ) -> Result<Connection<Cursor, Task, AdditionalFields>> {
         let task_service = ctx
             .data::<TaskServiceDyn>()

@@ -16,7 +16,7 @@ impl ViewQuery {
     pub async fn views<'a>(
         &self,
         ctx: &Context<'a>,
-        args: ViewArgs,
+        #[graphql(default)] args: ViewArgs,
     ) -> Result<Connection<Cursor, View, AdditionalFields>> {
         let view_service = ctx
             .data::<ViewServiceDyn>()

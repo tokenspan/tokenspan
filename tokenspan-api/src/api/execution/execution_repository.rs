@@ -1,78 +1,40 @@
-use crate::api::models::{ExecutionId, TaskId, TaskVersionId, UserId};
-use crate::repository::Repository;
-use async_graphql::{InputValueError, InputValueResult, Scalar, ScalarType, Value};
 use chrono::{DateTime, Utc};
 use mongodb::error::{Error, Result};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum Endpoint {
-    Studio,
-    Http,
+use crate::api::execution::execution_type::{Endpoint, ExecutionStatus, Usage};
+use crate::api::models::{Elapsed, ExecutionId, TaskId, TaskVersionId, UserId};
+use crate::repository::Repository;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ElapsedEntity {
+    pub pre_elapsed: f64,
+    pub elapsed: f64,
+    pub post_elapsed: f64,
 }
 
-#[Scalar]
-impl ScalarType for Endpoint {
-    fn parse(value: Value) -> InputValueResult<Self> {
-        match value.clone() {
-            Value::String(s) => match s.as_str() {
-                "Studio" => Ok(Endpoint::Studio),
-                "Http" => Ok(Endpoint::Http),
-                _ => Err(InputValueError::expected_type(value)),
-            },
-            _ => Err(InputValueError::expected_type(value)),
-        }
-    }
-
-    fn to_value(&self) -> Value {
-        match self {
-            Endpoint::Studio => Value::String("Studio".to_string()),
-            Endpoint::Http => Value::String("Http".to_string()),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ExecutionStatus {
-    Success,
-    Failure,
-    Pending,
-}
-
-#[Scalar]
-impl ScalarType for ExecutionStatus {
-    fn parse(value: Value) -> InputValueResult<Self> {
-        match value.clone() {
-            Value::String(s) => match s.as_str() {
-                "Success" => Ok(ExecutionStatus::Success),
-                "Failure" => Ok(ExecutionStatus::Failure),
-                "Pending" => Ok(ExecutionStatus::Pending),
-                _ => Err(InputValueError::expected_type(value)),
-            },
-            _ => Err(InputValueError::expected_type(value)),
-        }
-    }
-
-    fn to_value(&self) -> Value {
-        match self {
-            ExecutionStatus::Success => Value::String("Success".to_string()),
-            ExecutionStatus::Failure => Value::String("Failure".to_string()),
-            ExecutionStatus::Pending => Value::String("Pending".to_string()),
+impl From<ElapsedEntity> for Elapsed {
+    fn from(value: ElapsedEntity) -> Self {
+        Self {
+            pre_elapsed: value.pre_elapsed,
+            elapsed: value.elapsed,
+            post_elapsed: value.post_elapsed,
         }
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ExecutionEntity {
+    #[serde(rename = "_id")]
     pub id: ExecutionId,
     pub endpoint: Endpoint,
-    pub elapsed_ms: u32,
+    pub elapsed: ElapsedEntity,
     pub status: ExecutionStatus,
     pub messages: Vec<serde_json::Value>,
     pub parameter: serde_json::Value,
     pub output: Option<serde_json::Value>,
     pub error: Option<serde_json::Value>,
-    pub usage: Option<serde_json::Value>,
+    pub usage: Option<Usage>,
     pub task_id: TaskId,
     pub task_version_id: TaskVersionId,
     pub executed_by_id: UserId,
@@ -84,13 +46,13 @@ pub struct ExecutionEntity {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ExecutionCreateEntity {
     pub endpoint: Endpoint,
-    pub elapsed_ms: u32,
+    pub elapsed: ElapsedEntity,
     pub status: ExecutionStatus,
     pub messages: Vec<serde_json::Value>,
     pub parameter: serde_json::Value,
     pub output: Option<serde_json::Value>,
     pub error: Option<serde_json::Value>,
-    pub usage: Option<serde_json::Value>,
+    pub usage: Option<Usage>,
     pub task_id: TaskId,
     pub task_version_id: TaskVersionId,
     pub executed_by_id: UserId,
@@ -101,7 +63,7 @@ impl Repository<ExecutionEntity> {
         let doc = ExecutionEntity {
             id: ExecutionId::new(),
             endpoint: doc.endpoint,
-            elapsed_ms: doc.elapsed_ms,
+            elapsed: doc.elapsed,
             status: doc.status,
             messages: doc.messages,
             parameter: doc.parameter,

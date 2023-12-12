@@ -47,7 +47,7 @@ where
         filter: Document,
         args: PaginateArgs,
     ) -> mongodb::error::Result<Pagination<Cursor, TNode>> {
-        let take = args.take.unwrap_or(1);
+        let take = args.take.unwrap_or(10);
         let limit = take
             + if args.after.is_some() || args.before.is_some() {
                 2

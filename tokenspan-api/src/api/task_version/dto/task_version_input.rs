@@ -2,6 +2,7 @@ use async_graphql::InputObject;
 
 use crate::api::models::TaskId;
 use crate::api::repositories::TaskVersionStatus;
+use crate::prompt::ChatMessageInput;
 
 #[derive(InputObject)]
 pub struct TaskVersionCreateInput {
@@ -9,7 +10,7 @@ pub struct TaskVersionCreateInput {
     pub release_note: Option<String>,
     pub description: Option<String>,
     pub document: Option<String>,
-    pub messages: Vec<serde_json::Value>,
+    pub messages: Vec<ChatMessageInput>,
     pub task_id: TaskId,
 }
 
@@ -19,7 +20,7 @@ pub struct TaskVersionUpdateInput {
     pub release_note: Option<String>,
     pub description: Option<String>,
     pub document: Option<String>,
-    pub messages: Option<Vec<serde_json::Value>>,
+    pub messages: Option<Vec<ChatMessageInput>>,
     pub status: Option<TaskVersionStatus>,
     pub task_id: Option<String>,
 }

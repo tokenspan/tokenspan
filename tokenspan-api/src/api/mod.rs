@@ -53,6 +53,7 @@ pub mod models {
 }
 
 pub mod types {
+    pub use super::execution::execution_type::*;
     pub use super::user::user_type::*;
 }
 

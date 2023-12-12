@@ -2,7 +2,7 @@ use crate::repository::PaginateArgs;
 use async_graphql::InputObject;
 use tokenspan_utils::pagination::Cursor;
 
-#[derive(InputObject)]
+#[derive(InputObject, Default)]
 pub struct ExecutionArgs {
     pub take: Option<i64>,
     pub before: Option<Cursor>,

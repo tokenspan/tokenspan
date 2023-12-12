@@ -16,7 +16,7 @@ impl ExecutionQuery {
     pub async fn executions<'a>(
         &self,
         ctx: &Context<'a>,
-        args: ExecutionArgs,
+        #[graphql(default)] args: ExecutionArgs,
     ) -> Result<Connection<Cursor, Execution, AdditionalFields>> {
         let execution_service = ctx
             .data::<ExecutionServiceDyn>()
