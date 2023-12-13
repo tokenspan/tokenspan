@@ -6,7 +6,7 @@ use crate::api::execution::dto::ExecutionArgs;
 use crate::api::execution::execution_model::Execution;
 use crate::api::services::ExecutionServiceDyn;
 use crate::error::AppError;
-use tokenspan_utils::pagination::{AdditionalFields, Cursor};
+use tokenspan_extra::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct ExecutionQuery;

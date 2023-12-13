@@ -6,7 +6,7 @@ use crate::api::parameter::dto::ParameterArgs;
 use crate::api::parameter::parameter_model::Parameter;
 use crate::api::services::ParameterServiceDyn;
 use crate::error::AppError;
-use tokenspan_utils::pagination::{AdditionalFields, Cursor};
+use tokenspan_extra::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct ParameterQuery;

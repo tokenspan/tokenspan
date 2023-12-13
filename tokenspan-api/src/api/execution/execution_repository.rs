@@ -7,6 +7,7 @@ use crate::api::models::{Elapsed, ExecutionId, TaskId, TaskVersionId, UserId};
 use crate::repository::Repository;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ElapsedEntity {
     pub pre_elapsed: f64,
     pub elapsed: f64,
@@ -24,6 +25,7 @@ impl From<ElapsedEntity> for Elapsed {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ExecutionEntity {
     #[serde(rename = "_id")]
     pub id: ExecutionId,

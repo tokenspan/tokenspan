@@ -3,7 +3,7 @@ use std::sync::Arc;
 use async_graphql::Result;
 use axum::extract::FromRef;
 
-use tokenspan_utils::pagination::{Cursor, Pagination};
+use tokenspan_extra::pagination::{Cursor, Pagination};
 
 use crate::api::models::ParameterId;
 use crate::api::parameter::dto::{ParameterArgs, ParameterCreateInput, ParameterUpdateInput};

@@ -8,7 +8,7 @@ use crate::api::provider::provider_error::ProviderError;
 use crate::api::provider::provider_model::Provider;
 use crate::api::repositories::{ProviderCreateEntity, ProviderUpdateEntity};
 use crate::repository::RootRepository;
-use tokenspan_utils::pagination::{Cursor, Pagination};
+use tokenspan_extra::pagination::{Cursor, Pagination};
 
 #[async_trait::async_trait]
 pub trait ProviderServiceExt {

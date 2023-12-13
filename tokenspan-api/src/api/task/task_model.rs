@@ -6,8 +6,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tokenspan_extra::serialize_oid;
 
+use tokenspan_extra::pagination::{Cursor, CursorExt};
 use tokenspan_macros::ID;
-use tokenspan_utils::pagination::{Cursor, CursorExt};
 
 use crate::api::models::TaskVersion;
 use crate::api::services::TaskVersionServiceDyn;

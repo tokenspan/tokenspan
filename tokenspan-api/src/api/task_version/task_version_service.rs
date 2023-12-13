@@ -4,7 +4,7 @@ use async_graphql::Result;
 use bson::doc;
 use bson::oid::ObjectId;
 
-use tokenspan_utils::pagination::{Cursor, Pagination};
+use tokenspan_extra::pagination::{Cursor, Pagination};
 
 use crate::api::models::{TaskId, TaskVersionId, UserId};
 use crate::api::repositories::{

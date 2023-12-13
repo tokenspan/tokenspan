@@ -39,7 +39,7 @@ pub fn impl_tokenspan_id(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl From<#name> for tokenspan_utils::pagination::Cursor {
+        impl From<#name> for tokenspan_extra::pagination::Cursor {
             fn from(value: #name) -> Self {
                 Self::new(value.to_string())
             }

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use async_graphql::Result;
 use magic_crypt::{new_magic_crypt, MagicCrypt256, MagicCryptTrait};
 
-use tokenspan_utils::pagination::{Cursor, Pagination};
+use tokenspan_extra::pagination::{Cursor, Pagination};
 
 use crate::api::api_key::api_key_error::ApiKeyError;
 use crate::api::api_key::api_key_model::ApiKey;

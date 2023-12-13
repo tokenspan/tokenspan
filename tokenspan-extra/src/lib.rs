@@ -1,6 +1,8 @@
 use bson::oid::ObjectId;
 use serde::Serializer;
 
+pub mod pagination;
+
 pub fn serialize_oid<S: Serializer>(
     oid: impl Into<ObjectId>,
     serializer: S,

@@ -5,8 +5,8 @@ use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use tokenspan_extra::pagination::{Cursor, CursorExt};
 use tokenspan_macros::ID;
-use tokenspan_utils::pagination::{Cursor, CursorExt};
 
 #[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ProviderId(pub ObjectId);

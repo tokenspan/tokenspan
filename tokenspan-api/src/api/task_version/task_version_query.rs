@@ -6,7 +6,7 @@ use crate::api::services::TaskVersionServiceDyn;
 use crate::api::task_version::dto::TaskVersionArgs;
 use crate::api::task_version::task_version_model::TaskVersion;
 use crate::error::AppError;
-use tokenspan_utils::pagination::{AdditionalFields, Cursor};
+use tokenspan_extra::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct TaskVersionQuery;

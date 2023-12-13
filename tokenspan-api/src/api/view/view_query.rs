@@ -6,7 +6,7 @@ use crate::api::services::ViewServiceDyn;
 use crate::api::view::dto::ViewArgs;
 use crate::api::view::view_model::View;
 use crate::error::AppError;
-use tokenspan_utils::pagination::{AdditionalFields, Cursor};
+use tokenspan_extra::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct ViewQuery;
