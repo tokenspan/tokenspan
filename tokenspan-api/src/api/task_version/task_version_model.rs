@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use crate::api::models::TaskId;
 use crate::api::repositories::TaskVersionStatus;
 use crate::prompt::ChatMessage;
+use tokenspan_extra::pagination::{Cursor, CursorExt};
 use tokenspan_macros::ID;
-use tokenspan_utils::pagination::{Cursor, CursorExt};
 
 #[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct TaskVersionId(pub ObjectId);

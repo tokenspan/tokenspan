@@ -1,7 +1,7 @@
 use crate::api::models::TaskId;
 use crate::repository::PaginateArgs;
 use async_graphql::InputObject;
-use tokenspan_utils::pagination::Cursor;
+use tokenspan_extra::pagination::Cursor;
 
 #[derive(InputObject)]
 pub struct ExecutionArgs {

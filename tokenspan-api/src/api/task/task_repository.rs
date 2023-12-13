@@ -4,12 +4,13 @@ use chrono::{DateTime, Utc};
 use mongodb::error::{Error, Result};
 use serde::{Deserialize, Serialize};
 
-use tokenspan_utils::pagination::{Cursor, CursorExt, Pagination};
+use tokenspan_extra::pagination::{Cursor, CursorExt, Pagination};
 
 use crate::api::models::{TaskId, UserId};
 use crate::repository::{PaginateArgs, Repository};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TaskEntity {
     #[serde(rename = "_id")]
     pub id: TaskId,

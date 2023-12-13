@@ -5,12 +5,13 @@ use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use tokenspan_extra::pagination::{Cursor, CursorExt};
 use tokenspan_extra::serialize_oid;
 use tokenspan_macros::ID;
-use tokenspan_utils::pagination::{Cursor, CursorExt};
 
 use crate::api::execution::execution_type::Usage;
 use crate::api::models::{TaskVersionId, UserId};
+use crate::api::repositories::ExecutionEntity;
 use crate::api::types::{Endpoint, ExecutionStatus};
 
 #[derive(SimpleObject, Debug, Clone, Serialize)]
@@ -49,8 +50,8 @@ impl CursorExt<Cursor> for Execution {
     }
 }
 
-impl From<super::execution_repository::ExecutionEntity> for Execution {
-    fn from(value: super::execution_repository::ExecutionEntity) -> Self {
+impl From<ExecutionEntity> for Execution {
+    fn from(value: ExecutionEntity) -> Self {
         Self {
             id: value.id,
             task_version_id: value.task_version_id,

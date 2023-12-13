@@ -5,7 +5,7 @@ use mongodb::options::FindOptions;
 use mongodb::Client;
 use serde::de::DeserializeOwned;
 
-use tokenspan_utils::pagination::{Cursor, CursorExt, Pagination};
+use tokenspan_extra::pagination::{Cursor, CursorExt, Pagination};
 
 use crate::api::repositories::*;
 

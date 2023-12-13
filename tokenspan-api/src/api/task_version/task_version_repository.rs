@@ -23,6 +23,7 @@ pub enum TaskVersionStatus {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TaskVersionEntity {
     #[serde(rename = "_id")]
     pub id: ObjectId,

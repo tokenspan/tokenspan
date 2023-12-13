@@ -7,6 +7,7 @@ use mongodb::error::{Error, Result};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ProviderEntity {
     #[serde(rename = "_id")]
     pub id: ProviderId,

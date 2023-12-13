@@ -11,7 +11,7 @@ use axum::extract::FromRef;
 use serde_json::json;
 
 use crate::api::api_key::api_key_error::ApiKeyError;
-use tokenspan_utils::pagination::{Cursor, Pagination};
+use tokenspan_extra::pagination::{Cursor, Pagination};
 
 use crate::api::api_key_cache::ApiKeyCacheDyn;
 use crate::api::dto::{ElapsedInput, ExecutionCreateInput, TaskExecuteInput};
@@ -271,11 +271,7 @@ impl TaskServiceExt for TaskService {
         let pre_elapsed = start.elapsed();
 
         let start = Instant::now();
-        let messages: Vec<ChatMessage> = task_version
-            .messages
-            .into_iter()
-            .map(|message| message.into())
-            .collect();
+        let messages: Vec<ChatMessage> = task_version.messages;
         let response = self
             .chat_completion(&messages, parameter.clone(), api_key, model)
             .await;

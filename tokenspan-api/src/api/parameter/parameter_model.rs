@@ -6,9 +6,9 @@ use async_graphql::{ComplexObject, Context, Result, Scalar, ScalarType, SimpleOb
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use tokenspan_extra::pagination::{Cursor, CursorExt};
 use tokenspan_extra::serialize_oid;
 use tokenspan_macros::ID;
-use tokenspan_utils::pagination::{Cursor, CursorExt};
 
 use crate::api::model::model_error::ModelError;
 use crate::api::models::{Model, ModelId};

@@ -9,7 +9,7 @@ use crate::api::view::view_error::ViewError;
 use crate::api::view::view_model::View;
 
 use crate::repository::RootRepository;
-use tokenspan_utils::pagination::{Cursor, Pagination};
+use tokenspan_extra::pagination::{Cursor, Pagination};
 
 #[async_trait::async_trait]
 pub trait ViewServiceExt {

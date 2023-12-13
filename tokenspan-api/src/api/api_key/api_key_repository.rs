@@ -9,6 +9,7 @@ use crate::api::models::{ApiKeyId, ProviderId, UserId};
 use crate::repository::Repository;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ApiKeyEntity {
     #[serde(rename = "_id")]
     pub id: ApiKeyId,

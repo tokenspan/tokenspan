@@ -6,8 +6,8 @@ use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use tokenspan_extra::pagination::{Cursor, CursorExt};
 use tokenspan_macros::ID;
-use tokenspan_utils::pagination::{Cursor, CursorExt};
 
 use crate::api::models::{User, UserId};
 use crate::api::user::user_error::UserError;

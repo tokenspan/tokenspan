@@ -14,7 +14,7 @@ async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "su
 bson = { version = "2.0" }
 anyhow = "1.0.75"
 serde = { version = "1.0" }
-tokenspan-utils = { path = "../tokenspan-utils" }
+tokenspan-extra = { path = "../tokenspan-extra" }
 
 [lints]
 workspace = true

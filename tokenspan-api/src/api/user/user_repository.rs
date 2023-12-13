@@ -10,6 +10,7 @@ use crate::api::user::user_type::Role;
 use crate::repository::Repository;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UserEntity {
     #[serde(rename = "_id")]
     pub id: UserId,

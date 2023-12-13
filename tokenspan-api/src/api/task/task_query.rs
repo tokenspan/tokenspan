@@ -6,7 +6,7 @@ use crate::api::services::TaskServiceDyn;
 use crate::api::task::dto::TaskArgs;
 use crate::api::task::task_model::Task;
 use crate::error::AppError;
-use tokenspan_utils::pagination::{AdditionalFields, Cursor};
+use tokenspan_extra::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct TaskQuery;

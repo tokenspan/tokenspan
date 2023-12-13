@@ -12,6 +12,7 @@ use crate::api::models::{UserId, ViewId};
 use crate::repository::Repository;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ViewEntity {
     #[serde(rename = "_id")]
     pub id: ViewId,

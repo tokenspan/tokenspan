@@ -6,7 +6,7 @@ use crate::api::provider::dto::ProviderArgs;
 use crate::api::provider::provider_model::Provider;
 use crate::api::services::ProviderServiceDyn;
 use crate::error::AppError;
-use tokenspan_utils::pagination::{AdditionalFields, Cursor};
+use tokenspan_extra::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct ProviderQuery;
