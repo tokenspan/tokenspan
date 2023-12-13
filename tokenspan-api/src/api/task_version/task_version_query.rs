@@ -1,12 +1,13 @@
-use crate::api::models::TaskVersionId;
 use async_graphql::connection::Connection;
 use async_graphql::{Context, Object, Result};
 
+use tokenspan_extra::pagination::{AdditionalFields, Cursor};
+
+use crate::api::dto::TaskVersionBy;
 use crate::api::services::TaskVersionServiceDyn;
 use crate::api::task_version::dto::TaskVersionArgs;
 use crate::api::task_version::task_version_model::TaskVersion;
 use crate::error::AppError;
-use tokenspan_extra::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct TaskVersionQuery;
@@ -30,14 +31,32 @@ impl TaskVersionQuery {
     pub async fn task_version<'a>(
         &self,
         ctx: &Context<'a>,
-        id: TaskVersionId,
+        by: TaskVersionBy,
     ) -> Result<Option<TaskVersion>> {
         let task_version_service = ctx
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let task_version = task_version_service.get_task_version_by_id(id).await?;
+        match by {
+            TaskVersionBy::Id(id) => {
+                let task_version = task_version_service.get_task_version_by_id(id).await?;
 
-        Ok(task_version)
+                Ok(task_version)
+            }
+            TaskVersionBy::Version(version) => {
+                let task_version = task_version_service
+                    .get_task_version_by_version(version.task_id, version.version)
+                    .await?;
+
+                Ok(task_version)
+            }
+            TaskVersionBy::Latest(latest) => {
+                let task_version = task_version_service
+                    .get_latest_task_version_by_task_id(latest.task_id)
+                    .await?;
+
+                Ok(task_version)
+            }
+        }
     }
 }

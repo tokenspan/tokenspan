@@ -47,7 +47,7 @@ impl ExecutionServiceExt for ExecutionService {
             .execution
             .paginate_with_filter::<Execution>(
                 doc! {
-                    "task_id": task_id,
+                    "taskId": task_id,
                 },
                 args.into(),
             )

@@ -47,6 +47,8 @@ impl TaskMutation {
             description: None,
             document: None,
             messages: Vec::new(),
+            raw_messages: Vec::new(),
+            variables: Default::default(),
         };
         let created_task_version = task_version_service
             .create_task_version(create_task_version_input, &parsed_token.user_id)

@@ -8,6 +8,7 @@ use crate::api::models::{ModelId, ProviderId};
 use crate::repository::Repository;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PricingEntity {
     pub price: f64,
     pub tokens: u32,
@@ -15,6 +16,7 @@ pub struct PricingEntity {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ModelEntity {
     #[serde(rename = "_id")]
     pub id: ModelId,
@@ -86,11 +88,11 @@ impl Repository<ModelEntity> {
         };
         let update = doc! {
             "$set": {
-                "updated_at": Utc::now(),
+                "updatedAt": Utc::now(),
                 "name": doc.name,
                 "description": doc.description,
                 "context": doc.context,
-                "training_at": doc.training_at,
+                "trainingAt": doc.training_at,
             }
         };
 

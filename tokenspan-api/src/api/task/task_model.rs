@@ -31,15 +31,21 @@ impl Task {
     pub async fn version<'a>(
         &self,
         ctx: &Context<'a>,
-        version: String,
+        version: Option<String>,
     ) -> Result<Option<TaskVersion>> {
         let task_version_service = ctx
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        task_version_service
-            .get_task_version_by_version(version)
-            .await
+        if let Some(version) = version {
+            task_version_service
+                .get_task_version_by_version(self.id.clone(), version)
+                .await
+        } else {
+            task_version_service
+                .get_latest_task_version_by_task_id(self.id.clone())
+                .await
+        }
     }
 }
 

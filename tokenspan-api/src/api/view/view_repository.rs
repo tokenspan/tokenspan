@@ -75,7 +75,7 @@ impl Repository<ViewEntity> {
             "$set": {
                 "name": doc.name,
                 "config": config,
-                "updated_at": Utc::now(),
+                "updatedAt": Utc::now(),
             }
         };
 
@@ -86,7 +86,7 @@ impl Repository<ViewEntity> {
 
     pub async fn find_by_owner_id(&self, owner_id: UserId) -> Result<Vec<ViewEntity>> {
         let filter = doc! {
-            "owner_id": ObjectId::from(owner_id),
+            "ownerId": ObjectId::from(owner_id),
         };
 
         let cursor = self.collection.find(filter, None).await?;
