@@ -1,0 +1,15 @@
+task_versions:
+  - task:
+      slug: grammar-correction
+    owner:
+      username: wang_yu_meng
+    version: 0.0.0
+    release_note: ""
+    description: Convert ungrammatical statements into standard English.
+    document: ""
+    parameters: []
+    messages:
+      - role: SYSTEM
+        content: You will be provided with statements, and your task is to convert them to standard English.
+      - role: USER
+        content: {sentence}

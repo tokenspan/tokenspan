@@ -66,3 +66,23 @@ impl TryFrom<ChatMessage> for ChatCompletionRequestMessage {
         Ok(message)
     }
 }
+
+#[derive(Deserialize, Serialize, InputObject, Debug, Validate, Clone)]
+pub struct RawChatMessageInput {
+    role: PromptRole,
+    content: String,
+}
+
+impl From<RawChatMessageInput> for RawChatMessage {
+    fn from(value: RawChatMessageInput) -> Self {
+        Self {
+            content: value.content,
+            role: value.role,
+        }
+    }
+}
+#[derive(Deserialize, Serialize, SimpleObject, Debug, Validate, Clone)]
+pub struct RawChatMessage {
+    pub content: String,
+    pub role: PromptRole,
+}

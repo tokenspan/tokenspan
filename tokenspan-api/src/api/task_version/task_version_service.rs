@@ -15,7 +15,7 @@ use crate::api::task_version::dto::{
 };
 use crate::api::task_version::task_version_error::TaskVersionError;
 use crate::api::task_version::task_version_model::TaskVersion;
-use crate::prompt::ChatMessage;
+use crate::prompt::{ChatMessage, RawChatMessage};
 use crate::repository::RootRepository;
 
 #[async_trait::async_trait]
@@ -25,7 +25,15 @@ pub trait TaskVersionServiceExt {
         args: TaskVersionArgs,
     ) -> Result<Pagination<Cursor, TaskVersion>>;
     async fn get_task_version_by_id(&self, id: TaskVersionId) -> Result<Option<TaskVersion>>;
-    async fn get_task_version_by_version(&self, version: String) -> Result<Option<TaskVersion>>;
+    async fn get_task_version_by_version(
+        &self,
+        task_id: TaskId,
+        version: String,
+    ) -> Result<Option<TaskVersion>>;
+    async fn get_latest_task_version_by_task_id(
+        &self,
+        task_id: TaskId,
+    ) -> Result<Option<TaskVersion>>;
     async fn get_task_versions_by_ids(&self, ids: Vec<TaskVersionId>) -> Result<Vec<TaskVersion>>;
     async fn get_task_versions_by_task_id(&self, task_id: TaskId) -> Result<Vec<TaskVersion>>;
     async fn count_task_versions(&self) -> Result<u64>;
@@ -67,7 +75,7 @@ impl TaskVersionServiceExt for TaskVersionService {
             .task_version
             .paginate_with_filter::<TaskVersion>(
                 doc! {
-                    "task_id": task_id,
+                    "taskId": task_id,
                 },
                 args.into(),
             )
@@ -89,11 +97,30 @@ impl TaskVersionServiceExt for TaskVersionService {
         Ok(task_version)
     }
 
-    async fn get_task_version_by_version(&self, version: String) -> Result<Option<TaskVersion>> {
+    async fn get_task_version_by_version(
+        &self,
+        task_id: TaskId,
+        version: String,
+    ) -> Result<Option<TaskVersion>> {
         let task_version = self
             .repository
             .task_version
-            .find_by_version(version)
+            .find_by_version(task_id, version)
+            .await
+            .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?
+            .map(|task_version| task_version.into());
+
+        Ok(task_version)
+    }
+
+    async fn get_latest_task_version_by_task_id(
+        &self,
+        task_id: TaskId,
+    ) -> Result<Option<TaskVersion>> {
+        let task_version = self
+            .repository
+            .task_version
+            .find_latest(task_id)
             .await
             .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?
             .map(|task_version| task_version.into());
@@ -150,6 +177,11 @@ impl TaskVersionServiceExt for TaskVersionService {
             .into_iter()
             .map(|message| message.into())
             .collect();
+        let raw_messages = input
+            .raw_messages
+            .into_iter()
+            .map(|m| m.into())
+            .collect::<Vec<RawChatMessage>>();
         let created_task_version = self
             .repository
             .task_version
@@ -162,6 +194,8 @@ impl TaskVersionServiceExt for TaskVersionService {
                 document: input.document,
                 parameters: vec![],
                 messages,
+                raw_messages,
+                variables: input.variables,
                 status: TaskVersionStatus::Draft,
             })
             .await
@@ -189,6 +223,8 @@ impl TaskVersionServiceExt for TaskVersionService {
                     description: input.description,
                     document: input.document,
                     messages,
+                    raw_messages: input.raw_messages,
+                    variables: input.variables,
                 },
             )
             .await

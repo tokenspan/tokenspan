@@ -89,7 +89,7 @@ impl Repository<UserEntity> {
                     "$set": {
                         "email": doc.email,
                         "username": doc.username,
-                        "updated_at": Utc::now()
+                        "updatedAt": Utc::now()
                     }
                 },
                 None,

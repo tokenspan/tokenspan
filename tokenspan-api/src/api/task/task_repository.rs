@@ -70,7 +70,7 @@ impl Repository<TaskEntity> {
         };
         let update = doc! {
             "$set": {
-                "updated_at": Utc::now(),
+                "updatedAt": Utc::now(),
                 "name": doc.name,
                 "slug": doc.slug,
                 "private": doc.private,
@@ -89,7 +89,7 @@ impl Repository<TaskEntity> {
     ) -> Result<Pagination<Cursor, TNode>> {
         self.paginate_with_filter::<TNode>(
             doc! {
-                "owner_id": ObjectId::from(owner_id),
+                "ownerId": ObjectId::from(owner_id),
             },
             args,
         )

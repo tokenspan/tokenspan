@@ -57,7 +57,7 @@ impl Repository<ProviderEntity> {
         let update = doc! {
             "$set": {
                 "name": doc.name,
-                "updated_at": Utc::now(),
+                "updatedAt": Utc::now(),
             }
         };
 

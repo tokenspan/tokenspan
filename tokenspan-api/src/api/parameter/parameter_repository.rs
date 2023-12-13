@@ -92,13 +92,13 @@ impl Repository<ParameterEntity> {
             "$set": {
                 "name": doc.name,
                 "temperature": doc.temperature,
-                "max_tokens": doc.max_tokens,
-                "stop_sequences": doc.stop_sequences,
-                "top_p": doc.top_p,
-                "frequency_penalty": doc.frequency_penalty,
-                "presence_penalty": doc.presence_penalty,
+                "maxTokens": doc.max_tokens,
+                "stopSequences": doc.stop_sequences,
+                "topP": doc.top_p,
+                "frequencyPenalty": doc.frequency_penalty,
+                "presencePenalty": doc.presence_penalty,
                 "extra": extra,
-                "updated_at": Utc::now(),
+                "updatedAt": Utc::now(),
             }
         };
 

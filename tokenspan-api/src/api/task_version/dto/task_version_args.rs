@@ -1,8 +1,8 @@
-use async_graphql::InputObject;
+use async_graphql::{InputObject, OneofObject};
 
 use tokenspan_extra::pagination::Cursor;
 
-use crate::api::models::TaskId;
+use crate::api::models::{TaskId, TaskVersionId};
 use crate::repository::PaginateArgs;
 
 #[derive(InputObject)]
@@ -21,4 +21,22 @@ impl From<TaskVersionArgs> for PaginateArgs {
             after: args.after,
         }
     }
+}
+
+#[derive(InputObject)]
+pub struct TaskVersionByVersion {
+    pub task_id: TaskId,
+    pub version: String,
+}
+
+#[derive(InputObject)]
+pub struct TaskVersionByLatest {
+    pub task_id: TaskId,
+}
+
+#[derive(OneofObject)]
+pub enum TaskVersionBy {
+    Id(TaskVersionId),
+    Version(TaskVersionByVersion),
+    Latest(TaskVersionByLatest),
 }

@@ -1,8 +1,9 @@
-use crate::api::dto::ApiKeyArgs;
-use axum::extract::FromRef;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use axum::extract::FromRef;
+
+use crate::api::dto::ApiKeyArgs;
 use crate::api::models::ApiKeyId;
 use crate::api::services::ApiKeyServiceDyn;
 use crate::state::AppState;
