@@ -53,6 +53,7 @@ pub mod models {
 }
 
 pub mod types {
+    pub use super::execution::execution_type::*;
     pub use super::user::user_type::*;
 }
 
@@ -68,6 +69,8 @@ pub mod dto {
     pub use super::user::dto::*;
     pub use super::view::dto::*;
 }
+
+pub use api_key::api_key_cache;
 
 #[derive(MergedObject, Default)]
 pub struct QueryRoot(

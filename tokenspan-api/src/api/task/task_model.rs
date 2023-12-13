@@ -28,19 +28,6 @@ pub struct Task {
 
 #[ComplexObject]
 impl Task {
-    pub async fn versions<'a>(&self, ctx: &Context<'a>) -> Result<Vec<TaskVersion>> {
-        let task_version_service = ctx
-            .data::<TaskVersionServiceDyn>()
-            .map_err(|_| AppError::ContextExtractionError)?;
-
-        let task_versions = task_version_service
-            .get_task_versions_by_task_id(self.id.clone())
-            .await
-            .unwrap_or_default();
-
-        Ok(task_versions)
-    }
-
     pub async fn version<'a>(
         &self,
         ctx: &Context<'a>,

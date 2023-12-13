@@ -5,28 +5,40 @@ use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use tokenspan_extra::serialize_oid;
 use tokenspan_macros::ID;
 use tokenspan_utils::pagination::{Cursor, CursorExt};
 
-use crate::api::execution::execution_repository::{Endpoint, ExecutionStatus};
+use crate::api::execution::execution_type::Usage;
 use crate::api::models::{TaskVersionId, UserId};
+use crate::api::types::{Endpoint, ExecutionStatus};
+
+#[derive(SimpleObject, Debug, Clone, Serialize)]
+pub struct Elapsed {
+    pub pre_elapsed: f64,
+    pub elapsed: f64,
+    pub post_elapsed: f64,
+}
 
 #[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ExecutionId(pub ObjectId);
 
-#[derive(SimpleObject, Debug, Clone)]
+#[derive(SimpleObject, Debug, Clone, Serialize)]
 pub struct Execution {
+    #[serde(serialize_with = "serialize_oid")]
     pub id: ExecutionId,
+    #[serde(serialize_with = "serialize_oid")]
     pub task_version_id: TaskVersionId,
+    #[serde(serialize_with = "serialize_oid")]
     pub executed_by_id: UserId,
     pub endpoint: Endpoint,
-    pub elapsed_ms: u32,
+    pub elapsed: Elapsed,
     pub status: ExecutionStatus,
     pub messages: Vec<serde_json::Value>,
     pub parameter: serde_json::Value,
     pub output: Option<serde_json::Value>,
     pub error: Option<serde_json::Value>,
-    pub usage: Option<serde_json::Value>,
+    pub usage: Option<Usage>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -44,7 +56,7 @@ impl From<super::execution_repository::ExecutionEntity> for Execution {
             task_version_id: value.task_version_id,
             executed_by_id: value.executed_by_id,
             endpoint: value.endpoint,
-            elapsed_ms: value.elapsed_ms,
+            elapsed: value.elapsed.into(),
             status: value.status,
             messages: value.messages,
             parameter: value.parameter,

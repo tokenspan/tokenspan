@@ -5,7 +5,7 @@ use async_graphql::InputObject;
 pub struct ParameterCreateInput {
     pub name: String,
     pub temperature: f32,
-    pub max_tokens: u32,
+    pub max_tokens: u16,
     pub stop_sequences: Vec<String>,
     pub top_p: f32,
     pub frequency_penalty: f32,

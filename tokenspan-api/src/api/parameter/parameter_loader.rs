@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use async_graphql::dataloader::Loader;
 
@@ -9,7 +10,7 @@ use crate::loader::AppLoader;
 #[async_trait::async_trait]
 impl Loader<ParameterId> for AppLoader {
     type Value = Parameter;
-    type Error = ParameterError;
+    type Error = Arc<ParameterError>;
 
     async fn load(
         &self,
@@ -19,7 +20,7 @@ impl Loader<ParameterId> for AppLoader {
             .parameter_service
             .get_parameters_by_ids(keys.to_vec())
             .await
-            .map_err(|_| ParameterError::UnableToGetParameters)?
+            .map_err(|e| Arc::new(ParameterError::Unknown(anyhow::anyhow!(e.message))))?
             .into_iter()
             .map(|parameter| (parameter.id.clone(), parameter))
             .collect();

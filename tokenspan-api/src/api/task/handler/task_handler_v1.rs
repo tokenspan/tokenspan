@@ -1,20 +1,11 @@
-use std::convert::Infallible;
-
-use crate::api::dto::Role;
-use async_openai::config::OpenAIConfig;
-use async_openai::types::{
-    ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestSystemMessageArgs,
-    ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs,
-};
-use async_openai::Client;
 use axum::response::sse::EventExt;
-use axum::response::Sse;
+use axum::Json;
 use bytes::{Bytes, BytesMut};
-use futures::Stream;
-use futures_util::StreamExt;
 
+use crate::api::models::{Execution, ParsedToken};
 use crate::api::services::TaskServiceDyn;
 use crate::api::task::dto::TaskExecuteInput;
+use crate::api::task::task_error::TaskError;
 
 /// Server-sent event
 #[derive(Debug, Default, Clone)]
@@ -46,71 +37,15 @@ impl EventExt for TextEvent {
 }
 
 pub async fn execute_task_v1(
-    _task_service: TaskServiceDyn,
+    task_service: TaskServiceDyn,
     input: TaskExecuteInput,
-) -> Sse<impl Stream<Item = Result<TextEvent, Infallible>>, TextEvent> {
-    let messages = input
-        .messages
-        .into_iter()
-        .map(|message| match message.role {
-            Role::User => ChatCompletionRequestUserMessageArgs::default()
-                .content(message.content)
-                .build()
-                .unwrap()
-                .into(),
-            Role::System => ChatCompletionRequestSystemMessageArgs::default()
-                .content(message.content)
-                .build()
-                .unwrap()
-                .into(),
-            Role::Assistant => ChatCompletionRequestAssistantMessageArgs::default()
-                .content(message.content)
-                .build()
-                .unwrap()
-                .into(),
-        })
-        .collect::<Vec<_>>();
-
-    let request = CreateChatCompletionRequestArgs::default()
-        .model("gpt-3.5-turbo")
-        .max_tokens(512u16)
-        .messages(messages)
-        .build()
+    token: Option<ParsedToken>,
+) -> anyhow::Result<Json<Execution>, TaskError> {
+    let parsed_token = token.ok_or(TaskError::Unknown(anyhow::anyhow!("no token".to_string())))?;
+    let execution = task_service
+        .execute_task(input, parsed_token.user_id)
+        .await
         .unwrap();
 
-    let api_key = std::env::var("OPENAI_API_KEY").unwrap();
-    let config = OpenAIConfig::new().with_api_key(api_key);
-    let client = Client::with_config(config);
-    let mut stream = client.chat().create_stream(request).await.unwrap();
-    let stream = async_stream::stream! {
-        while let Some(response) = stream.next().await {
-            match response {
-                Ok(response) => {
-                    for choice in response.choices {
-                        if let Some(ref content) = choice.delta.content {
-                            yield Ok(TextEvent::default().data(content));
-                        }
-                    }
-                }
-                Err(err) => {
-                    yield Ok(TextEvent::default().data(format!("Error: {:?}", err)));
-                }
-            }
-        }
-    };
-
-    // let stream = async_stream::stream! {
-    //     let mut interval = tokio::time::interval(Duration::from_secs(1));
-    //     let mut count = 0;
-    //     loop {
-    //         interval.tick().await;
-    //         yield Ok(TextEvent::default().data("hi".to_string()));
-    //         count += 1;
-    //         if count == 5 {
-    //             break;
-    //         }
-    //     }
-    // };
-
-    Sse::new(stream)
+    Ok(Json(execution))
 }

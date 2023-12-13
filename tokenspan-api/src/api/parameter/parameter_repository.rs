@@ -8,11 +8,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ParameterEntity {
+    #[serde(rename = "_id")]
     pub id: ParameterId,
     pub model_id: ModelId,
     pub name: String,
     pub temperature: f32,
-    pub max_tokens: u32,
+    pub max_tokens: u16,
     pub stop_sequences: Vec<String>,
     pub top_p: f32,
     pub frequency_penalty: f32,
@@ -27,7 +28,7 @@ pub struct ParameterCreateEntity {
     pub model_id: ModelId,
     pub name: String,
     pub temperature: f32,
-    pub max_tokens: u32,
+    pub max_tokens: u16,
     pub stop_sequences: Vec<String>,
     pub top_p: f32,
     pub frequency_penalty: f32,

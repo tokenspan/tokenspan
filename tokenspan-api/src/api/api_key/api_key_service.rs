@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use async_graphql::Result;
-use magic_crypt::{new_magic_crypt, MagicCryptTrait};
+use magic_crypt::{new_magic_crypt, MagicCrypt256, MagicCryptTrait};
 
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
@@ -15,6 +15,7 @@ use crate::repository::RootRepository;
 
 #[async_trait::async_trait]
 pub trait ApiKeyServiceExt {
+    fn decrypt(&self, key: String) -> String;
     async fn get_api_keys(&self, args: ApiKeyArgs) -> Result<Pagination<Cursor, ApiKey>>;
     async fn get_api_key_by_id(&self, id: ApiKeyId) -> Result<Option<ApiKey>>;
     async fn get_api_keys_by_ids(&self, ids: Vec<ApiKeyId>) -> Result<Vec<ApiKey>>;
@@ -32,17 +33,16 @@ pub type ApiKeyServiceDyn = Arc<dyn ApiKeyServiceExt + Send + Sync>;
 
 pub struct ApiKeyService {
     repository: Arc<RootRepository>,
-    encryption_config: EncryptionConfig,
+    mc: MagicCrypt256,
 }
 
 impl ApiKeyService {
-    const HINT_SIZE: usize = 4;
-    
+    const HINT_SIZE: usize = 3;
+
     pub fn new(repository: Arc<RootRepository>, encryption_config: EncryptionConfig) -> Self {
-        Self {
-            repository,
-            encryption_config,
-        }
+        let mc = new_magic_crypt!(encryption_config.secret.clone(), 256);
+
+        Self { repository, mc }
     }
 
     fn create_hint(&self, key: String) -> String {
@@ -55,17 +55,25 @@ impl ApiKeyService {
         hint.push_str(key_last);
         hint
     }
+
+    pub fn encrypt(&self, key: String) -> String {
+        self.mc.encrypt_str_to_base64(key.as_str())
+    }
 }
 
 #[async_trait::async_trait]
 impl ApiKeyServiceExt for ApiKeyService {
+    fn decrypt(&self, key: String) -> String {
+        self.mc.decrypt_base64_to_string(key.as_str()).unwrap()
+    }
+
     async fn get_api_keys(&self, args: ApiKeyArgs) -> Result<Pagination<Cursor, ApiKey>> {
         let paginated = self
             .repository
             .api_key
             .paginate::<ApiKey>(args.into())
             .await
-            .map_err(|_| ApiKeyError::UnableToGetApiKeys)?;
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(paginated)
     }
@@ -76,7 +84,7 @@ impl ApiKeyServiceExt for ApiKeyService {
             .api_key
             .find_by_id(id)
             .await
-            .map_err(|_| ApiKeyError::UnableToGetApiKey)?
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
             .map(|api_key| api_key.into());
 
         Ok(api_key)
@@ -88,7 +96,7 @@ impl ApiKeyServiceExt for ApiKeyService {
             .api_key
             .find_many_by_ids(ids)
             .await
-            .map_err(|_| ApiKeyError::UnableToGetApiKeys)?
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
             .map(|api_key| api_key.into())
             .collect();
@@ -102,14 +110,13 @@ impl ApiKeyServiceExt for ApiKeyService {
             .api_key
             .count()
             .await
-            .map_err(|_| ApiKeyError::UnableToCountApiKeys)?;
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(count)
     }
 
     async fn create_api_key(&self, input: ApiKeyCreateInput, owner_id: UserId) -> Result<ApiKey> {
-        let mc = new_magic_crypt!(self.encryption_config.secret.clone(), 256);
-        let encrypted_key = mc.encrypt_str_to_base64(input.key.as_str());
+        let encrypted_key = self.encrypt(input.key.clone());
         let hint = self.create_hint(input.key);
 
         let created_api_key = self
@@ -123,7 +130,7 @@ impl ApiKeyServiceExt for ApiKeyService {
                 hint,
             })
             .await
-            .map_err(|_| ApiKeyError::UnableToCreateApiKey)?;
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(created_api_key.into())
     }
@@ -138,7 +145,7 @@ impl ApiKeyServiceExt for ApiKeyService {
             .api_key
             .update_by_id(id, ApiKeyUpdateEntity { name: input.name })
             .await
-            .map_err(|_| ApiKeyError::UnableToUpdateApiKey)?
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
             .map(|api_key| api_key.into());
 
         Ok(updated_api_key)
@@ -150,7 +157,7 @@ impl ApiKeyServiceExt for ApiKeyService {
             .api_key
             .delete_by_id(id)
             .await
-            .map_err(|_| ApiKeyError::UnableToDeleteApiKey)?
+            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
             .map(|api_key| api_key.into());
 
         Ok(deleted_api_key)

@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
 use async_graphql::Result;
+use bson::doc;
+use bson::oid::ObjectId;
 
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
@@ -13,6 +15,7 @@ use crate::api::task_version::dto::{
 };
 use crate::api::task_version::task_version_error::TaskVersionError;
 use crate::api::task_version::task_version_model::TaskVersion;
+use crate::prompt::ChatMessage;
 use crate::repository::RootRepository;
 
 #[async_trait::async_trait]
@@ -58,12 +61,18 @@ impl TaskVersionServiceExt for TaskVersionService {
         &self,
         args: TaskVersionArgs,
     ) -> Result<Pagination<Cursor, TaskVersion>> {
+        let task_id = ObjectId::from(args.task_id.clone());
         let paginated = self
             .repository
             .task_version
-            .paginate::<TaskVersion>(args.into())
+            .paginate_with_filter::<TaskVersion>(
+                doc! {
+                    "task_id": task_id,
+                },
+                args.into(),
+            )
             .await
-            .map_err(|_| TaskVersionError::UnableToCountTaskVersions)?;
+            .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(paginated)
     }
@@ -74,7 +83,7 @@ impl TaskVersionServiceExt for TaskVersionService {
             .task_version
             .find_by_id(id)
             .await
-            .map_err(|_| TaskVersionError::UnableToGetTaskVersion)?
+            .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?
             .map(|task_version| task_version.into());
 
         Ok(task_version)
@@ -86,7 +95,7 @@ impl TaskVersionServiceExt for TaskVersionService {
             .task_version
             .find_by_version(version)
             .await
-            .map_err(|_| TaskVersionError::UnableToGetTaskVersion)?
+            .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?
             .map(|task_version| task_version.into());
 
         Ok(task_version)
@@ -98,7 +107,7 @@ impl TaskVersionServiceExt for TaskVersionService {
             .task_version
             .find_many_by_ids(ids)
             .await
-            .map_err(|_| TaskVersionError::UnableToGetTaskVersions)?
+            .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
             .map(|task_version| task_version.into())
             .collect();
@@ -112,7 +121,7 @@ impl TaskVersionServiceExt for TaskVersionService {
             .task_version
             .find_by_task_id(task_id)
             .await
-            .map_err(|_| TaskVersionError::UnableToGetTaskVersions)?
+            .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
             .map(|task_version| task_version.into())
             .collect();
@@ -126,7 +135,7 @@ impl TaskVersionServiceExt for TaskVersionService {
             .task_version
             .count()
             .await
-            .map_err(|_| TaskVersionError::UnableToCountTaskVersions)?;
+            .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(count)
     }
@@ -136,6 +145,11 @@ impl TaskVersionServiceExt for TaskVersionService {
         input: TaskVersionCreateInput,
         owner: &UserId,
     ) -> Result<TaskVersion> {
+        let messages = input
+            .messages
+            .into_iter()
+            .map(|message| message.into())
+            .collect();
         let created_task_version = self
             .repository
             .task_version
@@ -147,11 +161,11 @@ impl TaskVersionServiceExt for TaskVersionService {
                 description: input.description,
                 document: input.document,
                 parameters: vec![],
-                messages: input.messages,
+                messages,
                 status: TaskVersionStatus::Draft,
             })
             .await
-            .map_err(|_| TaskVersionError::UnableToCreateTaskVersion)?;
+            .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(created_task_version.into())
     }
@@ -161,6 +175,9 @@ impl TaskVersionServiceExt for TaskVersionService {
         id: TaskVersionId,
         input: TaskVersionUpdateInput,
     ) -> Result<Option<TaskVersion>> {
+        let messages: Option<Vec<ChatMessage>> = input
+            .messages
+            .map(|messages| messages.into_iter().map(|message| message.into()).collect());
         let updated_task_version = self
             .repository
             .task_version
@@ -171,11 +188,11 @@ impl TaskVersionServiceExt for TaskVersionService {
                     release_note: input.release_note,
                     description: input.description,
                     document: input.document,
-                    messages: input.messages,
+                    messages,
                 },
             )
             .await
-            .map_err(|_| TaskVersionError::UnableToUpdateTaskVersion)?
+            .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?
             .map(|task_version| task_version.into());
 
         Ok(updated_task_version)
@@ -187,7 +204,7 @@ impl TaskVersionServiceExt for TaskVersionService {
             .task_version
             .delete_by_id(id)
             .await
-            .map_err(|_| TaskVersionError::UnableToDeleteTaskVersion)?
+            .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?
             .map(|task_version| task_version.into());
 
         Ok(deleted_task_version)

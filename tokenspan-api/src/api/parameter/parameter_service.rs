@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use async_graphql::Result;
+use axum::extract::FromRef;
 
 use tokenspan_utils::pagination::{Cursor, Pagination};
 
@@ -10,6 +11,7 @@ use crate::api::parameter::parameter_error::ParameterError;
 use crate::api::parameter::parameter_model::Parameter;
 use crate::api::repositories::{ParameterCreateEntity, ParameterUpdateEntity};
 use crate::repository::RootRepository;
+use crate::state::AppState;
 
 #[async_trait::async_trait]
 pub trait ParameterServiceExt {
@@ -27,6 +29,12 @@ pub trait ParameterServiceExt {
 }
 
 pub type ParameterServiceDyn = Arc<dyn ParameterServiceExt + Send + Sync>;
+
+impl FromRef<AppState> for ParameterServiceDyn {
+    fn from_ref(input: &AppState) -> Self {
+        input.parameter_service.clone()
+    }
+}
 
 pub struct ParameterService {
     repository: Arc<RootRepository>,
@@ -46,7 +54,7 @@ impl ParameterServiceExt for ParameterService {
             .parameter
             .paginate::<Parameter>(args.into())
             .await
-            .map_err(|_| ParameterError::UnableToGetParameters)?;
+            .map_err(|e| ParameterError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(paginated)
     }
@@ -57,7 +65,7 @@ impl ParameterServiceExt for ParameterService {
             .parameter
             .find_by_id(id)
             .await
-            .map_err(|_| ParameterError::UnableToGetParameter)?
+            .map_err(|e| ParameterError::Unknown(anyhow::anyhow!(e)))?
             .map(|parameter| parameter.into());
 
         Ok(parameter)
@@ -69,7 +77,7 @@ impl ParameterServiceExt for ParameterService {
             .parameter
             .find_many_by_ids(ids)
             .await
-            .map_err(|_| ParameterError::UnableToGetParameters)?
+            .map_err(|e| ParameterError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
             .map(|parameter| parameter.into())
             .collect();
@@ -83,7 +91,7 @@ impl ParameterServiceExt for ParameterService {
             .parameter
             .count()
             .await
-            .map_err(|_| ParameterError::UnableToCountParameters)?;
+            .map_err(|e| ParameterError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(count)
     }
@@ -104,7 +112,7 @@ impl ParameterServiceExt for ParameterService {
                 extra: input.extra,
             })
             .await
-            .map_err(|_| ParameterError::UnableToCreateParameter)?;
+            .map_err(|e| ParameterError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(created_parameter.into())
     }
@@ -131,7 +139,7 @@ impl ParameterServiceExt for ParameterService {
                 },
             )
             .await
-            .map_err(|_| ParameterError::UnableToUpdateParameter)?
+            .map_err(|e| ParameterError::Unknown(anyhow::anyhow!(e)))?
             .map(|parameter| parameter.into());
 
         Ok(updated_parameter)
@@ -143,7 +151,7 @@ impl ParameterServiceExt for ParameterService {
             .parameter
             .delete_by_id(id)
             .await
-            .map_err(|_| ParameterError::UnableToDeleteParameter)?
+            .map_err(|e| ParameterError::Unknown(anyhow::anyhow!(e)))?
             .map(|parameter| parameter.into());
 
         Ok(deleted_parameter)

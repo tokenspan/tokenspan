@@ -1,6 +1,10 @@
 use std::sync::Arc;
 
 use async_graphql::Result;
+use bson::doc;
+use bson::oid::ObjectId;
+
+use tokenspan_utils::pagination::{Cursor, Pagination};
 
 use crate::api::execution::dto::{ExecutionArgs, ExecutionCreateInput};
 use crate::api::execution::execution_error::ExecutionError;
@@ -8,7 +12,6 @@ use crate::api::execution::execution_model::Execution;
 use crate::api::models::{ExecutionId, UserId};
 use crate::api::repositories::ExecutionCreateEntity;
 use crate::repository::RootRepository;
-use tokenspan_utils::pagination::{Cursor, Pagination};
 
 #[async_trait::async_trait]
 pub trait ExecutionServiceExt {
@@ -38,12 +41,18 @@ impl ExecutionService {
 #[async_trait::async_trait]
 impl ExecutionServiceExt for ExecutionService {
     async fn get_executions(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>> {
+        let task_id = ObjectId::from(args.task_id.clone());
         let paginated = self
             .repository
             .execution
-            .paginate::<Execution>(args.into())
+            .paginate_with_filter::<Execution>(
+                doc! {
+                    "task_id": task_id,
+                },
+                args.into(),
+            )
             .await
-            .map_err(|_| ExecutionError::UnableToGetExecutions)?;
+            .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(paginated)
     }
@@ -54,7 +63,7 @@ impl ExecutionServiceExt for ExecutionService {
             .execution
             .find_by_id(id)
             .await
-            .map_err(|_| ExecutionError::UnableToGetExecution)?
+            .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?
             .map(|execution| execution.into());
 
         Ok(execution)
@@ -66,7 +75,7 @@ impl ExecutionServiceExt for ExecutionService {
             .execution
             .find_many_by_ids(ids)
             .await
-            .map_err(|_| ExecutionError::UnableToGetExecutions)?
+            .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
             .map(|execution| execution.into())
             .collect();
@@ -84,7 +93,7 @@ impl ExecutionServiceExt for ExecutionService {
             .execution
             .create(ExecutionCreateEntity {
                 endpoint: input.endpoint,
-                elapsed_ms: input.elapsed_ms,
+                elapsed: input.elapsed.into(),
                 status: input.status,
                 messages: input.messages,
                 parameter: input.parameter,
@@ -96,7 +105,7 @@ impl ExecutionServiceExt for ExecutionService {
                 executed_by_id,
             })
             .await
-            .map_err(|_| ExecutionError::UnableToCreateExecution)?;
+            .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(created_execution.into())
     }
@@ -107,7 +116,7 @@ impl ExecutionServiceExt for ExecutionService {
             .execution
             .delete_by_id(id)
             .await
-            .map_err(|_| ExecutionError::UnableToDeleteExecution)?
+            .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?
             .map(|execution| execution.into());
 
         Ok(deleted_execution)

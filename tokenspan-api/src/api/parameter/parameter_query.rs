@@ -16,7 +16,7 @@ impl ParameterQuery {
     pub async fn parameters<'a>(
         &self,
         ctx: &Context<'a>,
-        args: ParameterArgs,
+        #[graphql(default)] args: ParameterArgs,
     ) -> Result<Connection<Cursor, Parameter, AdditionalFields>> {
         let parameter_service = ctx
             .data::<ParameterServiceDyn>()

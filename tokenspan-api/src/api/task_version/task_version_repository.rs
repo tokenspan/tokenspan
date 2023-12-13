@@ -1,4 +1,4 @@
-use async_graphql::{InputValueError, InputValueResult, Scalar, ScalarType, Value};
+use async_graphql::Enum;
 use bson::doc;
 use bson::oid::ObjectId;
 use bson::serde_helpers::chrono_datetime_as_bson_datetime;
@@ -6,49 +6,20 @@ use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use mongodb::error::{Error, Result};
 use serde::{Deserialize, Serialize};
-use std::fmt::Display;
 
 use crate::api::models::{TaskId, TaskVersionId, UserId};
+use crate::api::repositories::ParameterEntity;
+use crate::prompt::ChatMessage;
 use crate::repository::Repository;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Deserialize, Serialize, Enum, Debug, Copy, Clone, Eq, PartialEq)]
 pub enum TaskVersionStatus {
+    #[serde(rename = "DRAFT")]
     Draft,
+    #[serde(rename = "PUBLISHED")]
     Published,
+    #[serde(rename = "ARCHIVED")]
     Archived,
-}
-
-impl Display for TaskVersionStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let str = match self {
-            Self::Draft => "Draft".to_string(),
-            Self::Published => "Published".to_string(),
-            Self::Archived => "Archived".to_string(),
-        };
-        write!(f, "{}", str)
-    }
-}
-
-#[Scalar]
-impl ScalarType for TaskVersionStatus {
-    fn parse(value: Value) -> InputValueResult<Self> {
-        if let Value::String(value) = value {
-            let value = match value.as_str() {
-                "Draft" => Self::Draft,
-                "Archived" => Self::Archived,
-                "Published" => Self::Published,
-                _ => return Err(InputValueError::custom("invalid execution status")),
-            };
-
-            Ok(value)
-        } else {
-            Err(InputValueError::expected_type(value))
-        }
-    }
-
-    fn to_value(&self) -> Value {
-        Value::String(self.to_string())
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -61,8 +32,8 @@ pub struct TaskVersionEntity {
     pub release_note: Option<String>,
     pub description: Option<String>,
     pub document: Option<String>,
-    pub parameters: Vec<serde_json::Value>,
-    pub messages: Vec<serde_json::Value>,
+    pub parameters: Vec<ParameterEntity>,
+    pub messages: Vec<ChatMessage>,
     pub status: TaskVersionStatus,
     pub release_at: Option<DateTime<Utc>>,
     #[serde(with = "chrono_datetime_as_bson_datetime")]
@@ -79,8 +50,8 @@ pub struct TaskVersionCreateEntity {
     pub release_note: Option<String>,
     pub description: Option<String>,
     pub document: Option<String>,
-    pub parameters: Vec<serde_json::Value>,
-    pub messages: Vec<serde_json::Value>,
+    pub parameters: Vec<ParameterEntity>,
+    pub messages: Vec<ChatMessage>,
     pub status: TaskVersionStatus,
 }
 
@@ -89,7 +60,7 @@ pub struct TaskVersionUpdateEntity {
     pub release_note: Option<String>,
     pub description: Option<String>,
     pub document: Option<String>,
-    pub messages: Option<Vec<serde_json::Value>>,
+    pub messages: Option<Vec<ChatMessage>>,
     pub status: Option<TaskVersionStatus>,
 }
 

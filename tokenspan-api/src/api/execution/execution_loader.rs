@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use async_graphql::dataloader::Loader;
 
@@ -9,7 +10,7 @@ use crate::loader::AppLoader;
 #[async_trait::async_trait]
 impl Loader<ExecutionId> for AppLoader {
     type Value = Execution;
-    type Error = ExecutionError;
+    type Error = Arc<ExecutionError>;
 
     async fn load(
         &self,
@@ -19,7 +20,7 @@ impl Loader<ExecutionId> for AppLoader {
             .execution_service
             .get_executions_by_ids(keys.to_vec())
             .await
-            .map_err(|_| ExecutionError::UnableToGetExecutions)?
+            .map_err(|e| Arc::new(ExecutionError::Unknown(anyhow::anyhow!(e.message))))?
             .into_iter()
             .map(|execution| (execution.id.clone(), execution))
             .collect();

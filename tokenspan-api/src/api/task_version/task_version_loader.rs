@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use async_graphql::dataloader::Loader;
 
@@ -9,7 +10,7 @@ use crate::loader::AppLoader;
 #[async_trait::async_trait]
 impl Loader<TaskVersionId> for AppLoader {
     type Value = TaskVersion;
-    type Error = TaskVersionError;
+    type Error = Arc<TaskVersionError>;
 
     async fn load(
         &self,
@@ -19,7 +20,7 @@ impl Loader<TaskVersionId> for AppLoader {
             .task_version_service
             .get_task_versions_by_ids(keys.to_vec())
             .await
-            .map_err(|_| TaskVersionError::UnableToGetTaskVersions)?
+            .map_err(|e| Arc::new(TaskVersionError::Unknown(anyhow::anyhow!(e.message))))?
             .into_iter()
             .map(|task_version| (task_version.id.clone(), task_version))
             .collect();
