@@ -1,17 +1,16 @@
-use bson::oid::ObjectId;
-use std::fmt::Display;
-
 use async_graphql::dataloader::DataLoader;
-use async_graphql::{ComplexObject, Context, Result, Scalar, ScalarType, SimpleObject};
+use async_graphql::{ComplexObject, Context, SimpleObject};
+use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use tokenspan_extra::pagination::{Cursor, CursorExt};
 use tokenspan_extra::serialize_oid;
 use tokenspan_macros::ID;
 
+use crate::api::dto::ParameterInput;
 use crate::api::model::model_error::ModelError;
 use crate::api::models::{Model, ModelId};
+use crate::api::repositories::ParameterEntity;
 use crate::error::AppError;
 use crate::loader::AppLoader;
 
@@ -21,7 +20,6 @@ pub struct ParameterId(pub ObjectId);
 #[derive(SimpleObject, Debug, Clone, Serialize, Deserialize)]
 #[graphql(complex)]
 pub struct Parameter {
-    #[serde(serialize_with = "serialize_oid")]
     pub id: ParameterId,
     pub name: String,
     pub temperature: f32,
@@ -39,7 +37,7 @@ pub struct Parameter {
 
 #[ComplexObject]
 impl Parameter {
-    pub async fn model<'a>(&self, ctx: &Context<'a>) -> Result<Option<Model>> {
+    pub async fn model<'a>(&self, ctx: &Context<'a>) -> async_graphql::Result<Option<Model>> {
         let app_loader = ctx
             .data::<DataLoader<AppLoader>>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -53,16 +51,29 @@ impl Parameter {
     }
 }
 
-impl CursorExt<Cursor> for Parameter {
-    fn cursor(&self) -> Cursor {
-        self.id.clone().into()
+impl From<ParameterInput> for Parameter {
+    fn from(value: ParameterInput) -> Self {
+        Self {
+            id: ParameterId::new(),
+            name: value.name,
+            temperature: value.temperature,
+            max_tokens: value.max_tokens,
+            stop_sequences: value.stop_sequences,
+            top_p: value.top_p,
+            frequency_penalty: value.frequency_penalty,
+            presence_penalty: value.presence_penalty,
+            extra: value.extra,
+            model_id: value.model_id,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
     }
 }
 
-impl From<super::parameter_repository::ParameterEntity> for Parameter {
-    fn from(value: super::parameter_repository::ParameterEntity) -> Self {
+impl From<ParameterEntity> for Parameter {
+    fn from(value: ParameterEntity) -> Self {
         Self {
-            id: value.id,
+            id: ParameterId::from(value.id),
             name: value.name,
             temperature: value.temperature,
             max_tokens: value.max_tokens,

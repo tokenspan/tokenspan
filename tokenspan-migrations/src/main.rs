@@ -169,7 +169,7 @@ async fn migrate_models(
         let model_name = model.name.clone();
         let result = app_state
             .model_service
-            .get_model_by_name(model_name.clone())
+            .find_by_name(model_name.clone())
             .await
             .unwrap();
 
@@ -178,7 +178,7 @@ async fn migrate_models(
         } else {
             let model = app_state
                 .model_service
-                .create_model(ModelCreateInput {
+                .create(ModelCreateInput {
                     provider_id: provider.id.clone(),
                     name: model.name,
                     description: model.description,

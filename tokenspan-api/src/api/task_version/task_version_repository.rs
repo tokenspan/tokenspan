@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fmt::Display;
 
 use async_graphql::Enum;
@@ -11,10 +10,48 @@ use mongodb::error::{Error, Result};
 use mongodb::options::FindOneOptions;
 use serde::{Deserialize, Serialize};
 
-use crate::api::models::{TaskId, TaskVersionId, UserId};
-use crate::api::repositories::ParameterEntity;
-use crate::prompt::{ChatMessage, RawChatMessage};
+use crate::api::models::{ModelId, Parameter, ParameterId, TaskId, TaskVersionId, UserId};
+use crate::prompt::ChatMessage;
 use crate::repository::Repository;
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ParameterEntity {
+    #[serde(rename = "_id")]
+    pub id: ParameterId,
+    pub name: String,
+    pub temperature: f32,
+    pub max_tokens: u16,
+    pub stop_sequences: Vec<String>,
+    pub top_p: f32,
+    pub frequency_penalty: f32,
+    pub presence_penalty: f32,
+    pub extra: Option<serde_json::Value>,
+    pub model_id: ModelId,
+    #[serde(with = "chrono_datetime_as_bson_datetime")]
+    pub created_at: DateTime<Utc>,
+    #[serde(with = "chrono_datetime_as_bson_datetime")]
+    pub updated_at: DateTime<Utc>,
+}
+
+impl From<Parameter> for ParameterEntity {
+    fn from(value: Parameter) -> Self {
+        Self {
+            id: value.id,
+            name: value.name,
+            temperature: value.temperature,
+            max_tokens: value.max_tokens,
+            stop_sequences: value.stop_sequences,
+            top_p: value.top_p,
+            frequency_penalty: value.frequency_penalty,
+            presence_penalty: value.presence_penalty,
+            extra: value.extra,
+            model_id: value.model_id,
+            created_at: value.created_at,
+            updated_at: value.updated_at,
+        }
+    }
+}
 
 #[derive(Deserialize, Serialize, Enum, Debug, Copy, Clone, Eq, PartialEq)]
 pub enum TaskVersionStatus {
@@ -55,8 +92,6 @@ pub struct TaskVersionEntity {
     pub document: Option<String>,
     pub parameters: Vec<ParameterEntity>,
     pub messages: Vec<ChatMessage>,
-    pub raw_messages: Vec<RawChatMessage>,
-    pub variables: HashMap<String, String>,
     pub status: TaskVersionStatus,
     pub release_at: Option<DateTime<Utc>>,
     #[serde(with = "chrono_datetime_as_bson_datetime")]
@@ -73,10 +108,8 @@ pub struct TaskVersionCreateEntity {
     pub release_note: Option<String>,
     pub description: Option<String>,
     pub document: Option<String>,
-    pub parameters: Vec<ParameterEntity>,
+    pub parameters: Vec<Parameter>,
     pub messages: Vec<ChatMessage>,
-    pub raw_messages: Vec<RawChatMessage>,
-    pub variables: HashMap<String, String>,
     pub status: TaskVersionStatus,
 }
 
@@ -86,13 +119,17 @@ pub struct TaskVersionUpdateEntity {
     pub description: Option<String>,
     pub document: Option<String>,
     pub messages: Option<Vec<ChatMessage>>,
-    pub raw_messages: Option<Vec<String>>,
-    pub variables: HashMap<String, String>,
+    pub parameters: Vec<Parameter>,
     pub status: Option<TaskVersionStatus>,
 }
 
 impl Repository<TaskVersionEntity> {
     pub async fn create(&self, doc: TaskVersionCreateEntity) -> Result<TaskVersionEntity> {
+        let parameters = doc
+            .parameters
+            .into_iter()
+            .map(|parameter| parameter.into())
+            .collect();
         let doc = TaskVersionEntity {
             id: ObjectId::new(),
             task_id: doc.task_id,
@@ -101,10 +138,8 @@ impl Repository<TaskVersionEntity> {
             release_note: doc.release_note,
             description: doc.description,
             document: doc.document,
-            parameters: doc.parameters,
+            parameters,
             messages: doc.messages,
-            raw_messages: doc.raw_messages,
-            variables: doc.variables,
             status: doc.status,
             release_at: None,
             created_at: Utc::now(),
@@ -134,6 +169,8 @@ impl Repository<TaskVersionEntity> {
             .messages
             .and_then(|config| bson::ser::to_bson(&config).ok());
 
+        let parameters = bson::ser::to_bson(&doc.parameters).map_err(|e| Error::custom(e))?;
+
         let update = doc! {
             "$set": {
                 "updatedAt": Utc::now(),
@@ -141,7 +178,8 @@ impl Repository<TaskVersionEntity> {
                 "description": doc.description,
                 "document": doc.document,
                 "messages": messages,
-                // "status": doc.status,
+                "parameters": parameters,
+                "status": doc.status,
             }
         };
 

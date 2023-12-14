@@ -1,12 +1,14 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_graphql::Result;
 use bson::doc;
 use bson::oid::ObjectId;
 
+use crate::api::dto::{ParameterInput, ParameterInputBy};
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
-use crate::api::models::{TaskId, TaskVersionId, UserId};
+use crate::api::models::{Parameter, ParameterId, TaskId, TaskVersion, TaskVersionId, UserId};
 use crate::api::repositories::{
     TaskVersionCreateEntity, TaskVersionStatus, TaskVersionUpdateEntity,
 };
@@ -14,41 +16,30 @@ use crate::api::task_version::dto::{
     TaskVersionArgs, TaskVersionCreateInput, TaskVersionUpdateInput,
 };
 use crate::api::task_version::task_version_error::TaskVersionError;
-use crate::api::task_version::task_version_model::TaskVersion;
-use crate::prompt::{ChatMessage, RawChatMessage};
+use crate::prompt::ChatMessage;
 use crate::repository::RootRepository;
 
 #[async_trait::async_trait]
 pub trait TaskVersionServiceExt {
-    async fn get_task_versions(
-        &self,
-        args: TaskVersionArgs,
-    ) -> Result<Pagination<Cursor, TaskVersion>>;
-    async fn get_task_version_by_id(&self, id: TaskVersionId) -> Result<Option<TaskVersion>>;
-    async fn get_task_version_by_version(
+    async fn paginate(&self, args: TaskVersionArgs) -> Result<Pagination<Cursor, TaskVersion>>;
+    async fn find_by_id(&self, id: TaskVersionId) -> Result<Option<TaskVersion>>;
+    async fn find_by_version(
         &self,
         task_id: TaskId,
         version: String,
     ) -> Result<Option<TaskVersion>>;
-    async fn get_latest_task_version_by_task_id(
-        &self,
-        task_id: TaskId,
-    ) -> Result<Option<TaskVersion>>;
-    async fn get_task_versions_by_ids(&self, ids: Vec<TaskVersionId>) -> Result<Vec<TaskVersion>>;
-    async fn get_task_versions_by_task_id(&self, task_id: TaskId) -> Result<Vec<TaskVersion>>;
-    async fn count_task_versions(&self) -> Result<u64>;
-    async fn create_task_version(
-        &self,
-        input: TaskVersionCreateInput,
-        owner: &UserId,
-    ) -> Result<TaskVersion>;
-    async fn update_task_version(
+    async fn find_latest(&self, task_id: TaskId) -> Result<Option<TaskVersion>>;
+    async fn find_by_ids(&self, ids: Vec<TaskVersionId>) -> Result<Vec<TaskVersion>>;
+    async fn find_by_task_id(&self, task_id: TaskId) -> Result<Vec<TaskVersion>>;
+    async fn count(&self) -> Result<u64>;
+    async fn create(&self, input: TaskVersionCreateInput, owner: &UserId) -> Result<TaskVersion>;
+    async fn update_by_id(
         &self,
         id: TaskVersionId,
         input: TaskVersionUpdateInput,
     ) -> Result<Option<TaskVersion>>;
-    async fn delete_task_version(&self, id: TaskVersionId) -> Result<Option<TaskVersion>>;
-    async fn release_task_version(&self, id: TaskVersionId) -> Result<TaskVersion>;
+    async fn delete_by_id(&self, id: TaskVersionId) -> Result<Option<TaskVersion>>;
+    async fn release(&self, id: TaskVersionId) -> Result<TaskVersion>;
 }
 
 pub type TaskVersionServiceDyn = Arc<dyn TaskVersionServiceExt + Send + Sync>;
@@ -65,10 +56,7 @@ impl TaskVersionService {
 
 #[async_trait::async_trait]
 impl TaskVersionServiceExt for TaskVersionService {
-    async fn get_task_versions(
-        &self,
-        args: TaskVersionArgs,
-    ) -> Result<Pagination<Cursor, TaskVersion>> {
+    async fn paginate(&self, args: TaskVersionArgs) -> Result<Pagination<Cursor, TaskVersion>> {
         let task_id = ObjectId::from(args.task_id.clone());
         let paginated = self
             .repository
@@ -85,7 +73,7 @@ impl TaskVersionServiceExt for TaskVersionService {
         Ok(paginated)
     }
 
-    async fn get_task_version_by_id(&self, id: TaskVersionId) -> Result<Option<TaskVersion>> {
+    async fn find_by_id(&self, id: TaskVersionId) -> Result<Option<TaskVersion>> {
         let task_version = self
             .repository
             .task_version
@@ -97,7 +85,7 @@ impl TaskVersionServiceExt for TaskVersionService {
         Ok(task_version)
     }
 
-    async fn get_task_version_by_version(
+    async fn find_by_version(
         &self,
         task_id: TaskId,
         version: String,
@@ -113,10 +101,7 @@ impl TaskVersionServiceExt for TaskVersionService {
         Ok(task_version)
     }
 
-    async fn get_latest_task_version_by_task_id(
-        &self,
-        task_id: TaskId,
-    ) -> Result<Option<TaskVersion>> {
+    async fn find_latest(&self, task_id: TaskId) -> Result<Option<TaskVersion>> {
         let task_version = self
             .repository
             .task_version
@@ -128,7 +113,7 @@ impl TaskVersionServiceExt for TaskVersionService {
         Ok(task_version)
     }
 
-    async fn get_task_versions_by_ids(&self, ids: Vec<TaskVersionId>) -> Result<Vec<TaskVersion>> {
+    async fn find_by_ids(&self, ids: Vec<TaskVersionId>) -> Result<Vec<TaskVersion>> {
         let task_versions = self
             .repository
             .task_version
@@ -142,7 +127,7 @@ impl TaskVersionServiceExt for TaskVersionService {
         Ok(task_versions)
     }
 
-    async fn get_task_versions_by_task_id(&self, task_id: TaskId) -> Result<Vec<TaskVersion>> {
+    async fn find_by_task_id(&self, task_id: TaskId) -> Result<Vec<TaskVersion>> {
         let task_versions = self
             .repository
             .task_version
@@ -156,7 +141,7 @@ impl TaskVersionServiceExt for TaskVersionService {
         Ok(task_versions)
     }
 
-    async fn count_task_versions(&self) -> Result<u64> {
+    async fn count(&self) -> Result<u64> {
         let count = self
             .repository
             .task_version
@@ -167,21 +152,19 @@ impl TaskVersionServiceExt for TaskVersionService {
         Ok(count)
     }
 
-    async fn create_task_version(
-        &self,
-        input: TaskVersionCreateInput,
-        owner: &UserId,
-    ) -> Result<TaskVersion> {
+    async fn create(&self, input: TaskVersionCreateInput, owner: &UserId) -> Result<TaskVersion> {
         let messages = input
             .messages
             .into_iter()
             .map(|message| message.into())
             .collect();
-        let raw_messages = input
-            .raw_messages
-            .into_iter()
-            .map(|m| m.into())
-            .collect::<Vec<RawChatMessage>>();
+
+        // let parameters = input
+        //     .parameters
+        //     .into_iter()
+        //     .map(|parameter| parameter.into())
+        //     .collect();
+
         let created_task_version = self
             .repository
             .task_version
@@ -192,11 +175,9 @@ impl TaskVersionServiceExt for TaskVersionService {
                 release_note: input.release_note,
                 description: input.description,
                 document: input.document,
+                status: TaskVersionStatus::Draft,
                 parameters: vec![],
                 messages,
-                raw_messages,
-                variables: input.variables,
-                status: TaskVersionStatus::Draft,
             })
             .await
             .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?;
@@ -204,7 +185,7 @@ impl TaskVersionServiceExt for TaskVersionService {
         Ok(created_task_version.into())
     }
 
-    async fn update_task_version(
+    async fn update_by_id(
         &self,
         id: TaskVersionId,
         input: TaskVersionUpdateInput,
@@ -212,19 +193,47 @@ impl TaskVersionServiceExt for TaskVersionService {
         let messages: Option<Vec<ChatMessage>> = input
             .messages
             .map(|messages| messages.into_iter().map(|message| message.into()).collect());
+
+        let task_version = self
+            .find_by_id(id.clone())
+            .await?
+            .ok_or(TaskVersionError::Unknown(anyhow::anyhow!(
+                "task version not found"
+            )))?;
+
+        let mut parameters = task_version.parameters;
+        if let Some(inputs) = input.parameters {
+            for input in inputs {
+                match input {
+                    ParameterInputBy::Create(input) => parameters.push(input.data.into()),
+                    ParameterInputBy::Update(input) => {
+                        let index = parameters.iter().position(|p| p.id == input.id);
+                        if let Some(index) = index {
+                            parameters[index] = input.data.into();
+                        }
+                    }
+                    ParameterInputBy::Delete(input) => {
+                        let index = parameters.iter().position(|p| p.id == input.id);
+                        if let Some(index) = index {
+                            parameters.remove(index);
+                        }
+                    }
+                }
+            }
+        }
+
         let updated_task_version = self
             .repository
             .task_version
             .update_by_id(
                 id,
                 TaskVersionUpdateEntity {
-                    status: input.status,
+                    status: None,
                     release_note: input.release_note,
                     description: input.description,
                     document: input.document,
                     messages,
-                    raw_messages: input.raw_messages,
-                    variables: input.variables,
+                    parameters,
                 },
             )
             .await
@@ -234,7 +243,7 @@ impl TaskVersionServiceExt for TaskVersionService {
         Ok(updated_task_version)
     }
 
-    async fn delete_task_version(&self, id: TaskVersionId) -> Result<Option<TaskVersion>> {
+    async fn delete_by_id(&self, id: TaskVersionId) -> Result<Option<TaskVersion>> {
         let deleted_task_version = self
             .repository
             .task_version
@@ -246,7 +255,7 @@ impl TaskVersionServiceExt for TaskVersionService {
         Ok(deleted_task_version)
     }
 
-    async fn release_task_version(&self, _id: TaskVersionId) -> Result<TaskVersion> {
+    async fn release(&self, _id: TaskVersionId) -> Result<TaskVersion> {
         // TODO: copy parameters and save it to task_version
         todo!()
     }

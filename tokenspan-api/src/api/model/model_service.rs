@@ -15,14 +15,14 @@ use crate::state::AppState;
 
 #[async_trait::async_trait]
 pub trait ModelServiceExt {
-    async fn get_models(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>>;
-    async fn get_model_by_id(&self, id: ModelId) -> Result<Option<Model>>;
-    async fn get_models_by_ids(&self, ids: Vec<ModelId>) -> Result<Vec<Model>>;
-    async fn get_model_by_name(&self, name: String) -> Result<Option<Model>>;
-    async fn count_models(&self) -> Result<u64>;
-    async fn create_model(&self, input: ModelCreateInput) -> Result<Model>;
-    async fn update_model(&self, id: ModelId, input: ModelUpdateInput) -> Result<Option<Model>>;
-    async fn delete_model(&self, id: ModelId) -> Result<Option<Model>>;
+    async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>>;
+    async fn find_by_id(&self, id: ModelId) -> Result<Option<Model>>;
+    async fn find_by_ids(&self, ids: Vec<ModelId>) -> Result<Vec<Model>>;
+    async fn find_by_name(&self, name: String) -> Result<Option<Model>>;
+    async fn count(&self) -> Result<u64>;
+    async fn create(&self, input: ModelCreateInput) -> Result<Model>;
+    async fn update_by_id(&self, id: ModelId, input: ModelUpdateInput) -> Result<Option<Model>>;
+    async fn delete_by_id(&self, id: ModelId) -> Result<Option<Model>>;
 }
 
 pub type ModelServiceDyn = Arc<dyn ModelServiceExt + Send + Sync>;
@@ -45,7 +45,7 @@ impl ModelService {
 
 #[async_trait::async_trait]
 impl ModelServiceExt for ModelService {
-    async fn get_models(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>> {
+    async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>> {
         let paginated = self
             .repository
             .model
@@ -56,7 +56,7 @@ impl ModelServiceExt for ModelService {
         Ok(paginated)
     }
 
-    async fn get_model_by_id(&self, id: ModelId) -> Result<Option<Model>> {
+    async fn find_by_id(&self, id: ModelId) -> Result<Option<Model>> {
         let model = self
             .repository
             .model
@@ -68,7 +68,7 @@ impl ModelServiceExt for ModelService {
         Ok(model)
     }
 
-    async fn get_models_by_ids(&self, ids: Vec<ModelId>) -> Result<Vec<Model>> {
+    async fn find_by_ids(&self, ids: Vec<ModelId>) -> Result<Vec<Model>> {
         let models = self
             .repository
             .model
@@ -82,7 +82,7 @@ impl ModelServiceExt for ModelService {
         Ok(models)
     }
 
-    async fn get_model_by_name(&self, name: String) -> Result<Option<Model>> {
+    async fn find_by_name(&self, name: String) -> Result<Option<Model>> {
         let model = self
             .repository
             .model
@@ -94,7 +94,7 @@ impl ModelServiceExt for ModelService {
         Ok(model)
     }
 
-    async fn count_models(&self) -> Result<u64> {
+    async fn count(&self) -> Result<u64> {
         let count = self
             .repository
             .model
@@ -105,7 +105,7 @@ impl ModelServiceExt for ModelService {
         Ok(count)
     }
 
-    async fn create_model(&self, input: ModelCreateInput) -> Result<Model> {
+    async fn create(&self, input: ModelCreateInput) -> Result<Model> {
         let created_model = self
             .repository
             .model
@@ -124,7 +124,7 @@ impl ModelServiceExt for ModelService {
         Ok(created_model.into())
     }
 
-    async fn update_model(&self, id: ModelId, input: ModelUpdateInput) -> Result<Option<Model>> {
+    async fn update_by_id(&self, id: ModelId, input: ModelUpdateInput) -> Result<Option<Model>> {
         let updated_model = self
             .repository
             .model
@@ -146,7 +146,7 @@ impl ModelServiceExt for ModelService {
         Ok(updated_model)
     }
 
-    async fn delete_model(&self, id: ModelId) -> Result<Option<Model>> {
+    async fn delete_by_id(&self, id: ModelId) -> Result<Option<Model>> {
         let deleted_model = self
             .repository
             .model

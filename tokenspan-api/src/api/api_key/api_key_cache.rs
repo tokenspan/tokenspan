@@ -1,12 +1,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use axum::extract::FromRef;
-
 use crate::api::dto::ApiKeyArgs;
 use crate::api::models::ApiKeyId;
 use crate::api::services::ApiKeyServiceDyn;
-use crate::state::AppState;
 
 #[derive(Clone)]
 pub struct ApiKeyCache {
@@ -14,12 +11,6 @@ pub struct ApiKeyCache {
 }
 
 pub type ApiKeyCacheDyn = Arc<ApiKeyCache>;
-
-impl FromRef<AppState> for ApiKeyCacheDyn {
-    fn from_ref(input: &AppState) -> Self {
-        input.api_key_cache.clone()
-    }
-}
 
 impl ApiKeyCache {
     pub async fn new(api_key_service: ApiKeyServiceDyn) -> anyhow::Result<Self> {

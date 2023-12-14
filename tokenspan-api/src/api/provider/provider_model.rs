@@ -1,6 +1,6 @@
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 
-use async_graphql::{Scalar, ScalarType, SimpleObject};
+use async_graphql::SimpleObject;
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

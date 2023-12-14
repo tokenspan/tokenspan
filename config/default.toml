@@ -14,8 +14,8 @@ iss = "tokenspan"
 aud = "tokenspan-api"
 # DO NOT USE THIS SECRET IN PRODUCTION
 secret = "ma8SUYC22nV2ciZ5GyZFe09nnlpeoYXAXFeriZOk3HwGtdHP2C"
-# 1 hour
-token_exp = 3600
+# 24 hour
+token_exp = 86400
 # 30 days
 refresh_token_exp = 2592000
 

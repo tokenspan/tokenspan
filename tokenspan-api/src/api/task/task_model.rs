@@ -1,6 +1,4 @@
-use std::fmt::Display;
-
-use async_graphql::{ComplexObject, Context, Result, Scalar, ScalarType, SimpleObject};
+use async_graphql::{ComplexObject, Context, Result, SimpleObject};
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -39,12 +37,10 @@ impl Task {
 
         if let Some(version) = version {
             task_version_service
-                .get_task_version_by_version(self.id.clone(), version)
+                .find_by_version(self.id.clone(), version)
                 .await
         } else {
-            task_version_service
-                .get_latest_task_version_by_task_id(self.id.clone())
-                .await
+            task_version_service.find_latest(self.id.clone()).await
         }
     }
 }

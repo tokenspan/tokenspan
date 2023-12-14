@@ -1,9 +1,8 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
-use bson::oid::ObjectId;
 
-use crate::api::models::{ModelId, ParsedToken, TaskId};
-use crate::api::parameter::dto::ParameterCreateInput;
-use crate::api::services::{ParameterServiceDyn, TaskServiceDyn, TaskVersionServiceDyn};
+use crate::api::dto::{CreateParameterInput, ParameterInput, ParameterInputBy};
+use crate::api::models::{ParsedToken, TaskId};
+use crate::api::services::{ModelServiceDyn, TaskServiceDyn, TaskVersionServiceDyn};
 use crate::api::task::dto::{TaskCreateInput, TaskUpdateInput};
 use crate::api::task::task_model::Task;
 use crate::api::task_version::dto::TaskVersionCreateInput;
@@ -18,6 +17,12 @@ pub struct TaskMutation;
 impl TaskMutation {
     // #[graphql(guard = "RoleGuard::new(Role::User)")]
     pub async fn create_task<'a>(&self, ctx: &Context<'a>, input: TaskCreateInput) -> Result<Task> {
+        let parsed_token = ctx
+            .data::<Option<ParsedToken>>()
+            .map_err(|_| AppError::ContextExtractionError.extend())?
+            .as_ref()
+            .ok_or(AppError::Unauthorized("no token".to_string()).extend())?;
+
         let task_service = ctx
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -26,50 +31,45 @@ impl TaskMutation {
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let parameter_service = ctx
-            .data::<ParameterServiceDyn>()
+        let model_service = ctx
+            .data::<ModelServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let parsed_token = ctx
-            .data::<Option<ParsedToken>>()
-            .map_err(|_| AppError::ContextExtractionError.extend())?
-            .as_ref()
-            .ok_or(AppError::Unauthorized("no token".to_string()).extend())?;
+        let model = model_service
+            .find_by_id(input.model_id.clone())
+            .await?
+            .ok_or(AppError::NotFound("model not found".to_string()))?;
 
         let created_task = task_service
             .create_task(input, parsed_token.user_id.clone())
             .await?;
 
-        let create_task_version_input = TaskVersionCreateInput {
-            task_id: created_task.id.clone(),
-            version: "0.0.0".to_string(),
-            release_note: None,
-            description: None,
-            document: None,
-            messages: Vec::new(),
-            raw_messages: Vec::new(),
-            variables: Default::default(),
-        };
-        let created_task_version = task_version_service
-            .create_task_version(create_task_version_input, &parsed_token.user_id)
-            .await?;
-
-        let gpt3_5_turbo_model_id =
-            ModelId::from(ObjectId::parse_str("65617fc7b35c48147687a83c").unwrap());
-        let create_parameter_input = ParameterCreateInput {
-            task_version_id: created_task_version.id.clone(),
-            model_id: gpt3_5_turbo_model_id,
-            name: "untitled".to_string(),
-            temperature: 1f32,
-            presence_penalty: 0f32,
-            frequency_penalty: 0f32,
-            max_tokens: 32,
-            top_p: 1f32,
+        let parameter = ParameterInput {
+            name: "default".to_string(),
+            temperature: 1.0,
+            max_tokens: 100,
             stop_sequences: Vec::new(),
+            top_p: 1.0,
+            frequency_penalty: 1.0,
+            presence_penalty: 1.0,
             extra: None,
+            model_id: model.id,
         };
-        parameter_service
-            .create_parameter(create_parameter_input)
+        task_version_service
+            .create(
+                TaskVersionCreateInput {
+                    task_id: created_task.id.clone(),
+                    version: "0.0.0".to_string(),
+                    release_note: None,
+                    description: None,
+                    document: None,
+                    messages: Vec::new(),
+                    parameters: vec![ParameterInputBy::Create(CreateParameterInput {
+                        data: parameter,
+                    })],
+                },
+                &parsed_token.user_id,
+            )
             .await?;
 
         Ok(created_task)

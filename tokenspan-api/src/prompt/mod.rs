@@ -15,6 +15,7 @@ pub enum PromptRole {
 
 #[derive(Deserialize, Serialize, InputObject, Debug, Validate, Clone)]
 pub struct ChatMessageInput {
+    pub raw: String,
     pub content: String,
     pub role: PromptRole,
 }
@@ -22,6 +23,7 @@ pub struct ChatMessageInput {
 impl From<ChatMessageInput> for ChatMessage {
     fn from(value: ChatMessageInput) -> Self {
         Self {
+            raw: value.raw,
             content: value.content,
             role: value.role,
         }
@@ -30,6 +32,7 @@ impl From<ChatMessageInput> for ChatMessage {
 
 #[derive(Deserialize, Serialize, SimpleObject, Debug, Validate, Clone)]
 pub struct ChatMessage {
+    pub raw: String,
     pub content: String,
     pub role: PromptRole,
 }
@@ -65,24 +68,4 @@ impl TryFrom<ChatMessage> for ChatCompletionRequestMessage {
 
         Ok(message)
     }
-}
-
-#[derive(Deserialize, Serialize, InputObject, Debug, Validate, Clone)]
-pub struct RawChatMessageInput {
-    role: PromptRole,
-    content: String,
-}
-
-impl From<RawChatMessageInput> for RawChatMessage {
-    fn from(value: RawChatMessageInput) -> Self {
-        Self {
-            content: value.content,
-            role: value.role,
-        }
-    }
-}
-#[derive(Deserialize, Serialize, SimpleObject, Debug, Validate, Clone)]
-pub struct RawChatMessage {
-    pub content: String,
-    pub role: PromptRole,
 }

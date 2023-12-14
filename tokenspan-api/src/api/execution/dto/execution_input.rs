@@ -1,4 +1,5 @@
 use async_graphql::InputObject;
+use std::collections::HashMap;
 
 use crate::api::execution::execution_type::{Endpoint, ExecutionStatus};
 use crate::api::models::{Elapsed, TaskId, TaskVersionId};
@@ -44,4 +45,5 @@ pub struct ExecutionCreateInput {
     pub output: Option<serde_json::Value>,
     pub error: Option<serde_json::Value>,
     pub usage: Option<Usage>,
+    pub variables: HashMap<String, String>,
 }

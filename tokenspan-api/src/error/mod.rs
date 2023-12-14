@@ -9,6 +9,9 @@ pub enum AppError {
 
     #[error("unauthorized: {0}")]
     Unauthorized(String),
+
+    #[error("not found: {0}")]
+    NotFound(String),
 }
 
 impl ErrorExtensions for AppError {
@@ -20,6 +23,10 @@ impl ErrorExtensions for AppError {
             }
             AppError::Unauthorized(reason) => {
                 e.set("code", "UNAUTHORIZED");
+                e.set("reason", reason);
+            }
+            AppError::NotFound(reason) => {
+                e.set("code", "NOT_FOUND");
                 e.set("reason", reason);
             }
         })
