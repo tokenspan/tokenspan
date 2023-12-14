@@ -1,6 +1,6 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 
-use crate::api::dto::{CreateParameterInput, ParameterInput, ParameterInputBy};
+use crate::api::dto::{ParameterCreateInput, ParameterInput};
 use crate::api::models::{ParsedToken, TaskId};
 use crate::api::services::{ModelServiceDyn, TaskServiceDyn, TaskVersionServiceDyn};
 use crate::api::task::dto::{TaskCreateInput, TaskUpdateInput};
@@ -44,16 +44,18 @@ impl TaskMutation {
             .create_task(input, parsed_token.user_id.clone())
             .await?;
 
-        let parameter = ParameterInput {
-            name: "default".to_string(),
-            temperature: 1.0,
-            max_tokens: 100,
-            stop_sequences: Vec::new(),
-            top_p: 1.0,
-            frequency_penalty: 1.0,
-            presence_penalty: 1.0,
-            extra: None,
-            model_id: model.id,
+        let parameter = ParameterCreateInput {
+            data: ParameterInput {
+                name: "default".to_string(),
+                temperature: 1.0,
+                max_tokens: 100,
+                stop_sequences: Vec::new(),
+                top_p: 1.0,
+                frequency_penalty: 1.0,
+                presence_penalty: 1.0,
+                extra: None,
+                model_id: model.id,
+            },
         };
         task_version_service
             .create(
@@ -64,9 +66,7 @@ impl TaskMutation {
                     description: None,
                     document: None,
                     messages: Vec::new(),
-                    parameters: vec![ParameterInputBy::Create(CreateParameterInput {
-                        data: parameter,
-                    })],
+                    parameters: vec![parameter],
                 },
                 &parsed_token.user_id,
             )

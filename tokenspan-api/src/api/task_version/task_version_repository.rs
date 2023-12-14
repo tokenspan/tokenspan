@@ -7,9 +7,10 @@ use bson::{doc, Bson};
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use mongodb::error::{Error, Result};
-use mongodb::options::FindOneOptions;
+use mongodb::options::{FindOneAndUpdateOptions, FindOneOptions};
 use serde::{Deserialize, Serialize};
 
+use crate::api::dto::ParameterInput;
 use crate::api::models::{ModelId, Parameter, ParameterId, TaskId, TaskVersionId, UserId};
 use crate::prompt::ChatMessage;
 use crate::repository::Repository;
@@ -34,6 +35,25 @@ pub struct ParameterEntity {
     pub updated_at: DateTime<Utc>,
 }
 
+impl ParameterEntity {
+    pub fn new_with_id(id: ParameterId, input: ParameterInput) -> Self {
+        Self {
+            id,
+            name: input.name,
+            temperature: input.temperature,
+            max_tokens: input.max_tokens,
+            stop_sequences: input.stop_sequences,
+            top_p: input.top_p,
+            frequency_penalty: input.frequency_penalty,
+            presence_penalty: input.presence_penalty,
+            extra: input.extra,
+            model_id: input.model_id,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
+}
+
 impl From<Parameter> for ParameterEntity {
     fn from(value: Parameter) -> Self {
         Self {
@@ -49,6 +69,25 @@ impl From<Parameter> for ParameterEntity {
             model_id: value.model_id,
             created_at: value.created_at,
             updated_at: value.updated_at,
+        }
+    }
+}
+
+impl From<ParameterInput> for ParameterEntity {
+    fn from(value: ParameterInput) -> Self {
+        Self {
+            id: ParameterId::new(),
+            name: value.name,
+            temperature: value.temperature,
+            max_tokens: value.max_tokens,
+            stop_sequences: value.stop_sequences,
+            top_p: value.top_p,
+            frequency_penalty: value.frequency_penalty,
+            presence_penalty: value.presence_penalty,
+            extra: value.extra,
+            model_id: value.model_id,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         }
     }
 }
@@ -108,7 +147,7 @@ pub struct TaskVersionCreateEntity {
     pub release_note: Option<String>,
     pub description: Option<String>,
     pub document: Option<String>,
-    pub parameters: Vec<Parameter>,
+    pub parameters: Vec<ParameterEntity>,
     pub messages: Vec<ChatMessage>,
     pub status: TaskVersionStatus,
 }
@@ -119,17 +158,13 @@ pub struct TaskVersionUpdateEntity {
     pub description: Option<String>,
     pub document: Option<String>,
     pub messages: Option<Vec<ChatMessage>>,
-    pub parameters: Vec<Parameter>,
+    pub parameters: Vec<ParameterEntity>,
     pub status: Option<TaskVersionStatus>,
 }
 
 impl Repository<TaskVersionEntity> {
     pub async fn create(&self, doc: TaskVersionCreateEntity) -> Result<TaskVersionEntity> {
-        let parameters = doc
-            .parameters
-            .into_iter()
-            .map(|parameter| parameter.into())
-            .collect();
+        let parameters = doc.parameters;
         let doc = TaskVersionEntity {
             id: ObjectId::new(),
             task_id: doc.task_id,
@@ -165,12 +200,14 @@ impl Repository<TaskVersionEntity> {
         let filter = doc! {
             "_id": ObjectId::from(id),
         };
+        let options = FindOneAndUpdateOptions::builder()
+            .return_document(mongodb::options::ReturnDocument::After)
+            .build();
+
         let messages = doc
             .messages
             .and_then(|config| bson::ser::to_bson(&config).ok());
-
-        let parameters = bson::ser::to_bson(&doc.parameters).map_err(|e| Error::custom(e))?;
-
+        let parameters = bson::ser::to_bson(&doc.parameters).map_err(Error::custom)?;
         let update = doc! {
             "$set": {
                 "updatedAt": Utc::now(),
@@ -179,12 +216,12 @@ impl Repository<TaskVersionEntity> {
                 "document": doc.document,
                 "messages": messages,
                 "parameters": parameters,
-                "status": doc.status,
+                // "status": doc.status,
             }
         };
 
         self.collection
-            .find_one_and_update(filter, update, None)
+            .find_one_and_update(filter, update, Some(options))
             .await
     }
 

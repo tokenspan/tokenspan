@@ -1,27 +1,26 @@
 use async_graphql::{InputObject, OneofObject};
-use chrono::{DateTime, Utc};
 
 use crate::api::models::{ModelId, ParameterId};
 
 #[derive(OneofObject)]
 pub enum ParameterInputBy {
-    Create(CreateParameterInput),
-    Update(UpdateParameterInput),
-    Delete(DeleteParameterInput),
+    Create(ParameterCreateInput),
+    Update(ParameterUpdateInput),
+    Delete(ParameterDeleteInput),
 }
 
 #[derive(InputObject)]
-pub struct DeleteParameterInput {
+pub struct ParameterDeleteInput {
     pub id: ParameterId,
 }
 
 #[derive(InputObject)]
-pub struct CreateParameterInput {
+pub struct ParameterCreateInput {
     pub data: ParameterInput,
 }
 
 #[derive(InputObject)]
-pub struct UpdateParameterInput {
+pub struct ParameterUpdateInput {
     pub id: ParameterId,
     pub data: ParameterInput,
 }

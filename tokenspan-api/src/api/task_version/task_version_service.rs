@@ -1,16 +1,16 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_graphql::Result;
 use bson::doc;
 use bson::oid::ObjectId;
 
-use crate::api::dto::{ParameterInput, ParameterInputBy};
+
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
-use crate::api::models::{Parameter, ParameterId, TaskId, TaskVersion, TaskVersionId, UserId};
+use crate::api::dto::ParameterInputBy;
+use crate::api::models::{TaskId, TaskVersion, TaskVersionId, UserId};
 use crate::api::repositories::{
-    TaskVersionCreateEntity, TaskVersionStatus, TaskVersionUpdateEntity,
+    ParameterEntity, TaskVersionCreateEntity, TaskVersionStatus, TaskVersionUpdateEntity,
 };
 use crate::api::task_version::dto::{
     TaskVersionArgs, TaskVersionCreateInput, TaskVersionUpdateInput,
@@ -159,11 +159,11 @@ impl TaskVersionServiceExt for TaskVersionService {
             .map(|message| message.into())
             .collect();
 
-        // let parameters = input
-        //     .parameters
-        //     .into_iter()
-        //     .map(|parameter| parameter.into())
-        //     .collect();
+        let parameters = input
+            .parameters
+            .into_iter()
+            .map(|p| p.data.into())
+            .collect();
 
         let created_task_version = self
             .repository
@@ -176,7 +176,7 @@ impl TaskVersionServiceExt for TaskVersionService {
                 description: input.description,
                 document: input.document,
                 status: TaskVersionStatus::Draft,
-                parameters: vec![],
+                parameters,
                 messages,
             })
             .await
@@ -201,7 +201,11 @@ impl TaskVersionServiceExt for TaskVersionService {
                 "task version not found"
             )))?;
 
-        let mut parameters = task_version.parameters;
+        let mut parameters: Vec<ParameterEntity> = task_version
+            .parameters
+            .into_iter()
+            .map(|p| p.into())
+            .collect();
         if let Some(inputs) = input.parameters {
             for input in inputs {
                 match input {
@@ -209,7 +213,8 @@ impl TaskVersionServiceExt for TaskVersionService {
                     ParameterInputBy::Update(input) => {
                         let index = parameters.iter().position(|p| p.id == input.id);
                         if let Some(index) = index {
-                            parameters[index] = input.data.into();
+                            parameters[index] =
+                                ParameterEntity::new_with_id(input.id, input.data);
                         }
                     }
                     ParameterInputBy::Delete(input) => {

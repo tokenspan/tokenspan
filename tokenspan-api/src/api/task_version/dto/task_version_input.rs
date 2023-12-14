@@ -1,6 +1,6 @@
 use async_graphql::InputObject;
 
-use crate::api::dto::{ParameterInput, ParameterInputBy};
+use crate::api::dto::{ParameterCreateInput, ParameterInputBy};
 use crate::api::models::TaskId;
 use crate::prompt::ChatMessageInput;
 
@@ -11,7 +11,7 @@ pub struct TaskVersionCreateInput {
     pub description: Option<String>,
     pub document: Option<String>,
     pub messages: Vec<ChatMessageInput>,
-    pub parameters: Vec<ParameterInputBy>,
+    pub parameters: Vec<ParameterCreateInput>,
     pub task_id: TaskId,
 }
 

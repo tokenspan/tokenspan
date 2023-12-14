@@ -73,7 +73,7 @@ impl From<ParameterInput> for Parameter {
 impl From<ParameterEntity> for Parameter {
     fn from(value: ParameterEntity) -> Self {
         Self {
-            id: ParameterId::from(value.id),
+            id: value.id,
             name: value.name,
             temperature: value.temperature,
             max_tokens: value.max_tokens,
