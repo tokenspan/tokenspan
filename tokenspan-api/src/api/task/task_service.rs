@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use async_graphql::Result;
+use anyhow::Result;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
     ChatCompletionRequestMessage, CreateChatCompletionRequestArgs, CreateChatCompletionResponse,
@@ -31,23 +31,20 @@ use crate::state::AppState;
 
 #[async_trait::async_trait]
 pub trait TaskServiceExt {
-    async fn get_tasks(&self, args: TaskArgs) -> Result<Pagination<Cursor, Task>>;
-    async fn get_tasks_by_owner(
+    async fn paginate(&self, args: TaskArgs) -> Result<Pagination<Cursor, Task>>;
+    async fn find_by_owner(
         &self,
         user_id: UserId,
         args: TaskArgs,
     ) -> Result<Pagination<Cursor, Task>>;
-    async fn get_task_by_id(&self, id: TaskId) -> Result<Option<Task>>;
-    async fn get_tasks_by_ids(&self, ids: Vec<TaskId>) -> Result<Vec<Task>>;
-    async fn count_tasks(&self) -> Result<u64>;
-    async fn create_task(&self, input: TaskCreateInput, owner: UserId) -> Result<Task>;
-    async fn update_task(&self, id: TaskId, input: TaskUpdateInput) -> Result<Option<Task>>;
-    async fn delete_task(&self, id: TaskId) -> Result<Option<Task>>;
-    async fn execute_task(
-        &self,
-        input: TaskExecuteInput,
-        execution_by_id: UserId,
-    ) -> Result<Execution>;
+    async fn find_by_id(&self, id: TaskId) -> Result<Option<Task>>;
+    async fn find_by_ids(&self, ids: Vec<TaskId>) -> Result<Vec<Task>>;
+    async fn find_by_slug(&self, slug: String) -> Result<Option<Task>>;
+    async fn count(&self) -> Result<u64>;
+    async fn create(&self, input: TaskCreateInput, owner: UserId) -> Result<Task>;
+    async fn update_by_id(&self, id: TaskId, input: TaskUpdateInput) -> Result<Option<Task>>;
+    async fn delete_by_id(&self, id: TaskId) -> Result<Option<Task>>;
+    async fn execute(&self, input: TaskExecuteInput, execution_by_id: UserId) -> Result<Execution>;
 }
 
 pub type TaskServiceDyn = Arc<dyn TaskServiceExt + Send + Sync>;
@@ -126,7 +123,7 @@ impl TaskService {
 
 #[async_trait::async_trait]
 impl TaskServiceExt for TaskService {
-    async fn get_tasks(&self, args: TaskArgs) -> Result<Pagination<Cursor, Task>> {
+    async fn paginate(&self, args: TaskArgs) -> Result<Pagination<Cursor, Task>> {
         let paginated = self
             .repository
             .task
@@ -137,7 +134,7 @@ impl TaskServiceExt for TaskService {
         Ok(paginated)
     }
 
-    async fn get_tasks_by_owner(
+    async fn find_by_owner(
         &self,
         user_id: UserId,
         args: TaskArgs,
@@ -152,7 +149,7 @@ impl TaskServiceExt for TaskService {
         Ok(paginated)
     }
 
-    async fn get_task_by_id(&self, id: TaskId) -> Result<Option<Task>> {
+    async fn find_by_id(&self, id: TaskId) -> Result<Option<Task>> {
         let task = self
             .repository
             .task
@@ -164,7 +161,7 @@ impl TaskServiceExt for TaskService {
         Ok(task)
     }
 
-    async fn get_tasks_by_ids(&self, ids: Vec<TaskId>) -> Result<Vec<Task>> {
+    async fn find_by_ids(&self, ids: Vec<TaskId>) -> Result<Vec<Task>> {
         let tasks = self
             .repository
             .task
@@ -178,7 +175,19 @@ impl TaskServiceExt for TaskService {
         Ok(tasks)
     }
 
-    async fn count_tasks(&self) -> Result<u64> {
+    async fn find_by_slug(&self, slug: String) -> Result<Option<Task>> {
+        let task = self
+            .repository
+            .task
+            .find_by_slug(slug)
+            .await
+            .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?
+            .map(|task| task.into());
+
+        Ok(task)
+    }
+
+    async fn count(&self) -> Result<u64> {
         let count = self
             .repository
             .task
@@ -189,14 +198,14 @@ impl TaskServiceExt for TaskService {
         Ok(count)
     }
 
-    async fn create_task(&self, input: TaskCreateInput, owner: UserId) -> Result<Task> {
+    async fn create(&self, input: TaskCreateInput, owner: UserId) -> Result<Task> {
         let created_task = self
             .repository
             .task
             .create(TaskCreateEntity {
                 owner_id: owner,
-                name: input.name.clone(),
-                slug: input.name,
+                name: input.name,
+                slug: input.slug,
                 private: input.private,
             })
             .await
@@ -205,7 +214,7 @@ impl TaskServiceExt for TaskService {
         Ok(created_task.into())
     }
 
-    async fn update_task(&self, id: TaskId, input: TaskUpdateInput) -> Result<Option<Task>> {
+    async fn update_by_id(&self, id: TaskId, input: TaskUpdateInput) -> Result<Option<Task>> {
         let updated_task = self
             .repository
             .task
@@ -224,7 +233,7 @@ impl TaskServiceExt for TaskService {
         Ok(updated_task)
     }
 
-    async fn delete_task(&self, id: TaskId) -> Result<Option<Task>> {
+    async fn delete_by_id(&self, id: TaskId) -> Result<Option<Task>> {
         let deleted_task = self
             .repository
             .task
@@ -236,11 +245,7 @@ impl TaskServiceExt for TaskService {
         Ok(deleted_task)
     }
 
-    async fn execute_task(
-        &self,
-        input: TaskExecuteInput,
-        execute_by_id: UserId,
-    ) -> Result<Execution> {
+    async fn execute(&self, input: TaskExecuteInput, execute_by_id: UserId) -> Result<Execution> {
         let start = Instant::now();
         let api_key = self
             .api_key_cache
@@ -324,7 +329,7 @@ impl TaskServiceExt for TaskService {
 
         let execution = self
             .execution_service
-            .create_execution(
+            .create(
                 ExecutionCreateInput {
                     task_id: task_version.task_id,
                     task_version_id: input.task_version_id,

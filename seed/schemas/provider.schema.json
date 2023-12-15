@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "type": "object",
+  "items": {
+    "$ref": "#/definitions/Provider"
+  },
+  "definitions": {
+    "Provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "slug"
+      ],
+      "title": "Provider"
+    }
+  }
+}

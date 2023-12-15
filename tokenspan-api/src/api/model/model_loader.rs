@@ -17,7 +17,7 @@ impl Loader<ModelId> for AppLoader {
             .model_service
             .find_by_ids(keys.to_vec())
             .await
-            .map_err(|e| Arc::new(ModelError::Unknown(anyhow::anyhow!(e.message))))?
+            .map_err(|e| Arc::new(ModelError::Unknown(e)))?
             .into_iter()
             .map(|model| (model.id.clone(), model))
             .collect();

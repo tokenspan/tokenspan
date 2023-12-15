@@ -23,6 +23,7 @@ pub struct ModelEntity {
     pub provider_id: ProviderId,
     pub name: String,
     pub description: String,
+    pub slug: String,
     pub context: u32,
     pub input_pricing: PricingEntity,
     pub output_pricing: PricingEntity,
@@ -36,6 +37,7 @@ pub struct ModelCreateEntity {
     pub provider_id: ProviderId,
     pub name: String,
     pub description: String,
+    pub slug: String,
     pub context: u32,
     pub input_pricing: PricingEntity,
     pub output_pricing: PricingEntity,
@@ -46,6 +48,7 @@ pub struct ModelCreateEntity {
 pub struct ModelUpdateEntity {
     pub name: Option<String>,
     pub description: Option<String>,
+    pub slug: Option<String>,
     pub context: Option<u32>,
     pub input_pricing: Option<PricingEntity>,
     pub output_pricing: Option<PricingEntity>,
@@ -59,6 +62,7 @@ impl Repository<ModelEntity> {
             provider_id: doc.provider_id,
             name: doc.name,
             description: doc.description,
+            slug: doc.slug,
             context: doc.context,
             input_pricing: doc.input_pricing,
             output_pricing: doc.output_pricing,
@@ -101,9 +105,9 @@ impl Repository<ModelEntity> {
             .await
     }
 
-    pub async fn find_by_name(&self, name: String) -> Result<Option<ModelEntity>> {
+    pub async fn find_by_slug(&self, slug: String) -> Result<Option<ModelEntity>> {
         let filter = doc! {
-            "name": name,
+            "slug": slug,
         };
 
         self.collection.find_one(filter, None).await

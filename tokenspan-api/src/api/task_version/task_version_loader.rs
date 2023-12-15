@@ -20,7 +20,7 @@ impl Loader<TaskVersionId> for AppLoader {
             .task_version_service
             .find_by_ids(keys.to_vec())
             .await
-            .map_err(|e| Arc::new(TaskVersionError::Unknown(anyhow::anyhow!(e.message))))?
+            .map_err(|e| Arc::new(TaskVersionError::Unknown(e)))?
             .into_iter()
             .map(|task_version| (task_version.id.clone(), task_version))
             .collect();

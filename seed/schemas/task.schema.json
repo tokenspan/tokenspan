@@ -1,0 +1,186 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/Task",
+  "definitions": {
+    "Task": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "$ref": "#/definitions/Owner"
+        },
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "private": {
+          "type": "boolean"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Version"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "owner",
+        "private",
+        "slug",
+        "versions"
+      ],
+      "title": "Task"
+    },
+    "Owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "email": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "email"
+      ],
+      "title": "Owner"
+    },
+    "Version": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "$ref": "#/definitions/Owner"
+        },
+        "version": {
+          "type": "string"
+        },
+        "releaseNote": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "document": {
+          "type": "string"
+        },
+        "status": {
+          "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+        },
+        "releaseAt": {
+          "type": "null"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Parameter"
+          }
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Message"
+          }
+        }
+      },
+      "required": [
+        "description",
+        "document",
+        "messages",
+        "owner",
+        "parameters",
+        "releaseAt",
+        "releaseNote",
+        "status",
+        "version"
+      ],
+      "title": "Version"
+    },
+    "Message": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": ["system", "user", "assistant"]
+        },
+        "content": {
+          "type": "string"
+        },
+        "raw": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "content",
+        "role",
+        "raw"
+      ],
+      "title": "Message"
+    },
+    "Parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "maxTokens": {
+          "type": "integer"
+        },
+        "stopSequences": {
+          "type": "array",
+          "items": {}
+        },
+        "topP": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "frequencyPenalty": {
+          "type": "number"
+        },
+        "presencePenalty": {
+          "type": "number"
+        },
+        "extra": {
+          "type": "null"
+        },
+        "model": {
+          "$ref": "#/definitions/Model"
+        }
+      },
+      "required": [
+        "extra",
+        "frequencyPenalty",
+        "maxTokens",
+        "model",
+        "name",
+        "presencePenalty",
+        "stopSequences",
+        "temperature",
+        "topP"
+      ],
+      "title": "Parameter"
+    },
+    "Model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug"
+      ],
+      "title": "Model"
+    }
+  }
+}

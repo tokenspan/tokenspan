@@ -37,9 +37,11 @@ impl ApiKey {
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        provider_service
-            .get_provider_by_id(self.provider_id.clone())
-            .await
+        let provider = provider_service
+            .find_by_id(self.provider_id.clone())
+            .await?;
+
+        Ok(provider)
     }
 
     pub async fn owner<'a>(&self, ctx: &Context<'a>) -> Result<Option<User>> {

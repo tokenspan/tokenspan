@@ -1,7 +1,7 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 
 use crate::api::dto::{ParameterCreateInput, ParameterInput};
-use crate::api::models::{ParsedToken, TaskId};
+use crate::api::models::{ModelId, ParsedToken, TaskId};
 use crate::api::services::{ModelServiceDyn, TaskServiceDyn, TaskVersionServiceDyn};
 use crate::api::task::dto::{TaskCreateInput, TaskUpdateInput};
 use crate::api::task::task_model::Task;
@@ -16,7 +16,12 @@ pub struct TaskMutation;
 #[Object]
 impl TaskMutation {
     // #[graphql(guard = "RoleGuard::new(Role::User)")]
-    pub async fn create_task<'a>(&self, ctx: &Context<'a>, input: TaskCreateInput) -> Result<Task> {
+    pub async fn create_task<'a>(
+        &self,
+        ctx: &Context<'a>,
+        input: TaskCreateInput,
+        model_id: ModelId,
+    ) -> Result<Task> {
         let parsed_token = ctx
             .data::<Option<ParsedToken>>()
             .map_err(|_| AppError::ContextExtractionError.extend())?
@@ -36,12 +41,12 @@ impl TaskMutation {
             .map_err(|_| AppError::ContextExtractionError)?;
 
         let model = model_service
-            .find_by_id(input.model_id.clone())
+            .find_by_id(model_id)
             .await?
             .ok_or(AppError::NotFound("model not found".to_string()))?;
 
         let created_task = task_service
-            .create_task(input, parsed_token.user_id.clone())
+            .create(input, parsed_token.user_id.clone())
             .await?;
 
         let parameter = ParameterCreateInput {
@@ -86,7 +91,9 @@ impl TaskMutation {
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        task_service.update_task(id, input).await
+        let task = task_service.update_by_id(id, input).await?;
+
+        Ok(task)
     }
 
     #[graphql(guard = "RoleGuard::new(Role::Admin)")]
@@ -95,6 +102,8 @@ impl TaskMutation {
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        task_service.delete_task(id).await
+        let task = task_service.delete_by_id(id).await?;
+
+        Ok(task)
     }
 }

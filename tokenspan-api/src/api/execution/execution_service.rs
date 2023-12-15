@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use async_graphql::Result;
+use anyhow::Result;
 use bson::doc;
 use bson::oid::ObjectId;
 
@@ -15,15 +15,15 @@ use crate::repository::RootRepository;
 
 #[async_trait::async_trait]
 pub trait ExecutionServiceExt {
-    async fn get_executions(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>>;
-    async fn get_execution_by_id(&self, id: ExecutionId) -> Result<Option<Execution>>;
-    async fn get_executions_by_ids(&self, ids: Vec<ExecutionId>) -> Result<Vec<Execution>>;
-    async fn create_execution(
+    async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>>;
+    async fn find_by_id(&self, id: ExecutionId) -> Result<Option<Execution>>;
+    async fn find_by_ids(&self, ids: Vec<ExecutionId>) -> Result<Vec<Execution>>;
+    async fn create(
         &self,
         input: ExecutionCreateInput,
         executed_by_id: UserId,
     ) -> Result<Execution>;
-    async fn delete_execution(&self, id: ExecutionId) -> Result<Option<Execution>>;
+    async fn delete_by_id(&self, id: ExecutionId) -> Result<Option<Execution>>;
 }
 
 pub type ExecutionServiceDyn = Arc<dyn ExecutionServiceExt + Send + Sync>;
@@ -40,7 +40,7 @@ impl ExecutionService {
 
 #[async_trait::async_trait]
 impl ExecutionServiceExt for ExecutionService {
-    async fn get_executions(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>> {
+    async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>> {
         let task_id = ObjectId::from(args.task_id.clone());
         let paginated = self
             .repository
@@ -57,7 +57,7 @@ impl ExecutionServiceExt for ExecutionService {
         Ok(paginated)
     }
 
-    async fn get_execution_by_id(&self, id: ExecutionId) -> Result<Option<Execution>> {
+    async fn find_by_id(&self, id: ExecutionId) -> Result<Option<Execution>> {
         let execution = self
             .repository
             .execution
@@ -69,7 +69,7 @@ impl ExecutionServiceExt for ExecutionService {
         Ok(execution)
     }
 
-    async fn get_executions_by_ids(&self, ids: Vec<ExecutionId>) -> Result<Vec<Execution>> {
+    async fn find_by_ids(&self, ids: Vec<ExecutionId>) -> Result<Vec<Execution>> {
         let executions = self
             .repository
             .execution
@@ -83,7 +83,7 @@ impl ExecutionServiceExt for ExecutionService {
         Ok(executions)
     }
 
-    async fn create_execution(
+    async fn create(
         &self,
         input: ExecutionCreateInput,
         executed_by_id: UserId,
@@ -110,7 +110,7 @@ impl ExecutionServiceExt for ExecutionService {
         Ok(created_execution.into())
     }
 
-    async fn delete_execution(&self, id: ExecutionId) -> Result<Option<Execution>> {
+    async fn delete_by_id(&self, id: ExecutionId) -> Result<Option<Execution>> {
         let deleted_execution = self
             .repository
             .execution

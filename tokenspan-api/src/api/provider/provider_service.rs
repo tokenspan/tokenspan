@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use async_graphql::Result;
+use anyhow::Result;
 
 use crate::api::models::ProviderId;
 use crate::api::provider::dto::{ProviderArgs, ProviderCreateInput, ProviderUpdateInput};
@@ -12,18 +12,18 @@ use tokenspan_extra::pagination::{Cursor, Pagination};
 
 #[async_trait::async_trait]
 pub trait ProviderServiceExt {
-    async fn get_providers(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>>;
-    async fn get_provider_by_id(&self, id: ProviderId) -> Result<Option<Provider>>;
-    async fn get_provider_by_name(&self, name: String) -> Result<Option<Provider>>;
-    async fn get_providers_by_ids(&self, ids: Vec<ProviderId>) -> Result<Vec<Provider>>;
-    async fn count_providers(&self) -> Result<u64>;
-    async fn create_provider(&self, input: ProviderCreateInput) -> Result<Provider>;
-    async fn update_provider(
+    async fn paginate(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>>;
+    async fn find_by_id(&self, id: ProviderId) -> Result<Option<Provider>>;
+    async fn find_by_slug(&self, slug: String) -> Result<Option<Provider>>;
+    async fn find_by_ids(&self, ids: Vec<ProviderId>) -> Result<Vec<Provider>>;
+    async fn count(&self) -> Result<u64>;
+    async fn create(&self, input: ProviderCreateInput) -> Result<Provider>;
+    async fn update_by_id(
         &self,
         id: ProviderId,
         input: ProviderUpdateInput,
     ) -> Result<Option<Provider>>;
-    async fn delete_provider(&self, id: ProviderId) -> Result<Option<Provider>>;
+    async fn delete_by_id(&self, id: ProviderId) -> Result<Option<Provider>>;
 }
 
 pub type ProviderServiceDyn = Arc<dyn ProviderServiceExt + Send + Sync>;
@@ -40,7 +40,7 @@ impl ProviderService {
 
 #[async_trait::async_trait]
 impl ProviderServiceExt for ProviderService {
-    async fn get_providers(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>> {
+    async fn paginate(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>> {
         let paginated = self
             .repository
             .provider
@@ -51,7 +51,7 @@ impl ProviderServiceExt for ProviderService {
         Ok(paginated)
     }
 
-    async fn get_provider_by_id(&self, id: ProviderId) -> Result<Option<Provider>> {
+    async fn find_by_id(&self, id: ProviderId) -> Result<Option<Provider>> {
         let provider = self
             .repository
             .provider
@@ -63,11 +63,11 @@ impl ProviderServiceExt for ProviderService {
         Ok(provider)
     }
 
-    async fn get_provider_by_name(&self, name: String) -> Result<Option<Provider>> {
+    async fn find_by_slug(&self, slug: String) -> Result<Option<Provider>> {
         let provider = self
             .repository
             .provider
-            .find_by_name(name)
+            .find_by_slug(slug)
             .await
             .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?
             .map(|provider| provider.into());
@@ -75,7 +75,7 @@ impl ProviderServiceExt for ProviderService {
         Ok(provider)
     }
 
-    async fn get_providers_by_ids(&self, ids: Vec<ProviderId>) -> Result<Vec<Provider>> {
+    async fn find_by_ids(&self, ids: Vec<ProviderId>) -> Result<Vec<Provider>> {
         let providers = self
             .repository
             .provider
@@ -89,7 +89,7 @@ impl ProviderServiceExt for ProviderService {
         Ok(providers)
     }
 
-    async fn count_providers(&self) -> Result<u64> {
+    async fn count(&self) -> Result<u64> {
         let count = self
             .repository
             .provider
@@ -100,18 +100,21 @@ impl ProviderServiceExt for ProviderService {
         Ok(count)
     }
 
-    async fn create_provider(&self, input: ProviderCreateInput) -> Result<Provider> {
+    async fn create(&self, input: ProviderCreateInput) -> Result<Provider> {
         let created_provider = self
             .repository
             .provider
-            .create(ProviderCreateEntity { name: input.name })
+            .create(ProviderCreateEntity {
+                name: input.name,
+                slug: input.slug,
+            })
             .await
             .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(created_provider.into())
     }
 
-    async fn update_provider(
+    async fn update_by_id(
         &self,
         id: ProviderId,
         input: ProviderUpdateInput,
@@ -119,7 +122,13 @@ impl ProviderServiceExt for ProviderService {
         let updated_provider = self
             .repository
             .provider
-            .update_by_id(id, ProviderUpdateEntity { name: input.name })
+            .update_by_id(
+                id,
+                ProviderUpdateEntity {
+                    name: input.name,
+                    slug: input.slug,
+                },
+            )
             .await
             .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?
             .map(|provider| provider.into());
@@ -127,7 +136,7 @@ impl ProviderServiceExt for ProviderService {
         Ok(updated_provider)
     }
 
-    async fn delete_provider(&self, id: ProviderId) -> Result<Option<Provider>> {
+    async fn delete_by_id(&self, id: ProviderId) -> Result<Option<Provider>> {
         let deleted_provider = self
             .repository
             .provider

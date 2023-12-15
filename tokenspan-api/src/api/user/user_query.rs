@@ -12,6 +12,8 @@ impl UserQuery {
     async fn user<'a>(&self, ctx: &Context<'a>, id: UserId) -> Result<Option<User>> {
         let user_service = ctx.data_unchecked::<UserServiceDyn>();
 
-        user_service.get_user_by_id(id).await
+        let user = user_service.find_by_id(id).await?;
+
+        Ok(user)
     }
 }

@@ -19,8 +19,7 @@ impl ModelCache {
                 take: Some(100),
                 ..Default::default()
             })
-            .await
-            .map_err(|e| anyhow::anyhow!(e.message))?;
+            .await?;
 
         let mut cache = HashMap::new();
         for model in models.items.into_iter() {

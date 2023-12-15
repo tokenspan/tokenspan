@@ -20,6 +20,7 @@ pub struct Task {
     #[serde(serialize_with = "serialize_oid")]
     pub id: TaskId,
     pub name: String,
+    pub slug: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -35,13 +36,15 @@ impl Task {
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        if let Some(version) = version {
+        let task_version = if let Some(version) = version {
             task_version_service
                 .find_by_version(self.id.clone(), version)
-                .await
+                .await?
         } else {
-            task_version_service.find_latest(self.id.clone()).await
-        }
+            task_version_service.find_latest(self.id.clone()).await?
+        };
+
+        Ok(task_version)
     }
 }
 
@@ -56,6 +59,7 @@ impl From<super::task_repository::TaskEntity> for Task {
         Self {
             id: value.id,
             name: value.name,
+            slug: value.slug,
             updated_at: value.updated_at,
             created_at: value.created_at,
         }

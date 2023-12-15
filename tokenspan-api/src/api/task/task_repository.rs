@@ -95,4 +95,12 @@ impl Repository<TaskEntity> {
         )
         .await
     }
+
+    pub async fn find_by_slug(&self, slug: String) -> Result<Option<TaskEntity>> {
+        let filter = doc! {
+            "slug": slug,
+        };
+
+        self.collection.find_one(filter, None).await
+    }
 }

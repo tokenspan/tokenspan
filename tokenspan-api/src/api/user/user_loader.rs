@@ -11,7 +11,7 @@ impl Loader<UserId> for AppLoader {
     async fn load(&self, keys: &[UserId]) -> Result<HashMap<UserId, Self::Value>, Self::Error> {
         let users = self
             .user_service
-            .get_users_by_ids(keys.to_vec())
+            .find_by_ids(keys.to_vec())
             .await
             .unwrap()
             .into_iter()

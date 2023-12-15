@@ -1,3 +1,0 @@
-providers:
-  - name: OpenAI
-  - name: Cohere

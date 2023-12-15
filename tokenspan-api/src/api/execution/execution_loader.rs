@@ -18,9 +18,9 @@ impl Loader<ExecutionId> for AppLoader {
     ) -> Result<HashMap<ExecutionId, Self::Value>, Self::Error> {
         let executions = self
             .execution_service
-            .get_executions_by_ids(keys.to_vec())
+            .find_by_ids(keys.to_vec())
             .await
-            .map_err(|e| Arc::new(ExecutionError::Unknown(anyhow::anyhow!(e.message))))?
+            .map_err(|e| Arc::new(ExecutionError::Unknown(anyhow::anyhow!(e))))?
             .into_iter()
             .map(|execution| (execution.id.clone(), execution))
             .collect();

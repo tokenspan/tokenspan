@@ -22,7 +22,7 @@ impl ProviderQuery {
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let paginated_provider = provider_service.get_providers(args).await?;
+        let paginated_provider = provider_service.paginate(args).await?;
 
         Ok(paginated_provider.into())
     }
@@ -36,7 +36,7 @@ impl ProviderQuery {
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let provider = provider_service.get_provider_by_id(id).await?;
+        let provider = provider_service.find_by_id(id).await?;
 
         Ok(provider)
     }

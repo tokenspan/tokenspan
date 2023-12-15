@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/Model",
+  "definitions": {
+    "Model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "$ref": "#/definitions/Provider"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "context": {
+          "type": "integer"
+        },
+        "inputPricing": {
+          "$ref": "#/definitions/PutPricing"
+        },
+        "outputPricing": {
+          "$ref": "#/definitions/PutPricing"
+        },
+        "trainingAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "context",
+        "description",
+        "inputPricing",
+        "name",
+        "slug",
+        "outputPricing",
+        "provider",
+        "trainingAt"
+      ],
+      "title": "Model"
+    },
+    "PutPricing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "price": {
+          "type": "number"
+        },
+        "tokens": {
+          "type": "integer"
+        },
+        "currency": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "currency",
+        "price",
+        "tokens"
+      ],
+      "title": "PutPricing"
+    },
+    "Provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug"
+      ],
+      "title": "Provider"
+    }
+  }
+}

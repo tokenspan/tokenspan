@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/User",
+  "definitions": {
+    "User": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "ADMIN",
+            "USER"
+          ]
+        }
+      },
+      "required": [
+        "email",
+        "username",
+        "password",
+        "role"
+      ],
+      "title": "User"
+    }
+  }
+}
