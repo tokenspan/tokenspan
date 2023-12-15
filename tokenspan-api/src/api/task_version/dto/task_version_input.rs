@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-
 use async_graphql::InputObject;
 
+use crate::api::dto::{ParameterCreateInput, ParameterInputBy};
 use crate::api::models::TaskId;
-use crate::api::repositories::TaskVersionStatus;
-use crate::prompt::{ChatMessageInput, RawChatMessageInput};
+use crate::prompt::ChatMessageInput;
 
 #[derive(InputObject)]
 pub struct TaskVersionCreateInput {
@@ -13,8 +11,7 @@ pub struct TaskVersionCreateInput {
     pub description: Option<String>,
     pub document: Option<String>,
     pub messages: Vec<ChatMessageInput>,
-    pub raw_messages: Vec<RawChatMessageInput>,
-    pub variables: HashMap<String, String>,
+    pub parameters: Vec<ParameterCreateInput>,
     pub task_id: TaskId,
 }
 
@@ -25,8 +22,6 @@ pub struct TaskVersionUpdateInput {
     pub description: Option<String>,
     pub document: Option<String>,
     pub messages: Option<Vec<ChatMessageInput>>,
-    pub raw_messages: Option<Vec<String>>,
-    pub variables: HashMap<String, String>,
-    pub status: Option<TaskVersionStatus>,
+    pub parameters: Option<Vec<ParameterInputBy>>,
     pub task_id: Option<String>,
 }

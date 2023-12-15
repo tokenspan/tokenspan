@@ -1,9 +1,8 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 
-use crate::api::models::{ParsedToken, TaskVersionId};
+use crate::api::models::{ParsedToken, TaskVersion, TaskVersionId};
 use crate::api::services::TaskVersionServiceDyn;
 use crate::api::task_version::dto::{TaskVersionCreateInput, TaskVersionUpdateInput};
-use crate::api::task_version::task_version_model::TaskVersion;
 use crate::api::types::Role;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
@@ -30,7 +29,7 @@ impl TaskVersionMutation {
             .ok_or(AppError::Unauthorized("no token".to_string()).extend())?;
 
         task_version_service
-            .create_task_version(input, &parsed_token.user_id)
+            .create(input, &parsed_token.user_id)
             .await
     }
 
@@ -45,7 +44,7 @@ impl TaskVersionMutation {
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        task_version_service.update_task_version(id, input).await
+        task_version_service.update_by_id(id, input).await
     }
 
     #[graphql(guard = "RoleGuard::new(Role::Admin)")]
@@ -58,6 +57,6 @@ impl TaskVersionMutation {
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        task_version_service.delete_task_version(id).await
+        task_version_service.delete_by_id(id).await
     }
 }

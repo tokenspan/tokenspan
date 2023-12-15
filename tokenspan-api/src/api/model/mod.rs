@@ -2,6 +2,7 @@ pub use model_mutation::ModelMutation;
 pub use model_query::ModelQuery;
 
 pub mod dto;
+pub mod model_cache;
 pub mod model_error;
 mod model_loader;
 pub mod model_model;

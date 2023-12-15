@@ -23,7 +23,7 @@ impl ModelQuery {
             .data::<ModelServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let paginated_model = model_service.get_models(args).await?;
+        let paginated_model = model_service.paginate(args).await?;
 
         Ok(paginated_model.into())
     }
@@ -33,7 +33,7 @@ impl ModelQuery {
             .data::<ModelServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let model = model_service.get_model_by_id(id).await?;
+        let model = model_service.find_by_id(id).await?;
 
         Ok(model)
     }

@@ -1,6 +1,7 @@
-use crate::api::api_key_cache::{ApiKeyCache, ApiKeyCacheDyn};
 use std::sync::Arc;
 
+use crate::api::caches::api_key_cache::{ApiKeyCache, ApiKeyCacheDyn};
+use crate::api::caches::model_cache::{ModelCache, ModelCacheDyn};
 use crate::api::services::*;
 use crate::configs::AppConfig;
 use crate::repository::RootRepository;
@@ -13,13 +14,12 @@ pub struct AppState {
     pub api_key_service: ApiKeyServiceDyn,
     pub provider_service: ProviderServiceDyn,
     pub model_service: ModelServiceDyn,
-    pub parameter_service: ParameterServiceDyn,
     pub task_version_service: TaskVersionServiceDyn,
     pub task_service: TaskServiceDyn,
-    pub view_service: ViewServiceDyn,
     pub execution_service: ExecutionServiceDyn,
 
     pub api_key_cache: ApiKeyCacheDyn,
+    pub model_cache: ModelCacheDyn,
 }
 
 impl AppState {
@@ -39,20 +39,19 @@ impl AppState {
         let api_key_cache = ApiKeyCache::new(api_key_service.clone()).await.unwrap();
         let api_key_cache = Arc::new(api_key_cache);
 
-        let provider_service: ProviderServiceDyn = ProviderService::new(repository.clone()).into();
         let model_service: ModelServiceDyn = ModelService::new(repository.clone()).into();
-        let parameter_service: ParameterServiceDyn =
-            ParameterService::new(repository.clone()).into();
+        let model_cache = ModelCache::new(model_service.clone()).await.unwrap();
+        let model_cache = Arc::new(model_cache);
+
+        let provider_service: ProviderServiceDyn = ProviderService::new(repository.clone()).into();
         let task_version_service: TaskVersionServiceDyn =
             TaskVersionService::new(repository.clone()).into();
-        let view_service: ViewServiceDyn = ViewService::new(repository.clone()).into();
         let execution_service: ExecutionServiceDyn =
             ExecutionService::new(repository.clone()).into();
         let task_service: TaskServiceDyn = TaskService::new(
             repository.clone(),
             api_key_cache.clone(),
-            parameter_service.clone(),
-            model_service.clone(),
+            model_cache.clone(),
             execution_service.clone(),
             task_version_service.clone(),
         )
@@ -65,13 +64,12 @@ impl AppState {
             api_key_service,
             provider_service,
             model_service,
-            parameter_service,
             task_version_service,
             task_service,
-            view_service,
             execution_service,
 
             api_key_cache,
+            model_cache,
         }
     }
 }

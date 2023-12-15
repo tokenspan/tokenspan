@@ -151,12 +151,10 @@ where
 
 pub struct RootRepository {
     pub user: Repository<UserEntity>,
-    pub view: Repository<ViewEntity>,
     pub api_key: Repository<ApiKeyEntity>,
     pub task_version: Repository<TaskVersionEntity>,
     pub task: Repository<TaskEntity>,
     pub provider: Repository<ProviderEntity>,
-    pub parameter: Repository<ParameterEntity>,
     pub model: Repository<ModelEntity>,
     pub execution: Repository<ExecutionEntity>,
 }
@@ -166,23 +164,19 @@ impl RootRepository {
         let client = Client::with_uri_str(uri).await.unwrap();
         let database = client.database("tokenspan");
         let user = Repository::new(database.clone(), "users");
-        let view = Repository::new(database.clone(), "views");
         let api_key = Repository::new(database.clone(), "api_keys");
         let task_version = Repository::new(database.clone(), "task_versions");
         let task = Repository::new(database.clone(), "tasks");
         let provider = Repository::new(database.clone(), "providers");
-        let parameter = Repository::new(database.clone(), "parameters");
         let model = Repository::new(database.clone(), "models");
         let execution = Repository::new(database.clone(), "executions");
 
         Self {
             user,
-            view,
             api_key,
             task_version,
             task,
             provider,
-            parameter,
             model,
             execution,
         }

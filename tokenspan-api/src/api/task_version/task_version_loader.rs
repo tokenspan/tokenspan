@@ -18,7 +18,7 @@ impl Loader<TaskVersionId> for AppLoader {
     ) -> Result<HashMap<TaskVersionId, Self::Value>, Self::Error> {
         let task_versions = self
             .task_version_service
-            .get_task_versions_by_ids(keys.to_vec())
+            .find_by_ids(keys.to_vec())
             .await
             .map_err(|e| Arc::new(TaskVersionError::Unknown(anyhow::anyhow!(e.message))))?
             .into_iter()

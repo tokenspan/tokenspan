@@ -8,35 +8,29 @@ mod auth;
 mod execution;
 mod health;
 mod model;
-mod parameter;
 mod provider;
 mod task;
 mod task_version;
 mod user;
-mod view;
 
 pub mod repositories {
     pub use super::api_key::api_key_repository::*;
     pub use super::execution::execution_repository::*;
     pub use super::model::model_repository::*;
-    pub use super::parameter::parameter_repository::*;
     pub use super::provider::provider_repository::*;
     pub use super::task::task_repository::*;
     pub use super::task_version::task_version_repository::*;
     pub use super::user::user_repository::*;
-    pub use super::view::view_repository::*;
 }
 pub mod services {
     pub use super::api_key::api_key_service::*;
     pub use super::auth::auth_service::*;
     pub use super::execution::execution_service::*;
     pub use super::model::model_service::*;
-    pub use super::parameter::parameter_service::*;
     pub use super::provider::provider_service::*;
     pub use super::task::task_service::*;
     pub use super::task_version::task_version_service::*;
     pub use super::user::user_service::*;
-    pub use super::view::view_service::*;
 }
 
 pub mod models {
@@ -44,12 +38,10 @@ pub mod models {
     pub use super::auth::auth_model::*;
     pub use super::execution::execution_model::*;
     pub use super::model::model_model::*;
-    pub use super::parameter::parameter_model::*;
     pub use super::provider::provider_model::*;
     pub use super::task::task_model::*;
-    pub use super::task_version::task_version_model::*;
+    pub use super::task_version::models::*;
     pub use super::user::user_model::*;
-    pub use super::view::view_model::*;
 }
 
 pub mod types {
@@ -62,15 +54,16 @@ pub mod dto {
     pub use super::auth::dto::*;
     pub use super::execution::dto::*;
     pub use super::model::dto::*;
-    pub use super::parameter::dto::*;
     pub use super::provider::dto::*;
     pub use super::task::dto::*;
     pub use super::task_version::dto::*;
     pub use super::user::dto::*;
-    pub use super::view::dto::*;
 }
 
-pub use api_key::api_key_cache;
+pub mod caches {
+    pub use super::api_key::api_key_cache;
+    pub use super::model::model_cache;
+}
 
 #[derive(MergedObject, Default)]
 pub struct QueryRoot(
@@ -80,9 +73,7 @@ pub struct QueryRoot(
     pub api_key::ApiKeyQuery,
     pub provider::ProviderQuery,
     pub model::ModelQuery,
-    pub parameter::ParameterQuery,
     pub task_version::TaskVersionQuery,
-    pub view::ViewQuery,
     pub execution::ExecutionQuery,
 );
 
@@ -94,9 +85,7 @@ pub struct MutationRoot(
     pub api_key::ApiKeyMutation,
     pub provider::ProviderMutation,
     pub model::ModelMutation,
-    pub parameter::ParameterMutation,
     pub task_version::TaskVersionMutation,
-    pub view::ViewMutation,
 );
 
 #[derive(MergedSubscription, Default)]

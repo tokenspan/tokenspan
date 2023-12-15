@@ -15,7 +15,7 @@ impl Loader<ModelId> for AppLoader {
     async fn load(&self, keys: &[ModelId]) -> Result<HashMap<ModelId, Self::Value>, Self::Error> {
         let models = self
             .model_service
-            .get_models_by_ids(keys.to_vec())
+            .find_by_ids(keys.to_vec())
             .await
             .map_err(|e| Arc::new(ModelError::Unknown(anyhow::anyhow!(e.message))))?
             .into_iter()

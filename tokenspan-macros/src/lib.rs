@@ -14,14 +14,14 @@ pub fn impl_tokenspan_id(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl Display for #name {
+        impl std::fmt::Display for #name {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 write!(f, "{}", &self.0.to_string())
             }
         }
 
-        #[Scalar]
-        impl ScalarType for #name {
+        #[async_graphql::Scalar]
+        impl async_graphql::ScalarType for #name {
             fn parse(value: async_graphql::Value) -> async_graphql::InputValueResult<Self> {
                 if let async_graphql::Value::String(maybe_id) = value.clone() {
                     if let Ok(object_id) = mongodb::bson::oid::ObjectId::parse_str(&maybe_id) {
