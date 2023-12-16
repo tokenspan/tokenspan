@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use anyhow::Result;
 
 use crate::api::caches::api_key_cache::{ApiKeyCache, ApiKeyCacheDyn};
 use crate::api::caches::model_cache::{ModelCache, ModelCacheDyn};
@@ -8,7 +8,7 @@ use crate::repository::RootRepository;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub repository: Arc<RootRepository>,
+    pub repository: RootRepository,
     pub user_service: UserServiceDyn,
     pub auth_service: AuthServiceDyn,
     pub api_key_service: ApiKeyServiceDyn,
@@ -23,11 +23,10 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new(app_config: AppConfig) -> Self {
+    pub async fn new(app_config: AppConfig) -> Result<Self> {
         let url = app_config.database.url.clone();
 
         let repository = RootRepository::new_with_uri(url).await;
-        let repository = Arc::new(repository);
 
         let user_service: UserServiceDyn = UserService::new(repository.clone()).into();
         let auth_service: AuthServiceDyn =
@@ -36,12 +35,10 @@ impl AppState {
         let api_key_service: ApiKeyServiceDyn =
             ApiKeyService::new(repository.clone(), app_config.encryption.clone()).into();
 
-        let api_key_cache = ApiKeyCache::new(api_key_service.clone()).await.unwrap();
-        let api_key_cache = Arc::new(api_key_cache);
+        let api_key_cache: ApiKeyCacheDyn = ApiKeyCache::new(api_key_service.clone()).await?.into();
 
         let model_service: ModelServiceDyn = ModelService::new(repository.clone()).into();
-        let model_cache = ModelCache::new(model_service.clone()).await.unwrap();
-        let model_cache = Arc::new(model_cache);
+        let model_cache: ModelCacheDyn = ModelCache::new(model_service.clone()).await?.into();
 
         let provider_service: ProviderServiceDyn = ProviderService::new(repository.clone()).into();
         let task_version_service: TaskVersionServiceDyn =
@@ -57,7 +54,7 @@ impl AppState {
         )
         .into();
 
-        Self {
+        Ok(Self {
             repository,
             user_service,
             auth_service,
@@ -70,6 +67,6 @@ impl AppState {
 
             api_key_cache,
             model_cache,
-        }
+        })
     }
 }

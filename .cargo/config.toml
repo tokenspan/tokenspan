@@ -1,2 +1,2 @@
 [alias]
-migrate = "run --bin tokenspan-migrations"
+migrate = "run --bin tokenspan-cli"

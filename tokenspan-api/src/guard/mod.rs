@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use async_graphql::{Context, Guard};
 use axum::extract::{Request, State};
 use axum::http::StatusCode;
@@ -14,7 +12,7 @@ use crate::api::types::Role;
 use crate::configs::AppConfig;
 
 pub async fn guard(
-    State(config): State<Arc<AppConfig>>,
+    State(config): State<AppConfig>,
     mut req: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {

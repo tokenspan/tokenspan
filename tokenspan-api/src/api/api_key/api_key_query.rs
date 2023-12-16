@@ -22,7 +22,7 @@ impl ApiKeyQuery {
             .data::<ApiKeyServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let paginated_api_key = api_key_service.get_api_keys(args).await?;
+        let paginated_api_key = api_key_service.paginate(args).await?;
 
         Ok(paginated_api_key.into())
     }
@@ -32,7 +32,7 @@ impl ApiKeyQuery {
             .data::<ApiKeyServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let api_key = api_key_service.get_api_key_by_id(id).await?;
+        let api_key = api_key_service.find_by_id(id).await?;
 
         Ok(api_key)
     }

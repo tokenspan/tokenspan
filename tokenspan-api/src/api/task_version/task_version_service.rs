@@ -44,11 +44,11 @@ pub trait TaskVersionServiceExt {
 pub type TaskVersionServiceDyn = Arc<dyn TaskVersionServiceExt + Send + Sync>;
 
 pub struct TaskVersionService {
-    repository: Arc<RootRepository>,
+    repository: RootRepository,
 }
 
 impl TaskVersionService {
-    pub fn new(repository: Arc<RootRepository>) -> Self {
+    pub fn new(repository: RootRepository) -> Self {
         Self { repository }
     }
 }
@@ -163,6 +163,8 @@ impl TaskVersionServiceExt for TaskVersionService {
             .into_iter()
             .map(|p| p.data.into())
             .collect();
+
+        println!("parameters: {:?}", parameters);
 
         let created_task_version = self
             .repository

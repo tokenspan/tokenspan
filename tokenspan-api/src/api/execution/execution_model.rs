@@ -13,6 +13,7 @@ use crate::api::repositories::ExecutionEntity;
 use crate::api::types::{Endpoint, ExecutionStatus};
 
 #[derive(SimpleObject, Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Elapsed {
     pub pre_elapsed: f64,
     pub elapsed: f64,
@@ -23,6 +24,7 @@ pub struct Elapsed {
 pub struct ExecutionId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Execution {
     #[serde(serialize_with = "serialize_oid")]
     pub id: ExecutionId,

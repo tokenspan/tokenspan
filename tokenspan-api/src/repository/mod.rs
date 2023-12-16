@@ -149,6 +149,7 @@ where
     }
 }
 
+#[derive(Clone)]
 pub struct RootRepository {
     pub user: Repository<UserEntity>,
     pub api_key: Repository<ApiKeyEntity>,

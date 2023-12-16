@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 use mongodb::error::{Error, Result};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProviderEntity {
     #[serde(rename = "_id")]

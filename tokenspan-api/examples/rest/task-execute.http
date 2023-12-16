@@ -1,0 +1,13 @@
+# execute task
+POST {{host}}/api/v1/tasks/execute
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "parameterId": "657d1cd748f0aa3bba3aaf41",
+  "taskVersionId": "657d1cd748f0aa3bba3aaf42",
+  "apiKeyId": "657d208932fc0103875d623c",
+  "variables": {
+    "statement": "She no went to the market."
+  }
+}

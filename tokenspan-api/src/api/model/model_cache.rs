@@ -1,19 +1,24 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use anyhow::Result;
+use async_trait::async_trait;
+use tokio::sync::Mutex;
+
+use crate::api::cache::CacheExt;
 use crate::api::dto::ModelArgs;
 use crate::api::models::{Model, ModelId};
 use crate::api::services::ModelServiceDyn;
 
 #[derive(Clone)]
 pub struct ModelCache {
-    cache: HashMap<ModelId, Model>,
+    cache: Arc<Mutex<HashMap<ModelId, Model>>>,
 }
 
-pub type ModelCacheDyn = Arc<ModelCache>;
+pub type ModelCacheDyn = Arc<dyn CacheExt<ModelId, Model> + Send + Sync>;
 
 impl ModelCache {
-    pub async fn new(model_service: ModelServiceDyn) -> anyhow::Result<Self> {
+    pub async fn new(model_service: ModelServiceDyn) -> Result<Self> {
         let models = model_service
             .paginate(ModelArgs {
                 take: Some(100),
@@ -26,10 +31,27 @@ impl ModelCache {
             cache.insert(model.id.clone(), model);
         }
 
-        Ok(Self { cache })
+        Ok(Self {
+            cache: Arc::new(Mutex::new(cache)),
+        })
+    }
+}
+
+#[async_trait]
+impl CacheExt<ModelId, Model> for ModelCache {
+    async fn set(&self, key: ModelId, value: Model) {
+        let mut cache = self.cache.lock().await;
+        cache.insert(key, value);
     }
 
-    pub fn get(&self, id: ModelId) -> Option<Model> {
-        self.cache.get(&id).cloned()
+    async fn get(&self, key: ModelId) -> Option<Model> {
+        let cache = self.cache.lock().await;
+        cache.get(&key).cloned()
+    }
+}
+
+impl From<ModelCache> for ModelCacheDyn {
+    fn from(value: ModelCache) -> Self {
+        Arc::new(value) as Self
     }
 }

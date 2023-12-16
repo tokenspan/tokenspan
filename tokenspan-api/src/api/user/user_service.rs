@@ -32,14 +32,14 @@ pub trait UserServiceExt {
 pub type UserServiceDyn = Arc<dyn UserServiceExt + Send + Sync>;
 
 pub struct UserService {
-    repository: Arc<RootRepository>,
+    repository: RootRepository,
 }
 
 impl UserService {
     const CREDENTIAL_LEN: usize = digest::SHA512_OUTPUT_LEN;
     const ITERATIONS: u32 = 100_000;
 
-    pub fn new(repository: Arc<RootRepository>) -> Self {
+    pub fn new(repository: RootRepository) -> Self {
         Self { repository }
     }
 

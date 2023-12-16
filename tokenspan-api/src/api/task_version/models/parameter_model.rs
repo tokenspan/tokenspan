@@ -18,8 +18,10 @@ use crate::loader::AppLoader;
 pub struct ParameterId(pub ObjectId);
 
 #[derive(SimpleObject, Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[graphql(complex)]
 pub struct Parameter {
+    #[serde(serialize_with = "serialize_oid")]
     pub id: ParameterId,
     pub name: String,
     pub temperature: f32,

@@ -5,6 +5,7 @@ use crate::state::AppState;
 
 mod api_key;
 mod auth;
+mod cache;
 mod execution;
 mod health;
 mod model;

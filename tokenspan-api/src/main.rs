@@ -1,6 +1,6 @@
-use std::sync::Arc;
 use std::time::Duration;
 
+use anyhow::Result;
 use async_graphql_axum::GraphQLSubscription;
 use axum::extract::MatchedPath;
 use axum::http::{Request, StatusCode};
@@ -31,7 +31,7 @@ async fn handler_404() -> impl IntoResponse {
     )
 }
 
-pub fn register_tracing(config: Arc<configs::AppConfig>) {
+pub fn register_tracing(config: configs::AppConfig) {
     let trace = tracing_subscriber::registry().with(
         tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
             // axum logs rejections from built-in extractors with the `axum::rejection`
@@ -49,9 +49,8 @@ pub fn register_tracing(config: Arc<configs::AppConfig>) {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     let config = configs::AppConfig::new().unwrap();
-    let config = Arc::new(config);
 
     register_tracing(config.clone());
 
@@ -75,7 +74,7 @@ async fn main() {
     let cors_layer = CorsLayer::permissive();
     let timeout_layer = TimeoutLayer::new(Duration::from_secs(10));
 
-    let app_state = state::AppState::new(config.clone()).await;
+    let app_state = state::AppState::new(config.clone()).await?;
     let schema = build_schema(app_state.clone()).await;
 
     let app = Router::new()
@@ -94,8 +93,8 @@ async fn main() {
 
     info!("Sandbox: http://localhost:8080/graphql");
 
-    let listener = TcpListener::bind("0.0.0.0:8080").await.unwrap();
-    axum::serve(listener, app.into_make_service())
-        .await
-        .unwrap();
+    let listener = TcpListener::bind("0.0.0.0:8080").await?;
+    axum::serve(listener, app.into_make_service()).await?;
+
+    Ok(())
 }
