@@ -29,11 +29,11 @@ pub trait ProviderServiceExt {
 pub type ProviderServiceDyn = Arc<dyn ProviderServiceExt + Send + Sync>;
 
 pub struct ProviderService {
-    repository: Arc<RootRepository>,
+    repository: RootRepository,
 }
 
 impl ProviderService {
-    pub fn new(repository: Arc<RootRepository>) -> Self {
+    pub fn new(repository: RootRepository) -> Self {
         Self { repository }
     }
 }

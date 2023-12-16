@@ -1,0 +1,99 @@
+### Create api key
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation CreateApiKey($input: ApiKeyCreateInput!) {
+  createApiKey(input: $input) {
+    id
+    name
+    hint
+    ownerId
+    providerId
+    createdAt
+    updatedAt
+    provider {
+      id
+      name
+      slug
+    }
+    owner {
+      id
+      username
+    }
+  }
+}
+
+{
+  "input": {
+    "name": "test",
+    "key": "",
+    "providerId": "657d1cd748f0aa3bba3aaf3d"
+  }
+}
+
+### Get api keys
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query ApiKeys {
+  apiKeys {
+    nodes {
+      id
+      name
+      hint
+      ownerId
+      providerId
+      createdAt
+      updatedAt
+      provider {
+        id
+        name
+        slug
+        createdAt
+        updatedAt
+      }
+      owner {
+        id
+        email
+        username
+        role
+      }
+    }
+    pageInfo {
+      startCursor
+      endCursor
+      hasNextPage
+      hasPreviousPage
+    }
+    totalNodes
+  }
+}
+
+### Get api key by id
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query GetApiKey($id: ID!) {
+  apiKey(id: $id) {
+    id
+    name
+    hint
+    ownerId
+    providerId
+    createdAt
+    updatedAt
+    provider {
+      id
+      name
+      slug
+    }
+    owner {
+      id
+      username
+    }
+  }
+}
+
+{
+  "id": "657d208932fc0103875d623c"
+}

@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::api::models::{ApiKeyId, ProviderId, UserId};
 use crate::repository::Repository;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiKeyEntity {
     #[serde(rename = "_id")]

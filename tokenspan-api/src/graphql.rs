@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use async_graphql::dataloader::DataLoader;
 use async_graphql::extensions::Tracing;
 use async_graphql::http::GraphiQLSource;
@@ -64,7 +62,7 @@ pub async fn graphql_sandbox(Host(hostname): Host) -> impl IntoResponse {
 
 pub async fn graphql_handler(
     Extension(schema): Extension<AppSchema>,
-    Extension(config): Extension<Arc<AppConfig>>,
+    Extension(config): Extension<AppConfig>,
     Extension(token): Extension<Option<ParsedToken>>,
     Extension(headers): Extension<HeaderMap>,
     req: GraphQLRequest,

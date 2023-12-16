@@ -29,9 +29,11 @@ impl ApiKeyMutation {
             .as_ref()
             .ok_or(AppError::Unauthorized("no token".to_string()).extend())?;
 
-        api_key_service
-            .create_api_key(input, parsed_token.user_id.clone())
-            .await
+        let api_key = api_key_service
+            .create(input, parsed_token.user_id.clone())
+            .await?;
+
+        Ok(api_key)
     }
 
     #[graphql(guard = "RoleGuard::new(Role::Admin)")]
@@ -45,7 +47,9 @@ impl ApiKeyMutation {
             .data::<ApiKeyServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        api_key_service.update_api_key(id, input).await
+        let api_key = api_key_service.update_by_id(id, input).await?;
+
+        Ok(api_key)
     }
 
     #[graphql(guard = "RoleGuard::new(Role::Admin)")]
@@ -58,6 +62,8 @@ impl ApiKeyMutation {
             .data::<ApiKeyServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        api_key_service.delete_api_key(id).await
+        let api_key = api_key_service.delete_by_id(id).await?;
+
+        Ok(api_key)
     }
 }

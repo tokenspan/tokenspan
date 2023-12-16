@@ -29,11 +29,11 @@ pub trait ExecutionServiceExt {
 pub type ExecutionServiceDyn = Arc<dyn ExecutionServiceExt + Send + Sync>;
 
 pub struct ExecutionService {
-    repository: Arc<RootRepository>,
+    repository: RootRepository,
 }
 
 impl ExecutionService {
-    pub fn new(repository: Arc<RootRepository>) -> Self {
+    pub fn new(repository: RootRepository) -> Self {
         Self { repository }
     }
 }

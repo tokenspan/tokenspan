@@ -1,0 +1,45 @@
+### Sign in
+GRAPHQL {{host}}/graphql
+
+mutation SignIn($input: SignInInput!) {
+  signIn(input: $input) {
+    token
+    refreshToken
+    user {
+      id
+      email
+      role
+    }
+  }
+}
+
+{
+  "input": {
+    "email": "wang_yu_meng@gmail.com",
+    "password": "123456"
+  }
+}
+
+### Sign up
+GRAPHQL {{host}}/graphql
+
+mutation SignUp($input: SignUpInput!) {
+  signUp(input: $input) {
+    refreshToken
+    token
+    user {
+      id
+      email
+      username
+      role
+    }
+  }
+}
+
+{
+  "input": {
+    "email": "linh@gmail.com",
+    "username": "linh",
+    "password": "123"
+  }
+}

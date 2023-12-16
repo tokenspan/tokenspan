@@ -56,7 +56,7 @@ impl FromRef<AppState> for TaskServiceDyn {
 }
 
 pub struct TaskService {
-    repository: Arc<RootRepository>,
+    repository: RootRepository,
     api_key_cache: ApiKeyCacheDyn,
     model_cache: ModelCacheDyn,
 
@@ -66,7 +66,7 @@ pub struct TaskService {
 
 impl TaskService {
     pub fn new(
-        repository: Arc<RootRepository>,
+        repository: RootRepository,
         api_key_cache: ApiKeyCacheDyn,
         model_cache: ModelCacheDyn,
 
@@ -250,6 +250,7 @@ impl TaskServiceExt for TaskService {
         let api_key = self
             .api_key_cache
             .get(input.api_key_id)
+            .await
             .ok_or(ApiKeyError::Unknown(anyhow::anyhow!("API key not found")))?;
 
         let task_version = self
@@ -292,6 +293,7 @@ impl TaskServiceExt for TaskService {
         let model = self
             .model_cache
             .get(parameter.model_id.clone())
+            .await
             .ok_or(TaskError::Unknown(anyhow::anyhow!("Model not found")))?;
         let pre_elapsed = start.elapsed();
 

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::api::models::{ModelId, ProviderId};
 use crate::repository::Repository;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PricingEntity {
     pub price: f64,
@@ -15,7 +15,7 @@ pub struct PricingEntity {
     pub currency: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModelEntity {
     #[serde(rename = "_id")]

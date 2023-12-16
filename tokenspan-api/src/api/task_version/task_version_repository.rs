@@ -9,13 +9,14 @@ use futures::TryStreamExt;
 use mongodb::error::{Error, Result};
 use mongodb::options::{FindOneAndUpdateOptions, FindOneOptions};
 use serde::{Deserialize, Serialize};
+use tokenspan_extra::round;
 
 use crate::api::dto::ParameterInput;
 use crate::api::models::{ModelId, Parameter, ParameterId, TaskId, TaskVersionId, UserId};
 use crate::prompt::ChatMessage;
 use crate::repository::Repository;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ParameterEntity {
     #[serde(rename = "_id")]
@@ -40,12 +41,12 @@ impl ParameterEntity {
         Self {
             id,
             name: input.name,
-            temperature: input.temperature,
+            temperature: round(input.temperature, 2),
             max_tokens: input.max_tokens,
             stop_sequences: input.stop_sequences,
-            top_p: input.top_p,
-            frequency_penalty: input.frequency_penalty,
-            presence_penalty: input.presence_penalty,
+            top_p: round(input.top_p, 2),
+            frequency_penalty: round(input.frequency_penalty, 2),
+            presence_penalty: round(input.presence_penalty, 2),
             extra: input.extra,
             model_id: input.model_id,
             created_at: Utc::now(),
@@ -59,12 +60,12 @@ impl From<Parameter> for ParameterEntity {
         Self {
             id: value.id,
             name: value.name,
-            temperature: value.temperature,
+            temperature: round(value.temperature, 2),
             max_tokens: value.max_tokens,
             stop_sequences: value.stop_sequences,
-            top_p: value.top_p,
-            frequency_penalty: value.frequency_penalty,
-            presence_penalty: value.presence_penalty,
+            top_p: round(value.top_p, 2),
+            frequency_penalty: round(value.frequency_penalty, 2),
+            presence_penalty: round(value.presence_penalty, 2),
             extra: value.extra,
             model_id: value.model_id,
             created_at: value.created_at,
@@ -78,12 +79,12 @@ impl From<ParameterInput> for ParameterEntity {
         Self {
             id: ParameterId::new(),
             name: value.name,
-            temperature: value.temperature,
+            temperature: round(value.temperature, 2),
             max_tokens: value.max_tokens,
             stop_sequences: value.stop_sequences,
-            top_p: value.top_p,
-            frequency_penalty: value.frequency_penalty,
-            presence_penalty: value.presence_penalty,
+            top_p: round(value.top_p, 2),
+            frequency_penalty: round(value.frequency_penalty, 2),
+            presence_penalty: round(value.presence_penalty, 2),
             extra: value.extra,
             model_id: value.model_id,
             created_at: Utc::now(),
@@ -124,7 +125,7 @@ impl From<TaskVersionStatus> for Bson {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskVersionEntity {
     #[serde(rename = "_id")]

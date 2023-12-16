@@ -34,11 +34,11 @@ impl FromRef<AppState> for ModelServiceDyn {
 }
 
 pub struct ModelService {
-    repository: Arc<RootRepository>,
+    repository: RootRepository,
 }
 
 impl ModelService {
-    pub fn new(repository: Arc<RootRepository>) -> Self {
+    pub fn new(repository: RootRepository) -> Self {
         Self { repository }
     }
 }

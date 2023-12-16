@@ -9,7 +9,7 @@ use tokenspan_extra::pagination::{Cursor, CursorExt, Pagination};
 use crate::api::models::{TaskId, UserId};
 use crate::repository::{PaginateArgs, Repository};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskEntity {
     #[serde(rename = "_id")]

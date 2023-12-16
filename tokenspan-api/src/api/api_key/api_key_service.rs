@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use async_graphql::Result;
+use anyhow::Result;
 use magic_crypt::{new_magic_crypt, MagicCrypt256, MagicCryptTrait};
 
 use tokenspan_extra::pagination::{Cursor, Pagination};
@@ -16,30 +16,26 @@ use crate::repository::RootRepository;
 #[async_trait::async_trait]
 pub trait ApiKeyServiceExt {
     fn decrypt(&self, key: String) -> String;
-    async fn get_api_keys(&self, args: ApiKeyArgs) -> Result<Pagination<Cursor, ApiKey>>;
-    async fn get_api_key_by_id(&self, id: ApiKeyId) -> Result<Option<ApiKey>>;
-    async fn get_api_keys_by_ids(&self, ids: Vec<ApiKeyId>) -> Result<Vec<ApiKey>>;
-    async fn count_api_keys(&self) -> Result<u64>;
-    async fn create_api_key(&self, input: ApiKeyCreateInput, owner_id: UserId) -> Result<ApiKey>;
-    async fn update_api_key(
-        &self,
-        id: ApiKeyId,
-        input: ApiKeyUpdateInput,
-    ) -> Result<Option<ApiKey>>;
-    async fn delete_api_key(&self, id: ApiKeyId) -> Result<Option<ApiKey>>;
+    async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<Cursor, ApiKey>>;
+    async fn find_by_id(&self, id: ApiKeyId) -> Result<Option<ApiKey>>;
+    async fn find_by_ids(&self, ids: Vec<ApiKeyId>) -> Result<Vec<ApiKey>>;
+    async fn count(&self) -> Result<u64>;
+    async fn create(&self, input: ApiKeyCreateInput, owner_id: UserId) -> Result<ApiKey>;
+    async fn update_by_id(&self, id: ApiKeyId, input: ApiKeyUpdateInput) -> Result<Option<ApiKey>>;
+    async fn delete_by_id(&self, id: ApiKeyId) -> Result<Option<ApiKey>>;
 }
 
 pub type ApiKeyServiceDyn = Arc<dyn ApiKeyServiceExt + Send + Sync>;
 
 pub struct ApiKeyService {
-    repository: Arc<RootRepository>,
+    repository: RootRepository,
     mc: MagicCrypt256,
 }
 
 impl ApiKeyService {
     const HINT_SIZE: usize = 3;
 
-    pub fn new(repository: Arc<RootRepository>, encryption_config: EncryptionConfig) -> Self {
+    pub fn new(repository: RootRepository, encryption_config: EncryptionConfig) -> Self {
         let mc = new_magic_crypt!(encryption_config.secret.clone(), 256);
 
         Self { repository, mc }
@@ -67,18 +63,21 @@ impl ApiKeyServiceExt for ApiKeyService {
         self.mc.decrypt_base64_to_string(key.as_str()).unwrap()
     }
 
-    async fn get_api_keys(&self, args: ApiKeyArgs) -> Result<Pagination<Cursor, ApiKey>> {
+    async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<Cursor, ApiKey>> {
         let paginated = self
             .repository
             .api_key
             .paginate::<ApiKey>(args.into())
             .await
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?;
+            .map_err(|e| {
+                println!("error: {:?}", e);
+                ApiKeyError::Unknown(anyhow::anyhow!(e))
+            })?;
 
         Ok(paginated)
     }
 
-    async fn get_api_key_by_id(&self, id: ApiKeyId) -> Result<Option<ApiKey>> {
+    async fn find_by_id(&self, id: ApiKeyId) -> Result<Option<ApiKey>> {
         let api_key = self
             .repository
             .api_key
@@ -90,7 +89,7 @@ impl ApiKeyServiceExt for ApiKeyService {
         Ok(api_key)
     }
 
-    async fn get_api_keys_by_ids(&self, ids: Vec<ApiKeyId>) -> Result<Vec<ApiKey>> {
+    async fn find_by_ids(&self, ids: Vec<ApiKeyId>) -> Result<Vec<ApiKey>> {
         let api_keys = self
             .repository
             .api_key
@@ -104,7 +103,7 @@ impl ApiKeyServiceExt for ApiKeyService {
         Ok(api_keys)
     }
 
-    async fn count_api_keys(&self) -> Result<u64> {
+    async fn count(&self) -> Result<u64> {
         let count = self
             .repository
             .api_key
@@ -115,7 +114,7 @@ impl ApiKeyServiceExt for ApiKeyService {
         Ok(count)
     }
 
-    async fn create_api_key(&self, input: ApiKeyCreateInput, owner_id: UserId) -> Result<ApiKey> {
+    async fn create(&self, input: ApiKeyCreateInput, owner_id: UserId) -> Result<ApiKey> {
         let encrypted_key = self.encrypt(input.key.clone());
         let hint = self.create_hint(input.key);
 
@@ -135,11 +134,7 @@ impl ApiKeyServiceExt for ApiKeyService {
         Ok(created_api_key.into())
     }
 
-    async fn update_api_key(
-        &self,
-        id: ApiKeyId,
-        input: ApiKeyUpdateInput,
-    ) -> Result<Option<ApiKey>> {
+    async fn update_by_id(&self, id: ApiKeyId, input: ApiKeyUpdateInput) -> Result<Option<ApiKey>> {
         let updated_api_key = self
             .repository
             .api_key
@@ -151,7 +146,7 @@ impl ApiKeyServiceExt for ApiKeyService {
         Ok(updated_api_key)
     }
 
-    async fn delete_api_key(&self, id: ApiKeyId) -> Result<Option<ApiKey>> {
+    async fn delete_by_id(&self, id: ApiKeyId) -> Result<Option<ApiKey>> {
         let deleted_api_key = self
             .repository
             .api_key

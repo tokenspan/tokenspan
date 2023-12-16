@@ -2,6 +2,7 @@ use async_graphql::{Enum, InputObject, SimpleObject};
 use serde::{Deserialize, Serialize};
 
 #[derive(SimpleObject, InputObject, Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Usage {
     pub input_tokens: u32,
     pub output_tokens: u32,

@@ -6,7 +6,7 @@ members = [
     "tokenspan-extra",
     "tokenspan-macros",
     "tokenspan-sdk",
-    "tokenspan-migrations"
+    "tokenspan-cli"
 ]
 
 [workspace.lints.clippy]
