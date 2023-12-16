@@ -23,7 +23,9 @@ impl ProviderMutation {
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        provider_service.create_provider(input).await
+        let provider = provider_service.create(input).await?;
+
+        Ok(provider)
     }
 
     #[graphql(guard = "RoleGuard::new(Role::Admin)")]
@@ -37,7 +39,9 @@ impl ProviderMutation {
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        provider_service.update_provider(id, input).await
+        let provider = provider_service.update_by_id(id, input).await?;
+
+        Ok(provider)
     }
 
     #[graphql(guard = "RoleGuard::new(Role::Admin)")]
@@ -50,6 +54,8 @@ impl ProviderMutation {
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        provider_service.delete_provider(id).await
+        let provider = provider_service.delete_by_id(id).await?;
+
+        Ok(provider)
     }
 }

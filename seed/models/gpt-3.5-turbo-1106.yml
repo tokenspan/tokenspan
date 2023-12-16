@@ -1,0 +1,15 @@
+provider:
+  slug: open-ai
+name: gpt-3.5-turbo-1106
+description: 'The latest GPT-3.5 Turbo model with improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more. Returns a maximum of 4,096 output tokens.'
+slug: gpt-3.5-turbo-1106
+context: 16385
+inputPricing:
+  price: 0.001
+  tokens: 1000
+  currency: USD
+outputPricing:
+  price: 0.002
+  tokens: 1000
+  currency: USD
+trainingAt: 2021-09-01T00:00:00Z

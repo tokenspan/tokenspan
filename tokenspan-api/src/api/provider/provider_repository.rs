@@ -12,6 +12,7 @@ pub struct ProviderEntity {
     #[serde(rename = "_id")]
     pub id: ProviderId,
     pub name: String,
+    pub slug: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -19,11 +20,13 @@ pub struct ProviderEntity {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProviderCreateEntity {
     pub name: String,
+    pub slug: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProviderUpdateEntity {
     pub name: Option<String>,
+    pub slug: Option<String>,
 }
 
 impl Repository<ProviderEntity> {
@@ -31,6 +34,7 @@ impl Repository<ProviderEntity> {
         let doc = ProviderEntity {
             id: ProviderId::new(),
             name: doc.name,
+            slug: doc.slug,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };
@@ -66,9 +70,9 @@ impl Repository<ProviderEntity> {
             .await
     }
 
-    pub async fn find_by_name(&self, name: String) -> Result<Option<ProviderEntity>> {
+    pub async fn find_by_slug(&self, slug: String) -> Result<Option<ProviderEntity>> {
         let filter = doc! {
-            "name": name,
+            "slug": slug,
         };
 
         self.collection.find_one(filter, None).await

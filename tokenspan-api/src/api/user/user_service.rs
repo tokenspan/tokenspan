@@ -1,7 +1,7 @@
 use std::num::NonZeroU32;
 use std::sync::Arc;
 
-use async_graphql::Result;
+use anyhow::Result;
 use data_encoding::HEXUPPER;
 use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2, rand};
@@ -15,17 +15,17 @@ use crate::repository::RootRepository;
 
 #[async_trait::async_trait]
 pub trait UserServiceExt {
-    async fn create_user(&self, email: String, username: String, password: String) -> Result<User>;
-    async fn create_user_with_role(
+    async fn create(&self, email: String, username: String, password: String) -> Result<User>;
+    async fn create_with_role(
         &self,
         email: String,
         username: String,
         password: String,
         role: Role,
     ) -> Result<User>;
-    async fn get_user_by_id(&self, id: UserId) -> Result<Option<User>>;
-    async fn get_users_by_ids(&self, ids: Vec<UserId>) -> Result<Vec<User>>;
-    async fn get_user_by_email(&self, email: String) -> Result<Option<User>>;
+    async fn find_by_id(&self, id: UserId) -> Result<Option<User>>;
+    async fn find_by_ids(&self, ids: Vec<UserId>) -> Result<Vec<User>>;
+    async fn find_by_email(&self, email: String) -> Result<Option<User>>;
     fn verify_password(&self, password: &str, salt: &str, hash_password: &str) -> Result<()>;
 }
 
@@ -65,12 +65,12 @@ impl UserService {
 
 #[async_trait::async_trait]
 impl UserServiceExt for UserService {
-    async fn create_user(&self, email: String, username: String, password: String) -> Result<User> {
-        self.create_user_with_role(email, username, password, Role::User)
+    async fn create(&self, email: String, username: String, password: String) -> Result<User> {
+        self.create_with_role(email, username, password, Role::User)
             .await
     }
 
-    async fn create_user_with_role(
+    async fn create_with_role(
         &self,
         email: String,
         username: String,
@@ -97,7 +97,7 @@ impl UserServiceExt for UserService {
         Ok(created_user.into())
     }
 
-    async fn get_user_by_id(&self, id: UserId) -> Result<Option<User>> {
+    async fn find_by_id(&self, id: UserId) -> Result<Option<User>> {
         let user = self
             .repository
             .user
@@ -109,7 +109,7 @@ impl UserServiceExt for UserService {
         Ok(user)
     }
 
-    async fn get_users_by_ids(&self, ids: Vec<UserId>) -> Result<Vec<User>> {
+    async fn find_by_ids(&self, ids: Vec<UserId>) -> Result<Vec<User>> {
         let users = self
             .repository
             .user
@@ -123,7 +123,7 @@ impl UserServiceExt for UserService {
         Ok(users)
     }
 
-    async fn get_user_by_email(&self, email: String) -> Result<Option<User>> {
+    async fn find_by_email(&self, email: String) -> Result<Option<User>> {
         let user = self
             .repository
             .user

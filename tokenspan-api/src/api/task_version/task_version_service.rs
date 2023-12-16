@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
-use async_graphql::Result;
+use anyhow::Result;
 use bson::doc;
 use bson::oid::ObjectId;
-
 
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
@@ -213,8 +212,7 @@ impl TaskVersionServiceExt for TaskVersionService {
                     ParameterInputBy::Update(input) => {
                         let index = parameters.iter().position(|p| p.id == input.id);
                         if let Some(index) = index {
-                            parameters[index] =
-                                ParameterEntity::new_with_id(input.id, input.data);
+                            parameters[index] = ParameterEntity::new_with_id(input.id, input.data);
                         }
                     }
                     ParameterInputBy::Delete(input) => {

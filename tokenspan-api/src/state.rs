@@ -23,7 +23,7 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new(app_config: Arc<AppConfig>) -> Self {
+    pub async fn new(app_config: AppConfig) -> Self {
         let url = app_config.database.url.clone();
 
         let repository = RootRepository::new_with_uri(url).await;

@@ -43,7 +43,7 @@ pub async fn execute_task_v1(
 ) -> anyhow::Result<Json<Execution>, TaskError> {
     let parsed_token = token.ok_or(TaskError::Unknown(anyhow::anyhow!("no token".to_string())))?;
     let execution = task_service
-        .execute_task(input, parsed_token.user_id)
+        .execute(input, parsed_token.user_id)
         .await
         .unwrap();
 

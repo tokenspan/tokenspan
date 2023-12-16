@@ -15,6 +15,7 @@ pub struct ProviderId(pub ObjectId);
 pub struct Provider {
     pub id: ProviderId,
     pub name: String,
+    pub slug: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -30,6 +31,7 @@ impl From<super::provider_repository::ProviderEntity> for Provider {
         Self {
             id: value.id,
             name: value.name,
+            slug: value.slug,
             updated_at: value.updated_at,
             created_at: value.created_at,
         }

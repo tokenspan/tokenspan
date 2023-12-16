@@ -23,7 +23,9 @@ impl ModelMutation {
             .data::<ModelServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        model_service.create(input).await
+        let model = model_service.create(input).await?;
+
+        Ok(model)
     }
 
     #[graphql(guard = "RoleGuard::new(Role::Admin)")]
@@ -37,7 +39,9 @@ impl ModelMutation {
             .data::<ModelServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        model_service.update_by_id(id, input).await
+        let model = model_service.update_by_id(id, input).await?;
+
+        Ok(model)
     }
 
     #[graphql(guard = "RoleGuard::new(Role::Admin)")]
@@ -46,6 +50,8 @@ impl ModelMutation {
             .data::<ModelServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        model_service.delete_by_id(id).await
+        let model = model_service.delete_by_id(id).await?;
+
+        Ok(model)
     }
 }

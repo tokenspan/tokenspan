@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use async_graphql::Result;
+use anyhow::Result;
 use axum::extract::FromRef;
 
 use tokenspan_extra::pagination::{Cursor, Pagination};
@@ -18,7 +18,7 @@ pub trait ModelServiceExt {
     async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>>;
     async fn find_by_id(&self, id: ModelId) -> Result<Option<Model>>;
     async fn find_by_ids(&self, ids: Vec<ModelId>) -> Result<Vec<Model>>;
-    async fn find_by_name(&self, name: String) -> Result<Option<Model>>;
+    async fn find_by_slug(&self, slug: String) -> Result<Option<Model>>;
     async fn count(&self) -> Result<u64>;
     async fn create(&self, input: ModelCreateInput) -> Result<Model>;
     async fn update_by_id(&self, id: ModelId, input: ModelUpdateInput) -> Result<Option<Model>>;
@@ -82,11 +82,11 @@ impl ModelServiceExt for ModelService {
         Ok(models)
     }
 
-    async fn find_by_name(&self, name: String) -> Result<Option<Model>> {
+    async fn find_by_slug(&self, slug: String) -> Result<Option<Model>> {
         let model = self
             .repository
             .model
-            .find_by_name(name)
+            .find_by_slug(slug)
             .await
             .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
             .map(|model| model.into());
@@ -113,6 +113,7 @@ impl ModelServiceExt for ModelService {
                 provider_id: input.provider_id,
                 name: input.name,
                 description: input.description,
+                slug: input.slug,
                 context: input.context,
                 input_pricing: input.input_pricing.into(),
                 output_pricing: input.output_pricing.into(),
@@ -133,6 +134,7 @@ impl ModelServiceExt for ModelService {
                 ModelUpdateEntity {
                     name: input.name,
                     description: input.description,
+                    slug: input.slug,
                     context: input.context,
                     input_pricing: input.input_pricing.map(|pricing| pricing.into()),
                     output_pricing: input.output_pricing.map(|pricing| pricing.into()),

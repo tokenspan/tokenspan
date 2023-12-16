@@ -18,9 +18,9 @@ impl Loader<ProviderId> for AppLoader {
     ) -> Result<HashMap<ProviderId, Self::Value>, Self::Error> {
         let providers = self
             .provider_service
-            .get_providers_by_ids(keys.to_vec())
+            .find_by_ids(keys.to_vec())
             .await
-            .map_err(|e| Arc::new(ProviderError::Unknown(anyhow::anyhow!(e.message))))?
+            .map_err(|e| Arc::new(ProviderError::Unknown(e)))?
             .into_iter()
             .map(|provider| (provider.id.clone(), provider))
             .collect();

@@ -28,9 +28,11 @@ impl TaskVersionMutation {
             .as_ref()
             .ok_or(AppError::Unauthorized("no token".to_string()).extend())?;
 
-        task_version_service
+        let task_version = task_version_service
             .create(input, &parsed_token.user_id)
-            .await
+            .await?;
+
+        Ok(task_version)
     }
 
     #[graphql(guard = "RoleGuard::new(Role::Admin)")]
@@ -44,7 +46,9 @@ impl TaskVersionMutation {
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        task_version_service.update_by_id(id, input).await
+        let task_version = task_version_service.update_by_id(id, input).await?;
+
+        Ok(task_version)
     }
 
     #[graphql(guard = "RoleGuard::new(Role::Admin)")]
@@ -57,6 +61,8 @@ impl TaskVersionMutation {
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        task_version_service.delete_by_id(id).await
+        let task_version = task_version_service.delete_by_id(id).await?;
+
+        Ok(task_version)
     }
 }

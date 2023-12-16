@@ -22,7 +22,7 @@ impl ExecutionQuery {
             .data::<ExecutionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let paginated_execution = execution_service.get_executions(args).await?;
+        let paginated_execution = execution_service.paginate(args).await?;
 
         Ok(paginated_execution.into())
     }
@@ -36,7 +36,7 @@ impl ExecutionQuery {
             .data::<ExecutionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let execution = execution_service.get_execution_by_id(id).await?;
+        let execution = execution_service.find_by_id(id).await?;
 
         Ok(execution)
     }

@@ -102,6 +102,12 @@ pub enum TaskVersionStatus {
     Archived,
 }
 
+impl Default for TaskVersionStatus {
+    fn default() -> Self {
+        TaskVersionStatus::Draft
+    }
+}
+
 impl Display for TaskVersionStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

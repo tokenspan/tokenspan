@@ -22,7 +22,7 @@ impl TaskQuery {
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let paginated_task = task_service.get_tasks(args).await?;
+        let paginated_task = task_service.paginate(args).await?;
 
         Ok(paginated_task.into())
     }
@@ -43,7 +43,7 @@ impl TaskQuery {
             .ok_or(AppError::Unauthorized("no token".to_string()).extend())?;
 
         let paginated_task = task_service
-            .get_tasks_by_owner(parsed_token.user_id.clone(), args)
+            .find_by_owner(parsed_token.user_id.clone(), args)
             .await?;
 
         Ok(paginated_task.into())
@@ -54,7 +54,7 @@ impl TaskQuery {
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let task = task_service.get_task_by_id(id).await?;
+        let task = task_service.find_by_id(id).await?;
 
         Ok(task)
     }
@@ -64,7 +64,7 @@ impl TaskQuery {
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let task = task_service.get_task_by_id(id).await?;
+        let task = task_service.find_by_id(id).await?;
 
         Ok(task)
     }

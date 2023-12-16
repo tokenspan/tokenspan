@@ -4,14 +4,13 @@ use async_graphql::InputObject;
 use serde::Deserialize;
 use validator::Validate;
 
-use crate::api::models::{ApiKeyId, ModelId, ParameterId, TaskVersionId};
+use crate::api::models::{ApiKeyId, ParameterId, TaskVersionId};
 
 #[derive(InputObject)]
 pub struct TaskCreateInput {
     pub name: String,
     pub slug: String,
     pub private: bool,
-    pub model_id: ModelId,
 }
 
 #[derive(InputObject)]

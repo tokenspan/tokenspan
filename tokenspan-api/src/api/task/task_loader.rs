@@ -15,9 +15,9 @@ impl Loader<TaskId> for AppLoader {
     async fn load(&self, keys: &[TaskId]) -> Result<HashMap<TaskId, Self::Value>, Self::Error> {
         let tasks = self
             .task_service
-            .get_tasks_by_ids(keys.to_vec())
+            .find_by_ids(keys.to_vec())
             .await
-            .map_err(|e| Arc::new(TaskError::Unknown(anyhow::anyhow!(e.message))))?
+            .map_err(|e| Arc::new(TaskError::Unknown(e)))?
             .into_iter()
             .map(|task| (task.id.clone(), task))
             .collect();
