@@ -8,16 +8,41 @@ use axum::response::{IntoResponse, Redirect};
 use axum::{response, Extension};
 use axum_extra::headers::HeaderMap;
 
+use crate::api::loaders::{
+    ApiKeyLoader, ModelLoader, ProviderLoader, TaskLoader, TaskVersionLoader, UserLoader,
+};
 use crate::api::models::ParsedToken;
 use crate::api::{MutationRoot, QueryRoot, SubscriptionRoot};
 use crate::configs::AppConfig;
-use crate::loader::AppLoader;
 use crate::state::AppState;
 
 pub type AppSchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
 
 pub async fn build_schema(app_state: AppState) -> AppSchema {
-    let loader = DataLoader::new(AppLoader::from(app_state.clone()), tokio::spawn);
+    let api_key_loader = DataLoader::new(
+        ApiKeyLoader::new(app_state.api_key_service.clone()),
+        tokio::spawn,
+    );
+    let model_loader = DataLoader::new(
+        ModelLoader::new(app_state.model_service.clone()),
+        tokio::spawn,
+    );
+    let provider_loader = DataLoader::new(
+        ProviderLoader::new(app_state.provider_service.clone()),
+        tokio::spawn,
+    );
+    let task_loader = DataLoader::new(
+        TaskLoader::new(app_state.task_service.clone()),
+        tokio::spawn,
+    );
+    let task_version_loader = DataLoader::new(
+        TaskVersionLoader::new(app_state.task_version_service.clone()),
+        tokio::spawn,
+    );
+    let user_loader = DataLoader::new(
+        UserLoader::new(app_state.user_service.clone()),
+        tokio::spawn,
+    );
 
     Schema::build(
         QueryRoot::default(),
@@ -33,7 +58,12 @@ pub async fn build_schema(app_state: AppState) -> AppSchema {
     .data(app_state.task_version_service)
     .data(app_state.task_service)
     .data(app_state.execution_service)
-    .data(loader)
+    .data(api_key_loader)
+    .data(model_loader)
+    .data(provider_loader)
+    .data(task_loader)
+    .data(task_version_loader)
+    .data(user_loader)
     .finish()
 }
 pub async fn graphiql() -> impl IntoResponse {

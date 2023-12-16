@@ -6,6 +6,7 @@ use async_graphql::{
     InputValueError, InputValueResult, OutputType, Scalar, ScalarType, SimpleObject, Value,
 };
 use base64ct::{Base64, Encoding};
+use chrono::NaiveDateTime;
 use thiserror::Error;
 
 pub trait CursorExt<C: CursorType> {
@@ -14,22 +15,33 @@ pub trait CursorExt<C: CursorType> {
 
 #[derive(Debug, Clone)]
 pub struct Cursor {
-    pub id: String,
+    pub id: i64,
 }
 
 impl Cursor {
-    pub fn new(id: String) -> Self {
+    pub fn new(id: i64) -> Self {
         Self { id }
     }
     pub fn encode(&self) -> String {
-        Base64::encode_string(self.id.as_bytes())
+        Base64::encode_string(format!("{}", self.id).as_bytes())
     }
 
     pub fn decode(encoded: &str) -> Result<Self, OffsetEncodedError> {
         let decoded = Base64::decode_vec(encoded).map_err(|_| OffsetEncodedError::InvalidBase64)?;
         let id = String::from_utf8(decoded).map_err(OffsetEncodedError::Utf8Error)?;
+        let id = id
+            .parse::<i64>()
+            .map_err(|_| OffsetEncodedError::InvalidCursor)?;
 
         Ok(Self { id })
+    }
+}
+
+impl From<NaiveDateTime> for Cursor {
+    fn from(value: NaiveDateTime) -> Self {
+        Self {
+            id: value.timestamp_micros(),
+        }
     }
 }
 
@@ -120,6 +132,7 @@ where
         let item_size = self.items.len();
         if self.after.is_some() {
             match item_size {
+                0 => (false, false),
                 size if size - 1 <= self.take as usize => (true, false),
                 // if size is greater than 2, it means we have a next page and previous page
                 // [A](cursor) -> (B) -> (C) -> (D) -> [E](check next)
@@ -130,6 +143,7 @@ where
             }
         } else if self.before.is_some() {
             match item_size {
+                0 => (false, false),
                 // if size - 1 is less than or equal to take, it means we have a previous page but no next page
                 // (check previous)[A] <- (B) <- (cursor)[C]
                 size if size - 1 <= self.take as usize => (false, true),

@@ -5,10 +5,20 @@ use async_graphql::dataloader::Loader;
 
 use crate::api::model::model_error::ModelError;
 use crate::api::models::{Model, ModelId};
-use crate::loader::AppLoader;
+use crate::api::services::ModelServiceDyn;
+
+pub struct ModelLoader {
+    pub model_service: ModelServiceDyn,
+}
+
+impl ModelLoader {
+    pub fn new(model_service: ModelServiceDyn) -> Self {
+        Self { model_service }
+    }
+}
 
 #[async_trait::async_trait]
-impl Loader<ModelId> for AppLoader {
+impl Loader<ModelId> for ModelLoader {
     type Value = Model;
     type Error = Arc<ModelError>;
 

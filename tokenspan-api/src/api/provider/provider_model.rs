@@ -1,33 +1,28 @@
-use std::fmt::Debug;
-
 use async_graphql::SimpleObject;
-use bson::oid::ObjectId;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use chrono::NaiveDateTime;
+use sea_orm::prelude::Uuid;
 
 use tokenspan_extra::pagination::{Cursor, CursorExt};
-use tokenspan_macros::ID;
 
-#[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub struct ProviderId(pub ObjectId);
+pub type ProviderId = Uuid;
 
 #[derive(SimpleObject, Debug, Clone)]
 pub struct Provider {
-    pub id: ProviderId,
+    pub id: Uuid,
     pub name: String,
     pub slug: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 impl CursorExt<Cursor> for Provider {
     fn cursor(&self) -> Cursor {
-        self.id.clone().into()
+        self.created_at.into()
     }
 }
 
-impl From<super::provider_repository::ProviderEntity> for Provider {
-    fn from(value: super::provider_repository::ProviderEntity) -> Self {
+impl From<entity::provider::Model> for Provider {
+    fn from(value: entity::provider::Model) -> Self {
         Self {
             id: value.id,
             name: value.name,

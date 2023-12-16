@@ -1,14 +1,24 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use async_graphql::dataloader::Loader;
+use async_graphql::dataloader::{DataLoader, Loader};
 
 use crate::api::api_key::api_key_error::ApiKeyError;
 use crate::api::models::{ApiKey, ApiKeyId};
-use crate::loader::AppLoader;
+use crate::api::services::ApiKeyServiceDyn;
+
+pub struct ApiKeyLoader {
+    pub api_key_service: ApiKeyServiceDyn,
+}
+
+impl ApiKeyLoader {
+    pub fn new(api_key_service: ApiKeyServiceDyn) -> Self {
+        Self { api_key_service }
+    }
+}
 
 #[async_trait::async_trait]
-impl Loader<ApiKeyId> for AppLoader {
+impl Loader<ApiKeyId> for ApiKeyLoader {
     type Value = ApiKey;
     type Error = Arc<ApiKeyError>;
 
@@ -23,5 +33,11 @@ impl Loader<ApiKeyId> for AppLoader {
             .collect();
 
         Ok(api_keys)
+    }
+}
+
+impl From<ApiKeyLoader> for DataLoader<ApiKeyLoader> {
+    fn from(api_key_loader: ApiKeyLoader) -> Self {
+        Self::new(api_key_loader, tokio::spawn)
     }
 }

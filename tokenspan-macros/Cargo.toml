@@ -14,6 +14,9 @@ async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "su
 bson = { version = "2.0" }
 anyhow = "1.0.75"
 serde = { version = "1.0" }
+rustflake = "0.1.1"
+base64ct = { version = "1.6.0", features = ["alloc"] }
+
 tokenspan-extra = { path = "../tokenspan-extra" }
 
 [lints]

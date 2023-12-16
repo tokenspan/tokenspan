@@ -10,7 +10,7 @@ axum = { git = "https://github.com/linrium/axum", branch = "feat/support-custom-
 axum-extra = { version = "0.9.0", features = ["typed-header"] }
 axum-macros = "0.4.0"
 tower-http = { version = "0.5.0", features = ["trace", "timeout", "cors"] }
-async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom", features = ["tokio", "chrono", "dataloader", "tracing"] }
+async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom", features = ["tokio", "chrono", "dataloader", "tracing", "uuid"] }
 async-graphql-axum = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -24,8 +24,6 @@ data-encoding = "2.4.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "ansi"] }
 validator = { version = "0.16", features = ["derive"] }
-mongodb = { version = "2.0", features = ["tokio-runtime"] }
-bson = { version = "2.0", features = ["chrono-0_4"] }
 futures = "0.3"
 config = "0.13.1"
 magic-crypt = "3.1.13"
@@ -33,13 +31,18 @@ async-openai = "0.17.1"
 futures-util = "0.3.29"
 dotenv = "0.15.0"
 async-stream = "0.3.5"
-bytes = { version = "1.5.0" }
 openssl = { version = "0.10.59", features = ["vendored"] }
 regex = "1.10.2"
-redis = { version = "0.24.0", features = ["tokio-comp"] }
+base64ct = { version = "1.6.0", features = ["alloc"] }
+sea-orm = { version = "0.12", features = ["sqlx-postgres", "runtime-tokio-native-tls", "macros", "debug-print", "with-chrono", "with-json", "with-uuid"] }
+strum = "0.25"
+strum_macros = "0.25"
 
 tokenspan-macros = { path = "../tokenspan-macros" }
 tokenspan-extra = { path = "../tokenspan-extra" }
+migration = { path = "./migration" }
+entity = { path = "./entity" }
+uuid = { version = "1.6.1", features = ["v4"] }
 
 [lints]
 workspace = true

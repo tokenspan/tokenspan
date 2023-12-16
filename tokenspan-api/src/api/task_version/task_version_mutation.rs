@@ -1,9 +1,8 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 
-use crate::api::models::{ParsedToken, TaskVersion, TaskVersionId};
+use crate::api::models::{ParsedToken, TaskVersion, TaskVersionId, UserRole};
 use crate::api::services::TaskVersionServiceDyn;
 use crate::api::task_version::dto::{TaskVersionCreateInput, TaskVersionUpdateInput};
-use crate::api::types::Role;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
 
@@ -12,7 +11,7 @@ pub struct TaskVersionMutation;
 
 #[Object]
 impl TaskVersionMutation {
-    #[graphql(guard = "RoleGuard::new(Role::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
     pub async fn create_task_version<'a>(
         &self,
         ctx: &Context<'a>,
@@ -29,19 +28,19 @@ impl TaskVersionMutation {
             .ok_or(AppError::Unauthorized("no token".to_string()).extend())?;
 
         let task_version = task_version_service
-            .create(input, &parsed_token.user_id)
+            .create(input, parsed_token.user_id.clone())
             .await?;
 
         Ok(task_version)
     }
 
-    #[graphql(guard = "RoleGuard::new(Role::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
     pub async fn update_task_version<'a>(
         &self,
         ctx: &Context<'a>,
         id: TaskVersionId,
         input: TaskVersionUpdateInput,
-    ) -> Result<Option<TaskVersion>> {
+    ) -> Result<TaskVersion> {
         let task_version_service = ctx
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -51,12 +50,12 @@ impl TaskVersionMutation {
         Ok(task_version)
     }
 
-    #[graphql(guard = "RoleGuard::new(Role::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
     pub async fn delete_task_version<'a>(
         &self,
         ctx: &Context<'a>,
         id: TaskVersionId,
-    ) -> Result<Option<TaskVersion>> {
+    ) -> Result<TaskVersion> {
         let task_version_service = ctx
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

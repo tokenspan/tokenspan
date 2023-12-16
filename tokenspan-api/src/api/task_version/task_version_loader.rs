@@ -4,11 +4,23 @@ use std::sync::Arc;
 use async_graphql::dataloader::Loader;
 
 use crate::api::models::{TaskVersion, TaskVersionId};
+use crate::api::services::TaskVersionServiceDyn;
 use crate::api::task_version::task_version_error::TaskVersionError;
-use crate::loader::AppLoader;
+
+pub struct TaskVersionLoader {
+    pub task_version_service: TaskVersionServiceDyn,
+}
+
+impl TaskVersionLoader {
+    pub fn new(task_version_service: TaskVersionServiceDyn) -> Self {
+        Self {
+            task_version_service,
+        }
+    }
+}
 
 #[async_trait::async_trait]
-impl Loader<TaskVersionId> for AppLoader {
+impl Loader<TaskVersionId> for TaskVersionLoader {
     type Value = TaskVersion;
     type Error = Arc<TaskVersionError>;
 

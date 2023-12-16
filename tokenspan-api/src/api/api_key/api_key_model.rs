@@ -1,33 +1,29 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::{ComplexObject, Context, Result, SimpleObject};
-use bson::oid::ObjectId;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use chrono::NaiveDateTime;
+use sea_orm::prelude::Uuid;
 
+use crate::api::loaders::UserLoader;
 use tokenspan_extra::pagination::{Cursor, CursorExt};
-use tokenspan_macros::ID;
 
 use crate::api::models::{Provider, ProviderId, User, UserId};
 use crate::api::services::ProviderServiceDyn;
 use crate::api::user::user_error::UserError;
 use crate::error::AppError;
-use crate::loader::AppLoader;
 
-#[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub struct ApiKeyId(pub ObjectId);
+pub type ApiKeyId = Uuid;
 
 #[derive(SimpleObject, Clone)]
 #[graphql(complex)]
 pub struct ApiKey {
     pub id: ApiKeyId,
     pub name: String,
-    pub hint: String,
     #[graphql(skip)]
     pub key: String,
     pub owner_id: UserId,
     pub provider_id: ProviderId,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 #[ComplexObject]
@@ -45,11 +41,11 @@ impl ApiKey {
     }
 
     pub async fn owner<'a>(&self, ctx: &Context<'a>) -> Result<Option<User>> {
-        let app_loader = ctx
-            .data::<DataLoader<AppLoader>>()
+        let user_loader = ctx
+            .data::<DataLoader<UserLoader>>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let user = app_loader
+        let user = user_loader
             .load_one(self.owner_id.clone())
             .await
             .map_err(|_| UserError::UserNotFound(Some(self.owner_id.clone())))?;
@@ -60,19 +56,18 @@ impl ApiKey {
 
 impl CursorExt<Cursor> for ApiKey {
     fn cursor(&self) -> Cursor {
-        self.id.clone().into()
+        self.created_at.clone().into()
     }
 }
 
-impl From<super::api_key_repository::ApiKeyEntity> for ApiKey {
-    fn from(value: super::api_key_repository::ApiKeyEntity) -> Self {
+impl From<entity::api_key::Model> for ApiKey {
+    fn from(value: entity::api_key::Model) -> Self {
         Self {
-            id: value.id,
+            id: value.id.into(),
             name: value.name,
             key: value.key,
-            hint: value.hint,
-            owner_id: value.owner_id,
-            provider_id: value.provider_id,
+            owner_id: value.owner_id.into(),
+            provider_id: value.provider_id.into(),
             created_at: value.created_at,
             updated_at: value.updated_at,
         }

@@ -1,13 +1,8 @@
-use async_graphql::SimpleObject;
-use bson::oid::ObjectId;
-use serde::{Deserialize, Serialize};
+use async_graphql::{Enum, SimpleObject};
+use sea_orm::prelude::Uuid;
+use strum_macros::{Display, EnumString};
 
-use tokenspan_macros::ID;
-
-use crate::api::user::user_type::Role;
-
-#[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub struct UserId(ObjectId);
+pub type UserId = Uuid;
 
 #[derive(SimpleObject, Clone, Debug)]
 pub struct User {
@@ -18,18 +13,25 @@ pub struct User {
     pub password: String,
     #[graphql(skip)]
     pub salt: String,
-    pub role: Role,
+    pub role: UserRole,
 }
 
-impl From<super::user_repository::UserEntity> for User {
-    fn from(value: super::user_repository::UserEntity) -> Self {
+impl From<entity::user::Model> for User {
+    fn from(value: entity::user::Model) -> Self {
         Self {
-            id: value.id,
+            id: value.id.into(),
             email: value.email,
             username: value.username,
             password: value.password,
             salt: value.salt,
-            role: value.role,
+            role: UserRole::from(value.role),
         }
     }
+}
+
+#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Display)]
+#[graphql(remote = "entity::sea_orm_active_enums::UserRole")]
+pub enum UserRole {
+    Admin,
+    User,
 }

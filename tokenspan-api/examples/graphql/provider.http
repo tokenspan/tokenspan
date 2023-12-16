@@ -1,0 +1,36 @@
+### Create provider
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation CreateProvider($input: ProviderCreateInput!) {
+  createProvider(input: $input) {
+    id
+    name
+    slug
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "input": {
+    "name": "OpenAI",
+    "slug": "openai"
+  }
+}
+
+### Get providers
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query GetProviders {
+  providers {
+    nodes {
+      id
+      name
+      slug
+      createdAt
+      updatedAt
+    }
+  }
+}

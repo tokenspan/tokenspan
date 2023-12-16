@@ -1,10 +1,22 @@
-use crate::api::models::{User, UserId};
-use crate::loader::AppLoader;
-use async_graphql::dataloader::Loader;
 use std::collections::HashMap;
 
+use async_graphql::dataloader::Loader;
+
+use crate::api::models::{User, UserId};
+use crate::api::services::UserServiceDyn;
+
+pub struct UserLoader {
+    pub user_service: UserServiceDyn,
+}
+
+impl UserLoader {
+    pub fn new(user_service: UserServiceDyn) -> Self {
+        Self { user_service }
+    }
+}
+
 #[async_trait::async_trait]
-impl Loader<UserId> for AppLoader {
+impl Loader<UserId> for UserLoader {
     type Value = User;
     type Error = ();
 

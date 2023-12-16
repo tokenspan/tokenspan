@@ -6,7 +6,5 @@ pub mod error;
 pub mod extractor;
 pub mod graphql;
 pub mod guard;
-pub mod loader;
 pub mod prompt;
-pub mod repository;
 pub mod state;

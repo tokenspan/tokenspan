@@ -1,14 +1,13 @@
 use anyhow::Result;
+use sea_orm::DatabaseConnection;
 
 use crate::api::caches::api_key_cache::{ApiKeyCache, ApiKeyCacheDyn};
 use crate::api::caches::model_cache::{ModelCache, ModelCacheDyn};
 use crate::api::services::*;
 use crate::configs::AppConfig;
-use crate::repository::RootRepository;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub repository: RootRepository,
     pub user_service: UserServiceDyn,
     pub auth_service: AuthServiceDyn,
     pub api_key_service: ApiKeyServiceDyn,
@@ -23,30 +22,25 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new(app_config: AppConfig) -> Result<Self> {
-        let url = app_config.database.url.clone();
-
-        let repository = RootRepository::new_with_uri(url).await;
-
-        let user_service: UserServiceDyn = UserService::new(repository.clone()).into();
+    pub async fn new(db: DatabaseConnection, app_config: AppConfig) -> Result<Self> {
+        let user_service: UserServiceDyn = UserService::new(db.clone()).into();
         let auth_service: AuthServiceDyn =
             AuthService::new(user_service.clone(), app_config.auth.clone()).into();
 
         let api_key_service: ApiKeyServiceDyn =
-            ApiKeyService::new(repository.clone(), app_config.encryption.clone()).into();
+            ApiKeyService::new(db.clone(), app_config.encryption.clone()).into();
 
         let api_key_cache: ApiKeyCacheDyn = ApiKeyCache::new(api_key_service.clone()).await?.into();
 
-        let model_service: ModelServiceDyn = ModelService::new(repository.clone()).into();
+        let model_service: ModelServiceDyn = ModelService::new(db.clone()).into();
         let model_cache: ModelCacheDyn = ModelCache::new(model_service.clone()).await?.into();
 
-        let provider_service: ProviderServiceDyn = ProviderService::new(repository.clone()).into();
+        let provider_service: ProviderServiceDyn = ProviderService::new(db.clone()).into();
         let task_version_service: TaskVersionServiceDyn =
-            TaskVersionService::new(repository.clone()).into();
-        let execution_service: ExecutionServiceDyn =
-            ExecutionService::new(repository.clone()).into();
+            TaskVersionService::new(db.clone()).into();
+        let execution_service: ExecutionServiceDyn = ExecutionService::new(db.clone()).into();
         let task_service: TaskServiceDyn = TaskService::new(
-            repository.clone(),
+            db.clone(),
             api_key_cache.clone(),
             model_cache.clone(),
             execution_service.clone(),
@@ -55,7 +49,6 @@ impl AppState {
         .into();
 
         Ok(Self {
-            repository,
             user_service,
             auth_service,
             api_key_service,

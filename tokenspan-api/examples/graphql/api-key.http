@@ -6,7 +6,6 @@ mutation CreateApiKey($input: ApiKeyCreateInput!) {
   createApiKey(input: $input) {
     id
     name
-    hint
     ownerId
     providerId
     createdAt
@@ -26,8 +25,8 @@ mutation CreateApiKey($input: ApiKeyCreateInput!) {
 {
   "input": {
     "name": "test",
-    "key": "",
-    "providerId": "657d1cd748f0aa3bba3aaf3d"
+    "key": "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",
+    "providerId": "657d6159bf39bd6478cc68f5"
   }
 }
 

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use async_graphql::InputObject;
+use sea_orm::ActiveValue::Set;
 use serde::Deserialize;
 use validator::Validate;
 
@@ -17,6 +18,18 @@ pub struct TaskCreateInput {
 pub struct TaskUpdateInput {
     pub name: Option<String>,
     pub private: Option<bool>,
+}
+
+impl TaskUpdateInput {
+    pub fn merge(&self, task: &mut entity::task::ActiveModel) {
+        if let Some(ref name) = self.name {
+            task.name = Set(name.clone());
+        }
+
+        if let Some(private) = self.private {
+            task.private = Set(private);
+        }
+    }
 }
 
 #[derive(Deserialize, Validate, Clone)]

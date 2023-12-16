@@ -7,16 +7,19 @@ use axum::http::{Request, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::{middleware, Extension, Json, Router};
+use sea_orm::{ConnectOptions, Database};
 use serde_json::json;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace;
 use tower_http::trace::TraceLayer;
+use tracing::log::LevelFilter;
 use tracing::{info, info_span, Level};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
+use migration::MigratorTrait;
 use tokenspan_api::graphql::*;
 use tokenspan_api::{api, configs, guard, state};
 
@@ -50,6 +53,19 @@ pub fn register_tracing(config: configs::AppConfig) {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let mut opt = ConnectOptions::new("postgres://postgres:123456@localhost:5432/tokenspan");
+    opt.max_connections(100)
+        .min_connections(5)
+        .connect_timeout(Duration::from_secs(8))
+        .acquire_timeout(Duration::from_secs(8))
+        .idle_timeout(Duration::from_secs(8))
+        .max_lifetime(Duration::from_secs(8))
+        .sqlx_logging(true)
+        .sqlx_logging_level(LevelFilter::Info);
+
+    let db = Database::connect(opt).await?;
+    migration::Migrator::up(&db, None).await?;
+
     let config = configs::AppConfig::new().unwrap();
 
     register_tracing(config.clone());
@@ -74,7 +90,7 @@ async fn main() -> Result<()> {
     let cors_layer = CorsLayer::permissive();
     let timeout_layer = TimeoutLayer::new(Duration::from_secs(10));
 
-    let app_state = state::AppState::new(config.clone()).await?;
+    let app_state = state::AppState::new(db.clone(), config.clone()).await?;
     let schema = build_schema(app_state.clone()).await;
 
     let app = Router::new()

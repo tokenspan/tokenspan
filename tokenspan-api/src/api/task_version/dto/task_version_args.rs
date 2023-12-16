@@ -3,7 +3,6 @@ use async_graphql::{InputObject, OneofObject};
 use tokenspan_extra::pagination::Cursor;
 
 use crate::api::models::{TaskId, TaskVersionId};
-use crate::repository::PaginateArgs;
 
 #[derive(InputObject)]
 pub struct TaskVersionArgs {
@@ -11,16 +10,6 @@ pub struct TaskVersionArgs {
     pub take: Option<i64>,
     pub before: Option<Cursor>,
     pub after: Option<Cursor>,
-}
-
-impl From<TaskVersionArgs> for PaginateArgs {
-    fn from(args: TaskVersionArgs) -> Self {
-        Self {
-            take: args.take,
-            before: args.before,
-            after: args.after,
-        }
-    }
 }
 
 #[derive(InputObject)]

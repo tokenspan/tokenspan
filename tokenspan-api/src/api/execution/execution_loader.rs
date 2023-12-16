@@ -5,10 +5,20 @@ use async_graphql::dataloader::Loader;
 
 use crate::api::execution::execution_error::ExecutionError;
 use crate::api::models::{Execution, ExecutionId};
-use crate::loader::AppLoader;
+use crate::api::services::ExecutionServiceDyn;
+
+pub struct ExecutionLoader {
+    pub execution_service: ExecutionServiceDyn,
+}
+
+impl ExecutionLoader {
+    pub fn new(execution_service: ExecutionServiceDyn) -> Self {
+        Self { execution_service }
+    }
+}
 
 #[async_trait::async_trait]
-impl Loader<ExecutionId> for AppLoader {
+impl Loader<ExecutionId> for ExecutionLoader {
     type Value = Execution;
     type Error = Arc<ExecutionError>;
 

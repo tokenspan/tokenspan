@@ -6,9 +6,8 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 
 use crate::api::auth::auth_error::AuthError;
 use crate::api::auth::auth_model::{AuthPayload, Claims, ParsedToken, SessionPayload};
-use crate::api::models::{RefreshPayload, UserId};
+use crate::api::models::{RefreshPayload, UserId, UserRole};
 use crate::api::services::UserServiceDyn;
-use crate::api::types::Role;
 use crate::configs::AuthConfig;
 
 #[async_trait::async_trait]
@@ -43,7 +42,7 @@ impl AuthService {
 }
 
 impl AuthService {
-    fn create_token(&self, user_id: UserId, role: &Role) -> Result<String, AuthError> {
+    fn create_token(&self, user_id: UserId, role: &UserRole) -> Result<String, AuthError> {
         let exp = Utc::now()
             .checked_add_signed(chrono::Duration::seconds(self.auth_config.token_exp))
             .ok_or(AuthError::TimeAdditionOverflow)?
@@ -52,7 +51,7 @@ impl AuthService {
         let claims = Claims {
             iss: self.auth_config.iss.clone(),
             aud: self.auth_config.aud.clone(),
-            sub: user_id.to_string(),
+            sub: user_id,
             exp,
             role: role.to_string(),
         };
@@ -66,7 +65,7 @@ impl AuthService {
         .map_err(AuthError::JwtError)
     }
 
-    fn create_refresh_token(&self, user_id: UserId, role: &Role) -> Result<String, AuthError> {
+    fn create_refresh_token(&self, user_id: UserId, role: &UserRole) -> Result<String, AuthError> {
         let exp = Utc::now()
             .checked_add_signed(chrono::Duration::seconds(
                 self.auth_config.refresh_token_exp,
@@ -77,7 +76,7 @@ impl AuthService {
         let claims = Claims {
             iss: self.auth_config.iss.clone(),
             aud: self.auth_config.aud.clone(),
-            sub: user_id.to_string(),
+            sub: user_id.into(),
             exp,
             role: role.to_string(),
         };
@@ -104,8 +103,14 @@ impl AuthService {
         let decoded = decode::<Claims>(jwt, &DecodingKey::from_secret(secret), &validation)
             .map_err(AuthError::JwtError)?;
 
+        let role = match decoded.claims.role.as_str() {
+            "Admin" => UserRole::Admin,
+            "User" => UserRole::User,
+            _ => return Err(AuthError::Custom(anyhow::anyhow!("Invalid role"))),
+        };
+
         Ok(ParsedToken {
-            role: Role::from(decoded.claims.role),
+            role,
             user_id: UserId::try_from(decoded.claims.sub).unwrap(),
         })
     }

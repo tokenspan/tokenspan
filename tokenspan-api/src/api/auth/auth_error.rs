@@ -20,4 +20,7 @@ pub enum AuthError {
 
     #[error("invalid password")]
     InvalidPassword,
+
+    #[error(transparent)]
+    Custom(#[from] anyhow::Error),
 }
