@@ -1,14 +1,11 @@
-use anyhow::Result;
-use async_graphql::{ComplexObject, Context, Enum, SimpleObject};
+use async_graphql::Result;
+use async_graphql::{ComplexObject, Enum, SimpleObject};
 use chrono::NaiveDateTime;
 use sea_orm::prelude::Uuid;
 use strum_macros::EnumString;
 
+use crate::api::models::{Message, Parameter, Task};
 use tokenspan_extra::pagination::{Cursor, CursorExt};
-
-use crate::api::models::{Message, Parameter};
-use crate::api::services::{MessageServiceDyn, ParameterServiceDyn};
-use crate::error::AppError;
 
 #[derive(SimpleObject, Clone)]
 #[graphql(complex)]
@@ -21,26 +18,36 @@ pub struct TaskVersion {
     pub document: Option<String>,
     pub status: TaskVersionStatus,
     pub task_id: Uuid,
+    #[graphql(skip)]
+    pub messages: serde_json::Value,
+    #[graphql(skip)]
+    pub parameters: serde_json::Value,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
 
 #[ComplexObject]
 impl TaskVersion {
-    pub async fn parameters<'a>(&self, ctx: &Context<'a>) -> Result<Vec<Parameter>> {
-        let parameter_service = ctx
-            .data::<ParameterServiceDyn>()
-            .map_err(|_| AppError::ContextExtractionError)?;
+    pub async fn task<'a>(&self, ctx: &async_graphql::Context<'a>) -> Result<Option<Task>> {
+        let task_service = ctx
+            .data::<crate::api::services::TaskServiceDyn>()
+            .map_err(|_| crate::error::AppError::ContextExtractionError)?;
 
-        parameter_service.find_by_task_version_id(self.id).await
+        let task = task_service.find_by_id(self.task_id).await?;
+
+        Ok(task)
     }
 
-    pub async fn messages<'a>(&self, ctx: &Context<'a>) -> Result<Vec<Message>> {
-        let message_service = ctx
-            .data::<MessageServiceDyn>()
-            .map_err(|_| AppError::ContextExtractionError)?;
+    pub async fn parameters(&self) -> Result<Vec<Parameter>> {
+        let parameters: Vec<Parameter> = serde_json::from_value(self.parameters.clone())?;
 
-        message_service.find_by_task_version_id(self.id).await
+        Ok(parameters)
+    }
+
+    pub async fn messages(&self) -> Result<Vec<Message>> {
+        let messages: Vec<Message> = serde_json::from_value(self.messages.clone())?;
+
+        Ok(messages)
     }
 }
 
@@ -61,6 +68,8 @@ impl From<entity::task_version::Model> for TaskVersion {
             document: value.document,
             status: TaskVersionStatus::from(value.status),
             task_id: value.task_id,
+            messages: value.messages,
+            parameters: value.parameters,
             created_at: value.created_at,
             updated_at: value.updated_at,
         }
@@ -70,8 +79,8 @@ impl From<entity::task_version::Model> for TaskVersion {
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString)]
 #[graphql(remote = "entity::sea_orm_active_enums::TaskVersionStatus")]
 pub enum TaskVersionStatus {
-    #[strum(serialize = "DRAFT", serialize = "DRAFT")]
+    #[strum(serialize = "DRAFT")]
     Draft,
-    #[strum(serialize = "RELEASED", serialize = "RELEASED")]
+    #[strum(serialize = "RELEASED")]
     Released,
 }

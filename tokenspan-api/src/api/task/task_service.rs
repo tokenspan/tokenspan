@@ -23,9 +23,7 @@ use crate::api::caches::model_cache::ModelCacheDyn;
 use crate::api::dto::parameter_input::ParameterCreateInput;
 use crate::api::dto::TaskVersionCreateInput;
 use crate::api::models::{Model, Parameter, Task};
-use crate::api::services::{
-    ExecutionServiceDyn, MessageServiceDyn, ParameterServiceDyn, TaskVersionServiceDyn,
-};
+use crate::api::services::{ExecutionServiceDyn, TaskVersionServiceDyn};
 use crate::api::task::dto::{TaskArgs, TaskCreateInput, TaskUpdateInput};
 use crate::api::task::task_error::TaskError;
 use crate::prompt::ChatMessage;
@@ -63,8 +61,6 @@ pub struct TaskService {
 
     execution_service: ExecutionServiceDyn,
     task_version_service: TaskVersionServiceDyn,
-    parameter_service: ParameterServiceDyn,
-    message_service: MessageServiceDyn,
 }
 
 impl TaskService {
@@ -233,22 +229,16 @@ impl TaskServiceExt for TaskService {
             .await
             .ok_or(TaskError::Unknown(anyhow::anyhow!("Model not found")))?;
 
-        let created_task_version = self
-            .task_version_service
+        let parameter = ParameterCreateInput::builder().model_id(model.id).build();
+
+        self.task_version_service
             .create(
                 TaskVersionCreateInput::builder()
                     .task_id(created_task.id)
+                    .parameters(vec![parameter])
+                    .messages(vec![])
                     .build(),
                 owner_id,
-            )
-            .await?;
-
-        self.parameter_service
-            .create(
-                ParameterCreateInput::builder()
-                    .task_version_id(created_task_version.id)
-                    .model_id(model.id)
-                    .build(),
             )
             .await?;
 

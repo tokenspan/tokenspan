@@ -26,7 +26,7 @@ mutation CreateApiKey($input: ApiKeyCreateInput!) {
   "input": {
     "name": "test1",
     "key": "{{open_ai_key}}",
-    "providerId": "2e3fd973-a46b-4ba2-b1be-d964629457d3"
+    "providerId": "3935066f-e3ac-4dd9-a23e-af9a9a7a88b3"
   }
 }
 

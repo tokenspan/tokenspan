@@ -4,9 +4,7 @@ pub mod prelude;
 
 pub mod api_key;
 pub mod execution;
-pub mod message;
 pub mod model;
-pub mod parameter;
 pub mod provider;
 pub mod sea_orm_active_enums;
 pub mod task;

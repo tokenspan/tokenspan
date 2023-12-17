@@ -4,8 +4,8 @@ use sea_orm::ActiveValue::Set;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use crate::api::dto::parameter_input::ParameterUpsertInput;
-use crate::api::dto::MessageUpsertInput;
+use crate::api::dto::parameter_input::ParameterCreateInput;
+use crate::api::dto::MessageCreateInput;
 
 #[derive(InputObject, TypedBuilder)]
 pub struct TaskVersionCreateInput {
@@ -20,14 +20,16 @@ pub struct TaskVersionCreateInput {
     pub description: Option<String>,
     #[builder(default)]
     pub document: Option<String>,
+    pub messages: Vec<MessageCreateInput>,
+    pub parameters: Vec<ParameterCreateInput>,
 }
 
 #[derive(InputObject)]
 pub struct TaskVersionUpdateInput {
     pub description: Option<String>,
     pub document: Option<String>,
-    pub messages: Option<Vec<MessageUpsertInput>>,
-    pub parameters: Option<Vec<ParameterUpsertInput>>,
+    pub messages: Option<Vec<MessageCreateInput>>,
+    pub parameters: Option<Vec<ParameterCreateInput>>,
 }
 
 impl TaskVersionUpdateInput {

@@ -10,11 +10,11 @@ use sea_orm::{
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
+use crate::api::model::model_cache::ModelCacheDyn;
 use entity::sea_orm_active_enums::TaskVersionStatus;
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
 use crate::api::models::TaskVersion;
-use crate::api::services::{MessageServiceDyn, ParameterServiceDyn};
 use crate::api::task_version::dto::{
     TaskVersionArgs, TaskVersionCreateInput, TaskVersionUpdateInput,
 };
@@ -38,9 +38,7 @@ pub type TaskVersionServiceDyn = Arc<dyn TaskVersionServiceExt + Send + Sync>;
 #[derive(TypedBuilder)]
 pub struct TaskVersionService {
     db: DatabaseConnection,
-
-    parameter_service: ParameterServiceDyn,
-    message_service: MessageServiceDyn,
+    model_cache: ModelCacheDyn,
 }
 
 #[async_trait::async_trait]
@@ -133,6 +131,9 @@ impl TaskVersionServiceExt for TaskVersionService {
     }
 
     async fn create(&self, input: TaskVersionCreateInput, owner_id: Uuid) -> Result<TaskVersion> {
+        let messages = serde_json::to_value(input.messages)?;
+        let parameters = serde_json::to_value(input.parameters)?;
+
         let created_task_version = entity::task_version::ActiveModel {
             id: Set(Uuid::new_v4()),
             task_id: Set(input.task_id.into()),
@@ -144,6 +145,8 @@ impl TaskVersionServiceExt for TaskVersionService {
             document: Set(input.document),
             status: Set(TaskVersionStatus::Draft),
             released_at: Set(None),
+            messages: Set(messages),
+            parameters: Set(parameters),
             created_at: Set(Utc::now().naive_utc()),
             updated_at: Set(Utc::now().naive_utc()),
         }
@@ -158,24 +161,6 @@ impl TaskVersionServiceExt for TaskVersionService {
     async fn update_by_id(&self, id: Uuid, input: TaskVersionUpdateInput) -> Result<TaskVersion> {
         let tx = self.db.begin().await?;
 
-        // process messages
-        if let Some(mut messages) = input.messages.clone() {
-            for message in messages.iter_mut() {
-                message.task_version_id = id;
-            }
-
-            self.message_service.upsert_many(messages).await?;
-        }
-
-        // process parameters
-        if let Some(mut parameters) = input.parameters.clone() {
-            for parameter in parameters.iter_mut() {
-                parameter.task_version_id = id;
-            }
-
-            self.parameter_service.upsert_many(parameters).await?;
-        }
-
         let mut task_version = entity::task_version::Entity::find_by_id(id)
             .one(&tx)
             .await
@@ -185,6 +170,27 @@ impl TaskVersionServiceExt for TaskVersionService {
             )))?
             .into_active_model();
         input.copy(&mut task_version);
+
+        if let Some(message) = input.messages {
+            let messages = serde_json::to_value(message)?;
+            task_version.messages = Set(messages);
+        }
+
+        if let Some(parameters) = input.parameters {
+            for parameter in parameters.iter() {
+                self.model_cache
+                    .get(parameter.model_id)
+                    .await
+                    .ok_or(TaskVersionError::Unknown(anyhow::anyhow!(
+                        "Model not found"
+                    )))?;
+            }
+
+            let parameters = serde_json::to_value(parameters)?;
+
+            task_version.parameters = Set(parameters);
+        }
+
         let updated_task_version = task_version
             .update(&tx)
             .await

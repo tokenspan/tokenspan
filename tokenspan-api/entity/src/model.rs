@@ -21,8 +21,6 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::parameter::Entity")]
-    Parameter,
     #[sea_orm(
         belongs_to = "super::provider::Entity",
         from = "Column::ProviderId",
@@ -31,12 +29,6 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     Provider,
-}
-
-impl Related<super::parameter::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Parameter.def()
-    }
 }
 
 impl Related<super::provider::Entity> for Entity {

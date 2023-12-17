@@ -11,13 +11,11 @@ pub struct AppState {
     pub user_service: UserServiceDyn,
     pub auth_service: AuthServiceDyn,
     pub api_key_service: ApiKeyServiceDyn,
-    pub parameter_service: ParameterServiceDyn,
     pub provider_service: ProviderServiceDyn,
     pub model_service: ModelServiceDyn,
     pub task_version_service: TaskVersionServiceDyn,
     pub task_service: TaskServiceDyn,
     pub execution_service: ExecutionServiceDyn,
-    pub message_service: MessageServiceDyn,
 
     pub api_key_cache: ApiKeyCacheDyn,
     pub model_cache: ModelCacheDyn,
@@ -41,13 +39,9 @@ impl AppState {
 
         let execution_service: ExecutionServiceDyn = ExecutionService::new(db.clone()).into();
 
-        let parameter_service: ParameterServiceDyn = ParameterService::new(db.clone()).into();
-        let message_service: MessageServiceDyn = MessageService::new(db.clone()).into();
-
         let task_version_service: TaskVersionServiceDyn = TaskVersionService::builder()
             .db(db.clone())
-            .parameter_service(parameter_service.clone())
-            .message_service(message_service.clone())
+            .model_cache(model_cache.clone())
             .build()
             .into();
 
@@ -57,8 +51,6 @@ impl AppState {
             .model_cache(model_cache.clone())
             .execution_service(execution_service.clone())
             .task_version_service(task_version_service.clone())
-            .parameter_service(parameter_service.clone())
-            .message_service(message_service.clone())
             .build()
             .into();
 
@@ -71,8 +63,6 @@ impl AppState {
             task_version_service,
             task_service,
             execution_service,
-            parameter_service,
-            message_service,
 
             api_key_cache,
             model_cache,
