@@ -1,11 +1,11 @@
 use async_graphql::connection::Connection;
 use async_graphql::{Context, Object, Result};
+use uuid::Uuid;
 
 use tokenspan_extra::pagination::{AdditionalFields, Cursor};
 
 use crate::api::model::dto::ModelArgs;
 use crate::api::model::model_model::Model;
-use crate::api::models::ModelId;
 use crate::api::services::ModelServiceDyn;
 use crate::error::AppError;
 
@@ -28,7 +28,7 @@ impl ModelQuery {
         Ok(paginated_model.into())
     }
 
-    pub async fn model<'a>(&self, ctx: &Context<'a>, id: ModelId) -> Result<Option<Model>> {
+    pub async fn model<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<Model>> {
         let model_service = ctx
             .data::<ModelServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

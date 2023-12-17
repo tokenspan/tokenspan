@@ -2,31 +2,31 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use axum::extract::FromRef;
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
     PaginatorTrait, QueryFilter, QueryOrder, QuerySelect,
 };
+use uuid::Uuid;
 
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
 use crate::api::model::dto::{ModelArgs, ModelCreateInput, ModelUpdateInput};
 use crate::api::model::model_error::ModelError;
 use crate::api::model::model_model::Model;
-use crate::api::models::ModelId;
 use crate::state::AppState;
 
 #[async_trait::async_trait]
 pub trait ModelServiceExt {
     async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>>;
-    async fn find_by_id(&self, id: ModelId) -> Result<Option<Model>>;
-    async fn find_by_ids(&self, ids: Vec<ModelId>) -> Result<Vec<Model>>;
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Model>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Model>>;
     async fn find_by_slug(&self, slug: String) -> Result<Option<Model>>;
     async fn count(&self) -> Result<u64>;
     async fn create(&self, input: ModelCreateInput) -> Result<Model>;
-    async fn update_by_id(&self, id: ModelId, input: ModelUpdateInput) -> Result<Model>;
-    async fn delete_by_id(&self, id: ModelId) -> Result<Model>;
+    async fn update_by_id(&self, id: Uuid, input: ModelUpdateInput) -> Result<Model>;
+    async fn delete_by_id(&self, id: Uuid) -> Result<Model>;
 }
 
 pub type ModelServiceDyn = Arc<dyn ModelServiceExt + Send + Sync>;
@@ -50,39 +50,43 @@ impl ModelService {
 #[async_trait::async_trait]
 impl ModelServiceExt for ModelService {
     async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>> {
-        let take = args.take.unwrap_or(10) as u64;
-        let mut cursor = entity::model::Entity::find()
-            .cursor_by(entity::model::Column::Id)
-            .order_by_desc(entity::model::Column::Id)
-            .limit(Some(take));
+        let take = args.take.unwrap_or(10);
+        let limit = take
+            + if args.after.is_some() || args.before.is_some() {
+                2
+            } else {
+                1
+            };
+        let mut select = entity::model::Entity::find()
+            .limit(Some(limit))
+            .order_by_desc(entity::model::Column::CreatedAt);
 
         if let Some(after) = args.after.clone() {
-            cursor.after(after.id);
+            let after: NaiveDateTime = after.try_into()?;
+            select = select.filter(entity::model::Column::CreatedAt.lte(after));
         }
 
         if let Some(before) = args.before.clone() {
-            cursor.before(before.id);
+            let before: NaiveDateTime = before.try_into()?;
+            select = select.filter(entity::model::Column::CreatedAt.gte(before));
         }
 
-        let count = entity::model::Entity::find().count(&self.db).await?;
-        let items = cursor
-            .all(&self.db)
-            .await
+        let count_fut = entity::model::Entity::find().count(&self.db);
+        let select_fut = select.all(&self.db);
+
+        let (count, items) = tokio::join!(count_fut, select_fut);
+
+        let count = count.map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?;
+        let items = items
             .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
-            .map(|model| model.into())
+            .map(|execution| execution.into())
             .collect::<Vec<_>>();
 
-        Ok(Pagination::new(
-            items,
-            args.before,
-            args.after,
-            take as i64,
-            count,
-        ))
+        Ok(Pagination::new(items, args.before, args.after, take, count))
     }
 
-    async fn find_by_id(&self, id: ModelId) -> Result<Option<Model>> {
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Model>> {
         let model = entity::model::Entity::find_by_id(id)
             .one(&self.db)
             .await
@@ -90,6 +94,19 @@ impl ModelServiceExt for ModelService {
             .map(|model| model.into());
 
         Ok(model)
+    }
+
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Model>> {
+        let models = entity::model::Entity::find()
+            .filter(entity::model::Column::Id.is_in(ids.to_vec()))
+            .all(&self.db)
+            .await
+            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
+            .into_iter()
+            .map(|model| model.into())
+            .collect();
+
+        Ok(models)
     }
 
     async fn find_by_slug(&self, slug: String) -> Result<Option<Model>> {
@@ -101,20 +118,6 @@ impl ModelServiceExt for ModelService {
             .map(|model| model.into());
 
         Ok(model)
-    }
-
-    async fn find_by_ids(&self, ids: Vec<ModelId>) -> Result<Vec<Model>> {
-        let ids = ids.into_iter().map(|id| id.to_string()).collect::<Vec<_>>();
-        let models = entity::model::Entity::find()
-            .filter(entity::model::Column::Id.is_in(ids))
-            .all(&self.db)
-            .await
-            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
-            .into_iter()
-            .map(|model| model.into())
-            .collect();
-
-        Ok(models)
     }
 
     async fn count(&self) -> Result<u64> {
@@ -132,7 +135,7 @@ impl ModelServiceExt for ModelService {
         })?;
 
         let created_model = entity::model::ActiveModel {
-            id: Set(ModelId::new_v4()),
+            id: Set(Uuid::new_v4()),
             name: Set(input.name),
             description: Set(input.description),
             slug: Set(input.slug),
@@ -152,7 +155,7 @@ impl ModelServiceExt for ModelService {
         Ok(created_model)
     }
 
-    async fn update_by_id(&self, id: ModelId, input: ModelUpdateInput) -> Result<Model> {
+    async fn update_by_id(&self, id: Uuid, input: ModelUpdateInput) -> Result<Model> {
         let mut updated_model = entity::model::Entity::find_by_id(id)
             .one(&self.db)
             .await
@@ -205,7 +208,7 @@ impl ModelServiceExt for ModelService {
         Ok(updated_model)
     }
 
-    async fn delete_by_id(&self, id: ModelId) -> Result<Model> {
+    async fn delete_by_id(&self, id: Uuid) -> Result<Model> {
         let deleted_model = entity::model::Entity::find_by_id(id)
             .one(&self.db)
             .await

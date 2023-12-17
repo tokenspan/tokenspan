@@ -3,9 +3,8 @@ use std::collections::HashMap;
 use async_graphql::InputObject;
 use sea_orm::ActiveValue::Set;
 use serde::Deserialize;
+use uuid::Uuid;
 use validator::Validate;
-
-use crate::api::models::{ApiKeyId, ParameterId, TaskVersionId};
 
 #[derive(InputObject)]
 pub struct TaskCreateInput {
@@ -35,8 +34,8 @@ impl TaskUpdateInput {
 #[derive(Deserialize, Validate, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskExecuteInput {
-    pub task_version_id: TaskVersionId,
-    pub parameter_id: ParameterId,
-    pub api_key_id: ApiKeyId,
+    pub task_version_id: Uuid,
+    pub parameter_id: Uuid,
+    pub api_key_id: Uuid,
     pub variables: HashMap<String, String>,
 }

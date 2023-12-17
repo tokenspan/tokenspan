@@ -1,12 +1,13 @@
 use async_graphql::{Enum, SimpleObject};
+use chrono::NaiveDateTime;
 use sea_orm::prelude::Uuid;
 use strum_macros::{Display, EnumString};
 
-pub type UserId = Uuid;
+use tokenspan_extra::pagination::{Cursor, CursorExt};
 
 #[derive(SimpleObject, Clone, Debug)]
 pub struct User {
-    pub id: UserId,
+    pub id: Uuid,
     pub email: String,
     pub username: String,
     #[graphql(skip)]
@@ -14,6 +15,13 @@ pub struct User {
     #[graphql(skip)]
     pub salt: String,
     pub role: UserRole,
+    pub created_at: NaiveDateTime,
+}
+
+impl CursorExt<Cursor> for User {
+    fn cursor(&self) -> Cursor {
+        self.created_at.into()
+    }
 }
 
 impl From<entity::user::Model> for User {
@@ -25,6 +33,7 @@ impl From<entity::user::Model> for User {
             password: value.password,
             salt: value.salt,
             role: UserRole::from(value.role),
+            created_at: value.created_at,
         }
     }
 }

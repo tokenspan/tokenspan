@@ -1,6 +1,7 @@
-use crate::api::models::{ParsedToken, TaskId};
+use crate::api::models::ParsedToken;
 use async_graphql::connection::Connection;
 use async_graphql::{Context, ErrorExtensions, Object, Result};
+use uuid::Uuid;
 
 use crate::api::services::TaskServiceDyn;
 use crate::api::task::dto::TaskArgs;
@@ -49,7 +50,7 @@ impl TaskQuery {
         Ok(paginated_task.into())
     }
 
-    pub async fn task<'a>(&self, ctx: &Context<'a>, id: TaskId) -> Result<Option<Task>> {
+    pub async fn task<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<Task>> {
         let task_service = ctx
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -59,7 +60,7 @@ impl TaskQuery {
         Ok(task)
     }
 
-    pub async fn count_tasks<'a>(&self, ctx: &Context<'a>, id: TaskId) -> Result<Option<Task>> {
+    pub async fn count_tasks<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<Task>> {
         let task_service = ctx
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

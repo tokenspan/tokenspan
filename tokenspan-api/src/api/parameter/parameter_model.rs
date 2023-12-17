@@ -1,21 +1,19 @@
-use crate::api::loaders::ModelLoader;
 use async_graphql::dataloader::DataLoader;
 use async_graphql::{ComplexObject, Context, SimpleObject};
 use chrono::NaiveDateTime;
 use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
 
+use crate::api::loaders::ModelLoader;
 use crate::api::model::model_error::ModelError;
-use crate::api::models::{Model, ModelId};
+use crate::api::models::Model;
 use crate::error::AppError;
-
-pub type ParameterId = Uuid;
 
 #[derive(SimpleObject, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[graphql(complex)]
 pub struct Parameter {
-    pub id: ParameterId,
+    pub id: Uuid,
     pub name: String,
     pub temperature: f32,
     pub max_tokens: u16,
@@ -24,7 +22,7 @@ pub struct Parameter {
     pub frequency_penalty: f32,
     pub presence_penalty: f32,
     pub extra: Option<serde_json::Value>,
-    pub model_id: ModelId,
+    pub model_id: Uuid,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }

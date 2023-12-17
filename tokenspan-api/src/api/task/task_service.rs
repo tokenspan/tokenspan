@@ -7,22 +7,22 @@ use async_openai::types::{
 };
 use async_openai::Client;
 use axum::extract::FromRef;
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
     PaginatorTrait, QueryFilter, QueryOrder, QuerySelect,
 };
+use uuid::Uuid;
 
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
 use crate::api::caches::api_key_cache::ApiKeyCacheDyn;
 use crate::api::caches::model_cache::ModelCacheDyn;
-use crate::api::models::{Model, Parameter, TaskId, UserId};
+use crate::api::models::{Model, Parameter, Task};
 use crate::api::services::{ExecutionServiceDyn, TaskVersionServiceDyn};
 use crate::api::task::dto::{TaskArgs, TaskCreateInput, TaskUpdateInput};
 use crate::api::task::task_error::TaskError;
-use crate::api::task::task_model::Task;
 use crate::prompt::ChatMessage;
 use crate::state::AppState;
 
@@ -31,15 +31,15 @@ pub trait TaskServiceExt {
     async fn paginate(&self, args: TaskArgs) -> Result<Pagination<Cursor, Task>>;
     async fn find_by_owner(
         &self,
-        user_id: UserId,
+        user_id: Uuid,
         args: TaskArgs,
     ) -> Result<Pagination<Cursor, Task>>;
-    async fn find_by_id(&self, id: TaskId) -> Result<Option<Task>>;
-    async fn find_by_ids(&self, ids: Vec<TaskId>) -> Result<Vec<Task>>;
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Task>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Task>>;
     async fn find_by_slug(&self, slug: String) -> Result<Option<Task>>;
-    async fn create(&self, input: TaskCreateInput, owner_id: UserId) -> Result<Task>;
-    async fn update_by_id(&self, id: TaskId, input: TaskUpdateInput) -> Result<Task>;
-    async fn delete_by_id(&self, id: TaskId) -> Result<Task>;
+    async fn create(&self, input: TaskCreateInput, owner_id: Uuid) -> Result<Task>;
+    async fn update_by_id(&self, id: Uuid, input: TaskUpdateInput) -> Result<Task>;
+    async fn delete_by_id(&self, id: Uuid) -> Result<Task>;
 }
 
 pub type TaskServiceDyn = Arc<dyn TaskServiceExt + Send + Sync>;
@@ -119,44 +119,48 @@ impl TaskService {
 #[async_trait::async_trait]
 impl TaskServiceExt for TaskService {
     async fn paginate(&self, args: TaskArgs) -> Result<Pagination<Cursor, Task>> {
-        let take = args.take.unwrap_or(10) as u64;
-        let mut cursor = entity::task::Entity::find()
-            .cursor_by(entity::task::Column::Id)
-            .order_by_desc(entity::task::Column::Id)
-            .limit(Some(take));
+        let take = args.take.unwrap_or(10);
+        let limit = take
+            + if args.after.is_some() || args.before.is_some() {
+                2
+            } else {
+                1
+            };
+        let mut select = entity::task::Entity::find()
+            .limit(Some(limit))
+            .order_by_desc(entity::task::Column::CreatedAt);
 
         if let Some(after) = args.after.clone() {
-            cursor.after(after.id);
+            let after: NaiveDateTime = after.try_into()?;
+            select = select.filter(entity::task::Column::CreatedAt.lte(after));
         }
 
         if let Some(before) = args.before.clone() {
-            cursor.before(before.id);
+            let before: NaiveDateTime = before.try_into()?;
+            select = select.filter(entity::task::Column::CreatedAt.gte(before));
         }
 
-        let count = entity::task::Entity::find().count(&self.db).await?;
-        let items = cursor
-            .all(&self.db)
-            .await
-            .map_err(|e| crate::api::task::task_error::TaskError::Unknown(anyhow::anyhow!(e)))?
+        let count_fut = entity::task::Entity::find().count(&self.db);
+        let select_fut = select.all(&self.db);
+
+        let (count, items) = tokio::join!(count_fut, select_fut);
+
+        let count = count.map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?;
+        let items = items
+            .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
-            .map(|task| task.into())
+            .map(|execution| execution.into())
             .collect::<Vec<_>>();
 
-        Ok(Pagination::new(
-            items,
-            args.before,
-            args.after,
-            take as i64,
-            count,
-        ))
+        Ok(Pagination::new(items, args.before, args.after, take, count))
     }
 
     async fn find_by_owner(
         &self,
-        user_id: UserId,
+        user_id: Uuid,
         args: TaskArgs,
     ) -> Result<Pagination<Cursor, Task>> {
-        let take = args.take.unwrap_or(10) as u64;
+        let take = args.take.unwrap_or(10);
         let mut cursor = entity::task::Entity::find()
             .filter(entity::task::Column::OwnerId.eq(user_id))
             .cursor_by(entity::task::Column::Id)
@@ -175,21 +179,15 @@ impl TaskServiceExt for TaskService {
         let items = cursor
             .all(&self.db)
             .await
-            .map_err(|e| crate::api::task::task_error::TaskError::Unknown(anyhow::anyhow!(e)))?
+            .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
             .map(|task| task.into())
             .collect::<Vec<_>>();
 
-        Ok(Pagination::new(
-            items,
-            args.before,
-            args.after,
-            take as i64,
-            count,
-        ))
+        Ok(Pagination::new(items, args.before, args.after, take, count))
     }
 
-    async fn find_by_id(&self, id: TaskId) -> Result<Option<Task>> {
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Task>> {
         let task = entity::task::Entity::find_by_id(id)
             .one(&self.db)
             .await
@@ -199,10 +197,9 @@ impl TaskServiceExt for TaskService {
         Ok(task)
     }
 
-    async fn find_by_ids(&self, ids: Vec<TaskId>) -> Result<Vec<Task>> {
-        let ids = ids.into_iter().map(|id| id.to_string()).collect::<Vec<_>>();
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Task>> {
         let tasks = entity::task::Entity::find()
-            .filter(entity::task::Column::Id.is_in(ids))
+            .filter(entity::task::Column::Id.is_in(ids.to_vec()))
             .all(&self.db)
             .await
             .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?
@@ -224,9 +221,9 @@ impl TaskServiceExt for TaskService {
         Ok(task)
     }
 
-    async fn create(&self, input: TaskCreateInput, owner_id: UserId) -> Result<Task> {
+    async fn create(&self, input: TaskCreateInput, owner_id: Uuid) -> Result<Task> {
         let task = entity::task::ActiveModel {
-            id: Set(TaskId::new_v4()),
+            id: Set(Uuid::new_v4()),
             name: Set(input.name.clone()),
             slug: Set(input.name),
             private: Set(input.private),
@@ -242,7 +239,7 @@ impl TaskServiceExt for TaskService {
         Ok(task)
     }
 
-    async fn update_by_id(&self, id: TaskId, input: TaskUpdateInput) -> Result<Task> {
+    async fn update_by_id(&self, id: Uuid, input: TaskUpdateInput) -> Result<Task> {
         let mut task = entity::task::Entity::find_by_id(id)
             .one(&self.db)
             .await
@@ -261,7 +258,7 @@ impl TaskServiceExt for TaskService {
         Ok(task)
     }
 
-    async fn delete_by_id(&self, id: TaskId) -> Result<Task> {
+    async fn delete_by_id(&self, id: Uuid) -> Result<Task> {
         let task = entity::task::Entity::find_by_id(id)
             .one(&self.db)
             .await
@@ -276,7 +273,7 @@ impl TaskServiceExt for TaskService {
         Ok(task.into())
     }
 
-    // async fn execute(&self, input: TaskExecuteInput, execute_by_id: UserId) -> Result<Execution> {
+    // async fn execute(&self, input: TaskExecuteInput, execute_by_id: Uuid) -> Result<Execution> {
     //     let start = Instant::now();
     //     let api_key = self
     //         .api_key_cache

@@ -1,10 +1,10 @@
-use crate::api::models::UserId;
 use thiserror::Error;
+use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum UserError {
     #[error("user not found: {0:?}")]
-    UserNotFound(Option<UserId>),
+    UserNotFound(Option<Uuid>),
 
     #[error("invalid iterations")]
     InvalidIterations,

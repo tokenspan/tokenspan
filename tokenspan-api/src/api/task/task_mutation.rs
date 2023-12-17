@@ -1,7 +1,9 @@
+use crate::api::dto::parameter_input::ParameterCreateInput;
 use async_graphql::{Context, ErrorExtensions, Object, Result};
+use uuid::Uuid;
 
-use crate::api::models::{ModelId, ParsedToken, TaskId, UserRole};
-use crate::api::services::{TaskServiceDyn, TaskVersionServiceDyn};
+use crate::api::models::{ParsedToken, UserRole};
+use crate::api::services::{ParameterServiceDyn, TaskServiceDyn, TaskVersionServiceDyn};
 use crate::api::task::dto::{TaskCreateInput, TaskUpdateInput};
 use crate::api::task::task_model::Task;
 use crate::api::task_version::dto::TaskVersionCreateInput;
@@ -13,12 +15,12 @@ pub struct TaskMutation;
 
 #[Object]
 impl TaskMutation {
-    // #[graphql(guard = "RoleGuard::new(Role::User)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn create_task<'a>(
         &self,
         ctx: &Context<'a>,
         input: TaskCreateInput,
-        _model_id: ModelId,
+        model_id: Uuid,
     ) -> Result<Task> {
         let parsed_token = ctx
             .data::<Option<ParsedToken>>()
@@ -34,23 +36,26 @@ impl TaskMutation {
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
+        let parameter_service = ctx
+            .data::<ParameterServiceDyn>()
+            .map_err(|_| AppError::ContextExtractionError)?;
+
         let created_task = task_service
             .create(input, parsed_token.user_id.clone())
             .await?;
 
-        task_version_service
-            .create(
-                TaskVersionCreateInput {
-                    task_id: created_task.id.clone(),
-                    version: 0,
-                    semver: "0.0.0".to_string(),
-                    release_note: None,
-                    description: None,
-                    document: None,
-                },
-                parsed_token.user_id.clone(),
-            )
+        let task_version_input = TaskVersionCreateInput::builder()
+            .task_id(created_task.id)
+            .build();
+        let created_task_version = task_version_service
+            .create(task_version_input, parsed_token.user_id.clone())
             .await?;
+
+        let parameter_input = ParameterCreateInput::builder()
+            .task_version_id(created_task_version.id)
+            .model_id(model_id)
+            .build();
+        parameter_service.create(parameter_input).await?;
 
         Ok(created_task)
     }
@@ -59,7 +64,7 @@ impl TaskMutation {
     pub async fn update_task<'a>(
         &self,
         ctx: &Context<'a>,
-        id: TaskId,
+        id: Uuid,
         input: TaskUpdateInput,
     ) -> Result<Task> {
         let task_service = ctx
@@ -72,7 +77,7 @@ impl TaskMutation {
     }
 
     #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
-    pub async fn delete_task<'a>(&self, ctx: &Context<'a>, id: TaskId) -> Result<Task> {
+    pub async fn delete_task<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Task> {
         let task_service = ctx
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

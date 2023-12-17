@@ -5,8 +5,6 @@ use serde::{Deserialize, Serialize};
 
 use tokenspan_extra::pagination::{Cursor, CursorExt};
 
-use crate::api::models::ProviderId;
-
 pub type ModelId = Uuid;
 
 #[derive(SimpleObject, Clone, Serialize, Deserialize)]
@@ -18,7 +16,7 @@ pub struct Pricing {
 
 #[derive(SimpleObject, Clone)]
 pub struct Model {
-    pub id: ModelId,
+    pub id: Uuid,
     pub name: String,
     pub description: String,
     pub slug: String,
@@ -26,7 +24,7 @@ pub struct Model {
     pub input_pricing: Pricing,
     pub output_pricing: Pricing,
     pub training_at: NaiveDateTime,
-    pub provider_id: ProviderId,
+    pub provider_id: Uuid,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }

@@ -1,12 +1,12 @@
 use async_trait::async_trait;
-
 use serde::Deserialize;
 use tokio_stream::StreamExt;
 
-use crate::seed::Seed;
-use tokenspan_api::api::types::Role;
+use tokenspan_api::api::models::UserRole;
 use tokenspan_api::configs::AppConfig;
 use tokenspan_api::state::AppState;
+
+use crate::seed::Seed;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct UserRef {
@@ -18,7 +18,7 @@ pub struct User {
     pub email: String,
     pub username: String,
     pub password: String,
-    pub role: Role,
+    pub role: UserRole,
 }
 
 pub struct UserSeed {

@@ -3,10 +3,11 @@ use std::sync::Arc;
 use async_graphql::Result;
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use uuid::Uuid;
 
 use crate::api::auth::auth_error::AuthError;
 use crate::api::auth::auth_model::{AuthPayload, Claims, ParsedToken, SessionPayload};
-use crate::api::models::{RefreshPayload, UserId, UserRole};
+use crate::api::models::{RefreshPayload, UserRole};
 use crate::api::services::UserServiceDyn;
 use crate::configs::AuthConfig;
 
@@ -42,7 +43,7 @@ impl AuthService {
 }
 
 impl AuthService {
-    fn create_token(&self, user_id: UserId, role: &UserRole) -> Result<String, AuthError> {
+    fn create_token(&self, user_id: Uuid, role: &UserRole) -> Result<String, AuthError> {
         let exp = Utc::now()
             .checked_add_signed(chrono::Duration::seconds(self.auth_config.token_exp))
             .ok_or(AuthError::TimeAdditionOverflow)?
@@ -65,7 +66,7 @@ impl AuthService {
         .map_err(AuthError::JwtError)
     }
 
-    fn create_refresh_token(&self, user_id: UserId, role: &UserRole) -> Result<String, AuthError> {
+    fn create_refresh_token(&self, user_id: Uuid, role: &UserRole) -> Result<String, AuthError> {
         let exp = Utc::now()
             .checked_add_signed(chrono::Duration::seconds(
                 self.auth_config.refresh_token_exp,
@@ -111,7 +112,7 @@ impl AuthService {
 
         Ok(ParsedToken {
             role,
-            user_id: UserId::try_from(decoded.claims.sub).unwrap(),
+            user_id: decoded.claims.sub,
         })
     }
 }

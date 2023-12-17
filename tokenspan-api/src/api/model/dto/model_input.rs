@@ -1,8 +1,7 @@
 use async_graphql::InputObject;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-
-use crate::api::models::ProviderId;
+use uuid::Uuid;
 
 #[derive(InputObject, Clone, Serialize, Deserialize)]
 pub struct PricingInput {
@@ -20,7 +19,7 @@ pub struct ModelCreateInput {
     pub input_pricing: PricingInput,
     pub output_pricing: PricingInput,
     pub training_at: NaiveDateTime,
-    pub provider_id: ProviderId,
+    pub provider_id: Uuid,
 }
 
 #[derive(InputObject)]

@@ -45,7 +45,7 @@ impl TaskVersionQuery {
             }
             TaskVersionBy::Version(version) => {
                 let task_version = task_version_service
-                    .find_by_version(version.task_id, version.version)
+                    .find_by_semver(version.task_id, version.version)
                     .await?;
 
                 Ok(task_version)

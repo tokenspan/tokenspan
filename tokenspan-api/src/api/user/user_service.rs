@@ -2,21 +2,27 @@ use std::num::NonZeroU32;
 use std::sync::Arc;
 
 use anyhow::Result;
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 use data_encoding::HEXUPPER;
 use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2, rand};
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter,
+    QueryOrder, QuerySelect,
+};
 use uuid::Uuid;
 
-use entity::sea_orm_active_enums::UserRole;
+use tokenspan_extra::pagination::{Cursor, Pagination};
 
+use crate::api::dto::UserArgs;
+use crate::api::models::UserRole;
 use crate::api::user::user_error::UserError;
 use crate::api::user::user_model::User;
 
 #[async_trait::async_trait]
 pub trait UserServiceExt {
+    async fn paginate(&self, args: UserArgs) -> Result<Pagination<Cursor, User>>;
     async fn create(&self, email: String, username: String, password: String) -> Result<User>;
     async fn create_with_role(
         &self,
@@ -26,7 +32,7 @@ pub trait UserServiceExt {
         role: UserRole,
     ) -> Result<User>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>>;
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<User>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>>;
     async fn find_by_email(&self, email: String) -> Result<Option<User>>;
     fn verify_password(&self, password: &str, salt: &str, hash_password: &str) -> Result<()>;
 }
@@ -67,6 +73,43 @@ impl UserService {
 
 #[async_trait::async_trait]
 impl UserServiceExt for UserService {
+    async fn paginate(&self, args: UserArgs) -> Result<Pagination<Cursor, User>> {
+        let take = args.take.unwrap_or(10);
+        let limit = take
+            + if args.after.is_some() || args.before.is_some() {
+                2
+            } else {
+                1
+            };
+        let mut select = entity::user::Entity::find()
+            .limit(Some(limit))
+            .order_by_desc(entity::user::Column::CreatedAt);
+
+        if let Some(after) = args.after.clone() {
+            let after: NaiveDateTime = after.try_into()?;
+            select = select.filter(entity::user::Column::CreatedAt.lte(after));
+        }
+
+        if let Some(before) = args.before.clone() {
+            let before: NaiveDateTime = before.try_into()?;
+            select = select.filter(entity::user::Column::CreatedAt.gte(before));
+        }
+
+        let count_fut = entity::user::Entity::find().count(&self.db);
+        let select_fut = select.all(&self.db);
+
+        let (count, items) = tokio::join!(count_fut, select_fut);
+
+        let count = count.map_err(|e| UserError::Unknown(anyhow::anyhow!(e)))?;
+        let items = items
+            .map_err(|e| UserError::Unknown(anyhow::anyhow!(e)))?
+            .into_iter()
+            .map(|execution| execution.into())
+            .collect::<Vec<_>>();
+
+        Ok(Pagination::new(items, args.before, args.after, take, count))
+    }
+
     async fn create(&self, email: String, username: String, password: String) -> Result<User> {
         self.create_with_role(email, username, password, UserRole::User)
             .await
@@ -89,7 +132,7 @@ impl UserServiceExt for UserService {
             username: Set(username),
             password: Set(hash_password),
             salt: Set(salt),
-            role: Set(role),
+            role: Set(role.into()),
             created_at: Set(Utc::now().naive_utc()),
             updated_at: Set(Utc::now().naive_utc()),
         }
@@ -110,9 +153,9 @@ impl UserServiceExt for UserService {
         Ok(user)
     }
 
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<User>> {
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>> {
         let users = entity::user::Entity::find()
-            .filter(entity::user::Column::Id.is_in(ids))
+            .filter(entity::user::Column::Id.is_in(ids.to_vec()))
             .all(&self.db)
             .await
             .map_err(|e| UserError::Unknown(anyhow::anyhow!(e)))?

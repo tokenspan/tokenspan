@@ -1,8 +1,9 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
+use uuid::Uuid;
 
 use crate::api::api_key::api_key_model::ApiKey;
 use crate::api::api_key::dto::{ApiKeyCreateInput, ApiKeyUpdateInput};
-use crate::api::models::{ApiKeyId, ParsedToken, UserRole};
+use crate::api::models::{ParsedToken, UserRole};
 use crate::api::services::ApiKeyServiceDyn;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
@@ -39,7 +40,7 @@ impl ApiKeyMutation {
     pub async fn update_api_key<'a>(
         &self,
         ctx: &Context<'a>,
-        id: ApiKeyId,
+        id: Uuid,
         input: ApiKeyUpdateInput,
     ) -> Result<ApiKey> {
         let api_key_service = ctx
@@ -52,7 +53,7 @@ impl ApiKeyMutation {
     }
 
     #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
-    pub async fn delete_api_key<'a>(&self, ctx: &Context<'a>, id: ApiKeyId) -> Result<ApiKey> {
+    pub async fn delete_api_key<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<ApiKey> {
         let api_key_service = ctx
             .data::<ApiKeyServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

@@ -1,15 +1,20 @@
 use async_graphql::InputObject;
 use sea_orm::ActiveValue::Set;
+use typed_builder::TypedBuilder;
+use uuid::Uuid;
 
-use crate::api::models::TaskId;
-
-#[derive(InputObject)]
+#[derive(InputObject, TypedBuilder)]
 pub struct TaskVersionCreateInput {
-    pub task_id: TaskId,
+    pub task_id: Uuid,
+    #[builder(default = "0.0.0".to_string())]
     pub semver: String,
+    #[builder(default = 0)]
     pub version: u32,
+    #[builder(default)]
     pub release_note: Option<String>,
+    #[builder(default)]
     pub description: Option<String>,
+    #[builder(default)]
     pub document: Option<String>,
 }
 

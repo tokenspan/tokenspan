@@ -7,20 +7,20 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
     QueryFilter,
 };
+use uuid::Uuid;
 
 use crate::api::dto::parameter_input::{ParameterCreateInput, ParameterUpdateInput};
-use crate::api::models::{Parameter, ParameterId, TaskVersionId};
+use crate::api::models::Parameter;
 use crate::api::parameter::parameter_error::ParameterError;
 
 #[async_trait::async_trait]
 pub trait ParameterServiceExt {
-    async fn find_by_id(&self, id: ParameterId) -> Result<Option<Parameter>>;
-    async fn find_by_task_version_id(&self, id: TaskVersionId) -> Result<Option<Parameter>>;
-    async fn find_by_ids(&self, ids: Vec<ParameterId>) -> Result<Vec<Parameter>>;
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Parameter>>;
+    async fn find_by_task_version_id(&self, id: Uuid) -> Result<Vec<Parameter>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Parameter>>;
     async fn create(&self, input: ParameterCreateInput) -> Result<Parameter>;
-    async fn update_by_id(&self, id: ParameterId, input: ParameterUpdateInput)
-        -> Result<Parameter>;
-    async fn delete_by_id(&self, id: ParameterId) -> Result<Parameter>;
+    async fn update_by_id(&self, id: Uuid, input: ParameterUpdateInput) -> Result<Parameter>;
+    async fn delete_by_id(&self, id: Uuid) -> Result<Parameter>;
 }
 
 pub type ParameterServiceDyn = Arc<dyn ParameterServiceExt + Send + Sync>;
@@ -37,7 +37,7 @@ impl ParameterService {
 
 #[async_trait::async_trait]
 impl ParameterServiceExt for ParameterService {
-    async fn find_by_id(&self, id: ParameterId) -> Result<Option<Parameter>> {
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Parameter>> {
         let parameter = entity::parameter::Entity::find_by_id(id)
             .one(&self.db)
             .await
@@ -47,10 +47,22 @@ impl ParameterServiceExt for ParameterService {
         Ok(parameter)
     }
 
-    async fn find_by_ids(&self, ids: Vec<ParameterId>) -> Result<Vec<Parameter>> {
-        let ids = ids.into_iter().map(|id| id.to_string()).collect::<Vec<_>>();
+    async fn find_by_task_version_id(&self, id: Uuid) -> Result<Vec<Parameter>> {
+        let parameter = entity::parameter::Entity::find()
+            .filter(entity::parameter::Column::TaskVersionId.eq(id))
+            .all(&self.db)
+            .await
+            .map_err(|e| ParameterError::Unknown(anyhow::anyhow!(e)))?
+            .into_iter()
+            .map(|parameter| parameter.into())
+            .collect();
+
+        Ok(parameter)
+    }
+
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Parameter>> {
         let parameters = entity::parameter::Entity::find()
-            .filter(entity::parameter::Column::Id.is_in(ids))
+            .filter(entity::parameter::Column::Id.is_in(ids.to_vec()))
             .all(&self.db)
             .await
             .map_err(|e| ParameterError::Unknown(anyhow::anyhow!(e)))?
@@ -61,20 +73,9 @@ impl ParameterServiceExt for ParameterService {
         Ok(parameters)
     }
 
-    async fn find_by_task_version_id(&self, id: TaskVersionId) -> Result<Option<Parameter>> {
-        let parameter = entity::parameter::Entity::find()
-            .filter(entity::parameter::Column::TaskVersionId.eq(id))
-            .one(&self.db)
-            .await
-            .map_err(|e| ParameterError::Unknown(anyhow::anyhow!(e)))?
-            .map(|parameter| parameter.into());
-
-        Ok(parameter)
-    }
-
     async fn create(&self, input: ParameterCreateInput) -> Result<Parameter> {
         let created_parameter = entity::parameter::ActiveModel {
-            id: Set(ParameterId::new_v4()),
+            id: Set(Uuid::new_v4()),
             task_version_id: Set(input.task_version_id),
             model_id: Set(input.model_id),
             name: Set(input.name),
@@ -96,11 +97,7 @@ impl ParameterServiceExt for ParameterService {
         Ok(created_parameter)
     }
 
-    async fn update_by_id(
-        &self,
-        id: ParameterId,
-        input: ParameterUpdateInput,
-    ) -> Result<Parameter> {
+    async fn update_by_id(&self, id: Uuid, input: ParameterUpdateInput) -> Result<Parameter> {
         let mut updated_parameter = entity::parameter::Entity::find_by_id(id)
             .one(&self.db)
             .await
@@ -121,7 +118,7 @@ impl ParameterServiceExt for ParameterService {
         Ok(updated_parameter)
     }
 
-    async fn delete_by_id(&self, id: ParameterId) -> Result<Parameter> {
+    async fn delete_by_id(&self, id: Uuid) -> Result<Parameter> {
         let deleted_parameter = entity::parameter::Entity::find_by_id(id)
             .one(&self.db)
             .await

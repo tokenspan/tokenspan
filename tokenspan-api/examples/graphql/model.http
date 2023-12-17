@@ -1,0 +1,91 @@
+### Create model
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation CreateModel($input: ModelCreateInput!) {
+  createModel(input: $input) {
+    id
+    name
+    description
+    slug
+    context
+    inputPricing {
+      price
+      tokens
+      currency
+    }
+    outputPricing {
+      price
+      tokens
+      currency
+    }
+    trainingAt
+    providerId
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "input": {
+    "name": "gpt-3.5-turbo-1106",
+    "description": "The latest GPT-3.5 Turbo model with improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more. Returns a maximum of 4,096 output tokens.",
+    "slug": "gpt-3.5-turbo-1106",
+    "context": 16385,
+    "inputPricing": {
+      "price": 0.001,
+      "currency": "USD",
+      "tokens": 1000
+    },
+    "outputPricing": {
+      "price": 0.002,
+      "tokens": 1000,
+      "currency": "USD"
+    },
+    "trainingAt": "2023-12-17T04:11:16.803571",
+    "providerId": "364a976f-1a4c-4cfa-8df1-e6ed58fb5f2f"
+  }
+}
+
+### Get models
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query Models($args: ModelArgs!) {
+  models(args: $args) {
+    nodes {
+      id
+      name
+      description
+      slug
+      context
+      inputPricing {
+        price
+        tokens
+        currency
+      }
+      outputPricing {
+        price
+        tokens
+        currency
+      }
+      trainingAt
+      providerId
+      createdAt
+      updatedAt
+    }
+    totalNodes
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
+{
+  "args": {
+    "take": 10
+  }
+}

@@ -1,25 +1,39 @@
-use async_graphql::{Enum, SimpleObject};
+use anyhow::Result;
+use async_graphql::{ComplexObject, Context, Enum, SimpleObject};
 use chrono::NaiveDateTime;
 use sea_orm::prelude::Uuid;
 use strum_macros::EnumString;
 
 use tokenspan_extra::pagination::{Cursor, CursorExt};
 
-use crate::api::models::TaskId;
-
-pub type TaskVersionId = Uuid;
+use crate::api::models::Parameter;
+use crate::api::services::ParameterServiceDyn;
+use crate::error::AppError;
 
 #[derive(SimpleObject, Clone)]
+#[graphql(complex)]
 pub struct TaskVersion {
-    pub id: TaskVersionId,
+    pub id: Uuid,
+    pub semver: String,
     pub version: u32,
     pub release_note: Option<String>,
     pub description: Option<String>,
     pub document: Option<String>,
     pub status: TaskVersionStatus,
-    pub task_id: TaskId,
+    pub task_id: Uuid,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+}
+
+#[ComplexObject]
+impl TaskVersion {
+    pub async fn parameters<'a>(&self, ctx: &Context<'a>) -> Result<Vec<Parameter>> {
+        let parameter_service = ctx
+            .data::<ParameterServiceDyn>()
+            .map_err(|_| AppError::ContextExtractionError)?;
+
+        parameter_service.find_by_task_version_id(self.id).await
+    }
 }
 
 impl CursorExt<Cursor> for TaskVersion {
@@ -31,13 +45,14 @@ impl CursorExt<Cursor> for TaskVersion {
 impl From<entity::task_version::Model> for TaskVersion {
     fn from(value: entity::task_version::Model) -> Self {
         Self {
-            id: TaskVersionId::from(value.id),
+            id: value.id,
+            semver: value.semver,
             version: value.version as u32,
             release_note: value.release_note,
             description: value.description,
             document: value.document,
             status: TaskVersionStatus::from(value.status),
-            task_id: value.task_id.into(),
+            task_id: value.task_id,
             created_at: value.created_at,
             updated_at: value.updated_at,
         }

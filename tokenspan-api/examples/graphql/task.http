@@ -1,0 +1,92 @@
+### Create task
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation CreateTask($input: TaskCreateInput!, $modelId: UUID!) {
+  createTask(input: $input, modelId: $modelId) {
+    id
+    name
+    slug
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "input": {
+    "name": "test",
+    "private": false,
+    "slug": "test"
+  },
+  "modelId": "62116abf-b1d1-4e70-a860-121ed3b4acf8"
+}
+
+### Get tasks
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query Task {
+  tasks {
+    nodes {
+      id
+      name
+      slug
+      createdAt
+      updatedAt
+      version {
+        id
+        version
+        semver
+        releaseNote
+        description
+        document
+        status
+        taskId
+        createdAt
+        updatedAt
+        parameters {
+          id
+          name
+          temperature
+          maxTokens
+          stopSequences
+          topP
+          frequencyPenalty
+          presencePenalty
+          extra
+          modelId
+          createdAt
+          updatedAt
+          model {
+            id
+            name
+            description
+            slug
+            context
+            inputPricing {
+              price
+              tokens
+              currency
+            }
+            outputPricing {
+              price
+              tokens
+              currency
+            }
+            trainingAt
+            providerId
+            createdAt
+            updatedAt
+          }
+        }
+      }
+    }
+    totalNodes
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+  }
+}

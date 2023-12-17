@@ -3,25 +3,22 @@ use async_graphql::{ComplexObject, Context, Result, SimpleObject};
 use chrono::NaiveDateTime;
 use sea_orm::prelude::Uuid;
 
-use crate::api::loaders::UserLoader;
 use tokenspan_extra::pagination::{Cursor, CursorExt};
 
-use crate::api::models::{Provider, ProviderId, User, UserId};
-use crate::api::services::ProviderServiceDyn;
+use crate::api::loaders::{ProviderLoader, UserLoader};
+use crate::api::models::{Provider, User};
 use crate::api::user::user_error::UserError;
 use crate::error::AppError;
-
-pub type ApiKeyId = Uuid;
 
 #[derive(SimpleObject, Clone)]
 #[graphql(complex)]
 pub struct ApiKey {
-    pub id: ApiKeyId,
+    pub id: Uuid,
     pub name: String,
     #[graphql(skip)]
     pub key: String,
-    pub owner_id: UserId,
-    pub provider_id: ProviderId,
+    pub owner_id: Uuid,
+    pub provider_id: Uuid,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -29,13 +26,11 @@ pub struct ApiKey {
 #[ComplexObject]
 impl ApiKey {
     pub async fn provider<'a>(&self, ctx: &Context<'a>) -> Result<Option<Provider>> {
-        let provider_service = ctx
-            .data::<ProviderServiceDyn>()
+        let provider_loader = ctx
+            .data::<DataLoader<ProviderLoader>>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let provider = provider_service
-            .find_by_id(self.provider_id.clone())
-            .await?;
+        let provider = provider_loader.load_one(self.provider_id.clone()).await?;
 
         Ok(provider)
     }

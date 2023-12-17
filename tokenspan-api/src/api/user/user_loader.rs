@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
 use async_graphql::dataloader::Loader;
+use uuid::Uuid;
 
-use crate::api::models::{User, UserId};
+use crate::api::models::User;
 use crate::api::services::UserServiceDyn;
 
 pub struct UserLoader {
@@ -16,14 +17,14 @@ impl UserLoader {
 }
 
 #[async_trait::async_trait]
-impl Loader<UserId> for UserLoader {
+impl Loader<Uuid> for UserLoader {
     type Value = User;
     type Error = ();
 
-    async fn load(&self, keys: &[UserId]) -> Result<HashMap<UserId, Self::Value>, Self::Error> {
+    async fn load(&self, keys: &[Uuid]) -> Result<HashMap<Uuid, Self::Value>, Self::Error> {
         let users = self
             .user_service
-            .find_by_ids(keys.to_vec())
+            .find_by_ids(keys)
             .await
             .unwrap()
             .into_iter()

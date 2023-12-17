@@ -1,27 +1,27 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, PaginatorTrait,
     QueryFilter, QueryOrder, QuerySelect,
 };
+use uuid::Uuid;
 
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
 use crate::api::execution::dto::{ExecutionArgs, ExecutionCreateInput};
 use crate::api::execution::execution_error::ExecutionError;
 use crate::api::execution::execution_model::Execution;
-use crate::api::models::{ExecutionId, UserId};
 
 #[async_trait::async_trait]
 pub trait ExecutionServiceExt {
     async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>>;
-    async fn find_by_id(&self, id: ExecutionId) -> Result<Option<Execution>>;
-    async fn find_by_ids(&self, ids: Vec<ExecutionId>) -> Result<Vec<Execution>>;
-    async fn create(&self, input: ExecutionCreateInput, executor_id: UserId) -> Result<Execution>;
-    async fn delete_by_id(&self, id: ExecutionId) -> Result<Execution>;
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Execution>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Execution>>;
+    async fn create(&self, input: ExecutionCreateInput, executor_id: Uuid) -> Result<Execution>;
+    async fn delete_by_id(&self, id: Uuid) -> Result<Execution>;
 }
 
 pub type ExecutionServiceDyn = Arc<dyn ExecutionServiceExt + Send + Sync>;
@@ -39,39 +39,43 @@ impl ExecutionService {
 #[async_trait::async_trait]
 impl ExecutionServiceExt for ExecutionService {
     async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>> {
-        let take = args.take.unwrap_or(10) as u64;
-        let mut cursor = entity::execution::Entity::find()
-            .cursor_by(entity::execution::Column::Id)
-            .order_by_desc(entity::execution::Column::Id)
-            .limit(Some(take));
+        let take = args.take.unwrap_or(10);
+        let limit = take
+            + if args.after.is_some() || args.before.is_some() {
+                2
+            } else {
+                1
+            };
+        let mut select = entity::execution::Entity::find()
+            .limit(Some(limit))
+            .order_by_desc(entity::execution::Column::CreatedAt);
 
         if let Some(after) = args.after.clone() {
-            cursor.after(after.id);
+            let after: NaiveDateTime = after.try_into()?;
+            select = select.filter(entity::execution::Column::CreatedAt.lte(after));
         }
 
         if let Some(before) = args.before.clone() {
-            cursor.before(before.id);
+            let before: NaiveDateTime = before.try_into()?;
+            select = select.filter(entity::execution::Column::CreatedAt.gte(before));
         }
 
-        let count = entity::execution::Entity::find().count(&self.db).await?;
-        let items = cursor
-            .all(&self.db)
-            .await
+        let count_fut = entity::execution::Entity::find().count(&self.db);
+        let select_fut = select.all(&self.db);
+
+        let (count, items) = tokio::join!(count_fut, select_fut);
+
+        let count = count.map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?;
+        let items = items
             .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?
             .into_iter()
             .map(|execution| execution.into())
             .collect::<Vec<_>>();
 
-        Ok(Pagination::new(
-            items,
-            args.before,
-            args.after,
-            take as i64,
-            count,
-        ))
+        Ok(Pagination::new(items, args.before, args.after, take, count))
     }
 
-    async fn find_by_id(&self, id: ExecutionId) -> Result<Option<Execution>> {
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Execution>> {
         let execution = entity::execution::Entity::find_by_id(id)
             .one(&self.db)
             .await
@@ -81,10 +85,9 @@ impl ExecutionServiceExt for ExecutionService {
         Ok(execution)
     }
 
-    async fn find_by_ids(&self, ids: Vec<ExecutionId>) -> Result<Vec<Execution>> {
-        let ids = ids.into_iter().map(|id| id.to_string()).collect::<Vec<_>>();
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Execution>> {
         let executions = entity::execution::Entity::find()
-            .filter(entity::execution::Column::Id.is_in(ids))
+            .filter(entity::execution::Column::Id.is_in(ids.to_vec()))
             .all(&self.db)
             .await
             .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?
@@ -95,7 +98,7 @@ impl ExecutionServiceExt for ExecutionService {
         Ok(executions)
     }
 
-    async fn create(&self, input: ExecutionCreateInput, executor_id: UserId) -> Result<Execution> {
+    async fn create(&self, input: ExecutionCreateInput, executor_id: Uuid) -> Result<Execution> {
         let usage = if let Some(usage) = input.usage {
             let value = serde_json::to_value(usage).map_err(|e| {
                 ExecutionError::Unknown(anyhow::anyhow!("Failed to serialize usage: {}", e))
@@ -111,7 +114,7 @@ impl ExecutionServiceExt for ExecutionService {
         })?;
 
         let created_execution = entity::execution::ActiveModel {
-            id: Set(ExecutionId::new_v4()),
+            id: Set(Uuid::new_v4()),
             task_id: Set(input.task_id.into()),
             executor_id: Set(executor_id.into()),
             task_version_id: Set(input.task_version_id.into()),
@@ -132,7 +135,7 @@ impl ExecutionServiceExt for ExecutionService {
         Ok(created_execution)
     }
 
-    async fn delete_by_id(&self, id: ExecutionId) -> Result<Execution> {
+    async fn delete_by_id(&self, id: Uuid) -> Result<Execution> {
         let execution = entity::execution::Entity::find_by_id(id)
             .one(&self.db)
             .await

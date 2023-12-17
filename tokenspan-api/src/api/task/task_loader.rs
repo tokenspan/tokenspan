@@ -2,8 +2,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_graphql::dataloader::Loader;
+use uuid::Uuid;
 
-use crate::api::models::{Task, TaskId};
+use crate::api::models::Task;
 use crate::api::services::TaskServiceDyn;
 use crate::api::task::task_error::TaskError;
 
@@ -18,14 +19,14 @@ impl TaskLoader {
 }
 
 #[async_trait::async_trait]
-impl Loader<TaskId> for TaskLoader {
+impl Loader<Uuid> for TaskLoader {
     type Value = Task;
     type Error = Arc<TaskError>;
 
-    async fn load(&self, keys: &[TaskId]) -> Result<HashMap<TaskId, Self::Value>, Self::Error> {
+    async fn load(&self, keys: &[Uuid]) -> Result<HashMap<Uuid, Self::Value>, Self::Error> {
         let tasks = self
             .task_service
-            .find_by_ids(keys.to_vec())
+            .find_by_ids(keys)
             .await
             .map_err(|e| Arc::new(TaskError::Unknown(e)))?
             .into_iter()

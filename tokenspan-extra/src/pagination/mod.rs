@@ -45,6 +45,14 @@ impl From<NaiveDateTime> for Cursor {
     }
 }
 
+impl TryFrom<Cursor> for NaiveDateTime {
+    type Error = OffsetEncodedError;
+
+    fn try_from(value: Cursor) -> std::result::Result<Self, Self::Error> {
+        Self::from_timestamp_micros(value.id).ok_or(OffsetEncodedError::InvalidCursor)
+    }
+}
+
 #[Scalar]
 impl ScalarType for Cursor {
     fn parse(value: Value) -> InputValueResult<Self> {
@@ -100,7 +108,7 @@ where
     pub items: Vec<T>,
     pub before: Option<Cursor>,
     pub after: Option<Cursor>,
-    pub take: i64,
+    pub take: u64,
     pub total_nodes: u64,
     _phantom: PhantomData<C>,
 }
@@ -114,7 +122,7 @@ where
         items: Vec<T>,
         before: Option<Cursor>,
         after: Option<Cursor>,
-        take: i64,
+        take: u64,
         total_nodes: u64,
     ) -> Self {
         Self {

@@ -58,7 +58,9 @@ pub mod caches {
 
 pub mod loaders {
     pub use super::api_key::api_key_loader::*;
+    pub use super::execution::execution_loader::*;
     pub use super::model::model_loader::*;
+    pub use super::parameter::parameter_loader::*;
     pub use super::provider::provider_loader::*;
     pub use super::task::task_loader::*;
     pub use super::task_version::task_version_loader::*;

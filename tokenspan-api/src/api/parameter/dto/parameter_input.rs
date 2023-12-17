@@ -1,26 +1,35 @@
-use crate::api::models::{ModelId, TaskVersionId};
 use async_graphql::InputObject;
 use chrono::Utc;
 use sea_orm::ActiveValue::Set;
+use typed_builder::TypedBuilder;
+use uuid::Uuid;
 
-#[derive(InputObject)]
+#[derive(InputObject, TypedBuilder)]
 pub struct ParameterCreateInput {
+    #[builder(default = "untitled".to_string())]
     pub name: String,
+    #[builder(default = 1.0)]
     pub temperature: f32,
+    #[builder(default = 256)]
     pub max_tokens: u32,
+    #[builder(default)]
     pub stop_sequences: Vec<String>,
+    #[builder(default = 1.0)]
     pub top_p: f32,
+    #[builder(default = 0.0)]
     pub frequency_penalty: f32,
+    #[builder(default = 0.0)]
     pub presence_penalty: f32,
+    #[builder(default)]
     pub extra: Option<serde_json::Value>,
-    pub task_version_id: TaskVersionId,
-    pub model_id: ModelId,
+    pub task_version_id: Uuid,
+    pub model_id: Uuid,
 }
 
 #[derive(InputObject)]
 pub struct ParameterUpdateInput {
     pub name: Option<String>,
-    pub model_id: Option<ModelId>,
+    pub model_id: Option<Uuid>,
     pub temperature: Option<f32>,
     pub max_tokens: Option<u32>,
     pub stop_sequences: Option<Vec<String>>,

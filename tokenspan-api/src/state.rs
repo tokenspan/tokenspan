@@ -11,6 +11,7 @@ pub struct AppState {
     pub user_service: UserServiceDyn,
     pub auth_service: AuthServiceDyn,
     pub api_key_service: ApiKeyServiceDyn,
+    pub parameter_service: ParameterServiceDyn,
     pub provider_service: ProviderServiceDyn,
     pub model_service: ModelServiceDyn,
     pub task_version_service: TaskVersionServiceDyn,
@@ -48,6 +49,8 @@ impl AppState {
         )
         .into();
 
+        let parameter_service: ParameterServiceDyn = ParameterService::new(db.clone()).into();
+
         Ok(Self {
             user_service,
             auth_service,
@@ -57,6 +60,7 @@ impl AppState {
             task_version_service,
             task_service,
             execution_service,
+            parameter_service,
 
             api_key_cache,
             model_cache,

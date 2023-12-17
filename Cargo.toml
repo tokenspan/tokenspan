@@ -3,13 +3,13 @@ resolver = "2"
 
 members = [
     "tokenspan-api",
+    "tokenspan-api/entity"
+,
+    "tokenspan-api/migration",
+    "tokenspan-cli",
     "tokenspan-extra",
     "tokenspan-macros",
-    "tokenspan-sdk",
-    "tokenspan-cli",
-    "tokenspan-api/migration",
-    "tokenspan-api/entity"
-]
+    "tokenspan-sdk"]
 
 [workspace.lints.clippy]
 new_ret_no_self = "allow"

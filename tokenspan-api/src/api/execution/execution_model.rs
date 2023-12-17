@@ -4,9 +4,6 @@ use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
 
 use tokenspan_extra::pagination::{Cursor, CursorExt};
-use tokenspan_macros::ID;
-
-use crate::api::models::{TaskVersionId, UserId};
 
 #[derive(SimpleObject, InputObject, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -24,14 +21,12 @@ pub struct Elapsed {
     pub post_elapsed: f64,
 }
 
-pub type ExecutionId = Uuid;
-
 #[derive(SimpleObject, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Execution {
-    pub id: ExecutionId,
-    pub task_version_id: TaskVersionId,
-    pub executed_by_id: UserId,
+    pub id: Uuid,
+    pub task_version_id: Uuid,
+    pub executed_by_id: Uuid,
     pub elapsed: Elapsed,
     pub messages: Vec<serde_json::Value>,
     pub parameter: serde_json::Value,

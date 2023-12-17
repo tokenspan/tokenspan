@@ -4,18 +4,19 @@ use std::sync::Arc;
 use anyhow::Result;
 use async_trait::async_trait;
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
 use crate::api::cache::CacheExt;
 use crate::api::dto::ModelArgs;
-use crate::api::models::{Model, ModelId};
+use crate::api::models::Model;
 use crate::api::services::ModelServiceDyn;
 
 #[derive(Clone)]
 pub struct ModelCache {
-    cache: Arc<Mutex<HashMap<ModelId, Model>>>,
+    cache: Arc<Mutex<HashMap<Uuid, Model>>>,
 }
 
-pub type ModelCacheDyn = Arc<dyn CacheExt<ModelId, Model> + Send + Sync>;
+pub type ModelCacheDyn = Arc<dyn CacheExt<Uuid, Model> + Send + Sync>;
 
 impl ModelCache {
     pub async fn new(model_service: ModelServiceDyn) -> Result<Self> {
@@ -38,13 +39,13 @@ impl ModelCache {
 }
 
 #[async_trait]
-impl CacheExt<ModelId, Model> for ModelCache {
-    async fn set(&self, key: ModelId, value: Model) {
+impl CacheExt<Uuid, Model> for ModelCache {
+    async fn set(&self, key: Uuid, value: Model) {
         let mut cache = self.cache.lock().await;
         cache.insert(key, value);
     }
 
-    async fn get(&self, key: ModelId) -> Option<Model> {
+    async fn get(&self, key: Uuid) -> Option<Model> {
         let cache = self.cache.lock().await;
         cache.get(&key).cloned()
     }

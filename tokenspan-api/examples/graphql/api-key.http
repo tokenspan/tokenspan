@@ -26,7 +26,7 @@ mutation CreateApiKey($input: ApiKeyCreateInput!) {
   "input": {
     "name": "test",
     "key": "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",
-    "providerId": "657d6159bf39bd6478cc68f5"
+    "providerId": "364a976f-1a4c-4cfa-8df1-e6ed58fb5f2f"
   }
 }
 
@@ -39,7 +39,6 @@ query ApiKeys {
     nodes {
       id
       name
-      hint
       ownerId
       providerId
       createdAt

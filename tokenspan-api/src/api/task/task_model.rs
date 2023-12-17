@@ -9,12 +9,10 @@ use crate::api::models::TaskVersion;
 use crate::api::services::TaskVersionServiceDyn;
 use crate::error::AppError;
 
-pub type TaskId = Uuid;
-
 #[derive(SimpleObject, Clone, Serialize)]
 #[graphql(complex)]
 pub struct Task {
-    pub id: TaskId,
+    pub id: Uuid,
     pub name: String,
     pub slug: String,
     pub created_at: NaiveDateTime,
@@ -26,15 +24,15 @@ impl Task {
     pub async fn version<'a>(
         &self,
         ctx: &Context<'a>,
-        version: Option<String>,
+        semver: Option<String>,
     ) -> Result<Option<TaskVersion>> {
         let task_version_service = ctx
             .data::<TaskVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let task_version = if let Some(version) = version {
+        let task_version = if let Some(semver) = semver {
             task_version_service
-                .find_by_version(self.id.clone(), version)
+                .find_by_semver(self.id.clone(), semver)
                 .await?
         } else {
             task_version_service.find_latest(self.id.clone()).await?

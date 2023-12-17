@@ -1,8 +1,9 @@
 use async_graphql::{Context, Object, Result};
+use uuid::Uuid;
 
 use crate::api::model::dto::{ModelCreateInput, ModelUpdateInput};
 use crate::api::model::model_model::Model;
-use crate::api::models::{ModelId, UserRole};
+use crate::api::models::UserRole;
 use crate::api::services::ModelServiceDyn;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
@@ -31,7 +32,7 @@ impl ModelMutation {
     pub async fn update_model<'a>(
         &self,
         ctx: &Context<'a>,
-        id: ModelId,
+        id: Uuid,
         input: ModelUpdateInput,
     ) -> Result<Model> {
         let model_service = ctx
@@ -44,7 +45,7 @@ impl ModelMutation {
     }
 
     #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
-    pub async fn delete_model<'a>(&self, ctx: &Context<'a>, id: ModelId) -> Result<Model> {
+    pub async fn delete_model<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Model> {
         let model_service = ctx
             .data::<ModelServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

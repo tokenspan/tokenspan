@@ -4,45 +4,45 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-tokio = { version = "1", features = ["full"] }
-tokio-stream = "0.1.14"
+anyhow = "1.0.75"
+async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom", features = ["tokio", "chrono", "dataloader", "tracing", "uuid"] }
+async-graphql-axum = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom" }
+async-openai = "0.17.1"
+async-stream = "0.3.5"
+async-trait = "0.1.74"
 axum = { git = "https://github.com/linrium/axum", branch = "feat/support-custom-sse-event", features = ["ws"] }
 axum-extra = { version = "0.9.0", features = ["typed-header"] }
 axum-macros = "0.4.0"
-tower-http = { version = "0.5.0", features = ["trace", "timeout", "cors"] }
-async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom", features = ["tokio", "chrono", "dataloader", "tracing", "uuid"] }
-async-graphql-axum = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom" }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-jsonwebtoken = "9"
-anyhow = "1.0.75"
-thiserror = "1.0.50"
-async-trait = "0.1.74"
+base64ct = { version = "1.6.0", features = ["alloc"] }
 chrono = { version = "0.4.31", features = ["serde"] }
-ring = "0.17.5"
-data-encoding = "2.4.0"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "ansi"] }
-validator = { version = "0.16", features = ["derive"] }
-futures = "0.3"
 config = "0.13.1"
-magic-crypt = "3.1.13"
-async-openai = "0.17.1"
-futures-util = "0.3.29"
+data-encoding = "2.4.0"
 dotenv = "0.15.0"
-async-stream = "0.3.5"
+entity = { path = "./entity" }
+futures = "0.3"
+futures-util = "0.3.29"
+jsonwebtoken = "9"
+magic-crypt = "3.1.13"
+migration = { path = "./migration" }
 openssl = { version = "0.10.59", features = ["vendored"] }
 regex = "1.10.2"
-base64ct = { version = "1.6.0", features = ["alloc"] }
+ring = "0.17.5"
 sea-orm = { version = "0.12", features = ["sqlx-postgres", "runtime-tokio-native-tls", "macros", "debug-print", "with-chrono", "with-json", "with-uuid"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 strum = "0.25"
 strum_macros = "0.25"
-
-tokenspan-macros = { path = "../tokenspan-macros" }
+thiserror = "1.0.50"
 tokenspan-extra = { path = "../tokenspan-extra" }
-migration = { path = "./migration" }
-entity = { path = "./entity" }
+tokenspan-macros = { path = "../tokenspan-macros" }
+tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1.14"
+tower-http = { version = "0.5.0", features = ["trace", "timeout", "cors"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "ansi"] }
 uuid = { version = "1.6.1", features = ["v4"] }
+validator = { version = "0.16", features = ["derive"] }
+typed-builder = "0.18.0"
 
 [lints]
 workspace = true

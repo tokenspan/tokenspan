@@ -1,6 +1,6 @@
-use crate::api::models::ProviderId;
 use async_graphql::connection::Connection;
 use async_graphql::{Context, Object, Result};
+use uuid::Uuid;
 
 use crate::api::provider::dto::ProviderArgs;
 use crate::api::provider::provider_model::Provider;
@@ -27,11 +27,7 @@ impl ProviderQuery {
         Ok(paginated_provider.into())
     }
 
-    pub async fn provider<'a>(
-        &self,
-        ctx: &Context<'a>,
-        id: ProviderId,
-    ) -> Result<Option<Provider>> {
+    pub async fn provider<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<Provider>> {
         let provider_service = ctx
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

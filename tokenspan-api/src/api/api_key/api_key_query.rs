@@ -1,6 +1,6 @@
-use crate::api::models::ApiKeyId;
 use async_graphql::connection::Connection;
 use async_graphql::{Context, Object, Result};
+use uuid::Uuid;
 
 use crate::api::api_key::api_key_model::ApiKey;
 use crate::api::api_key::dto::ApiKeyArgs;
@@ -27,7 +27,7 @@ impl ApiKeyQuery {
         Ok(paginated_api_key.into())
     }
 
-    pub async fn api_key<'a>(&self, ctx: &Context<'a>, id: ApiKeyId) -> Result<Option<ApiKey>> {
+    pub async fn api_key<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<ApiKey>> {
         let api_key_service = ctx
             .data::<ApiKeyServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

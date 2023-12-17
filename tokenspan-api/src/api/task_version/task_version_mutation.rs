@@ -1,6 +1,7 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
+use uuid::Uuid;
 
-use crate::api::models::{ParsedToken, TaskVersion, TaskVersionId, UserRole};
+use crate::api::models::{ParsedToken, TaskVersion, UserRole};
 use crate::api::services::TaskVersionServiceDyn;
 use crate::api::task_version::dto::{TaskVersionCreateInput, TaskVersionUpdateInput};
 use crate::error::AppError;
@@ -38,7 +39,7 @@ impl TaskVersionMutation {
     pub async fn update_task_version<'a>(
         &self,
         ctx: &Context<'a>,
-        id: TaskVersionId,
+        id: Uuid,
         input: TaskVersionUpdateInput,
     ) -> Result<TaskVersion> {
         let task_version_service = ctx
@@ -54,7 +55,7 @@ impl TaskVersionMutation {
     pub async fn delete_task_version<'a>(
         &self,
         ctx: &Context<'a>,
-        id: TaskVersionId,
+        id: Uuid,
     ) -> Result<TaskVersion> {
         let task_version_service = ctx
             .data::<TaskVersionServiceDyn>()

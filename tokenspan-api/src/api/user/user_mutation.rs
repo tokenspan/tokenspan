@@ -1,4 +1,5 @@
 use async_graphql::{Context, Object, Result};
+use chrono::Utc;
 use uuid::Uuid;
 
 use crate::api::models::UserRole;
@@ -18,6 +19,7 @@ impl UserMutation {
             password: input.password,
             salt: "".to_string(),
             role: UserRole::User,
+            created_at: Utc::now().naive_utc(),
         })
     }
 }

@@ -4,8 +4,6 @@ use sea_orm::prelude::Uuid;
 
 use tokenspan_extra::pagination::{Cursor, CursorExt};
 
-pub type ProviderId = Uuid;
-
 #[derive(SimpleObject, Debug, Clone)]
 pub struct Provider {
     pub id: Uuid,

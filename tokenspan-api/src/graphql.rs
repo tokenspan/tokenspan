@@ -9,7 +9,8 @@ use axum::{response, Extension};
 use axum_extra::headers::HeaderMap;
 
 use crate::api::loaders::{
-    ApiKeyLoader, ModelLoader, ProviderLoader, TaskLoader, TaskVersionLoader, UserLoader,
+    ApiKeyLoader, ExecutionLoader, ModelLoader, ParameterLoader, ProviderLoader, TaskLoader,
+    TaskVersionLoader, UserLoader,
 };
 use crate::api::models::ParsedToken;
 use crate::api::{MutationRoot, QueryRoot, SubscriptionRoot};
@@ -43,6 +44,14 @@ pub async fn build_schema(app_state: AppState) -> AppSchema {
         UserLoader::new(app_state.user_service.clone()),
         tokio::spawn,
     );
+    let parameter_loader = DataLoader::new(
+        ParameterLoader::new(app_state.parameter_service.clone()),
+        tokio::spawn,
+    );
+    let execution_loader = DataLoader::new(
+        ExecutionLoader::new(app_state.execution_service.clone()),
+        tokio::spawn,
+    );
 
     Schema::build(
         QueryRoot::default(),
@@ -58,12 +67,15 @@ pub async fn build_schema(app_state: AppState) -> AppSchema {
     .data(app_state.task_version_service)
     .data(app_state.task_service)
     .data(app_state.execution_service)
+    .data(app_state.parameter_service)
     .data(api_key_loader)
     .data(model_loader)
     .data(provider_loader)
     .data(task_loader)
     .data(task_version_loader)
     .data(user_loader)
+    .data(parameter_loader)
+    .data(execution_loader)
     .finish()
 }
 pub async fn graphiql() -> impl IntoResponse {

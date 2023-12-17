@@ -66,6 +66,19 @@ impl MigrationTrait for Migration {
                     .name("idx-task-version-task-id")
                     .table(TaskVersion::Table)
                     .col(TaskVersion::TaskId)
+                    .col(TaskVersion::Version)
+                    .unique()
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .create_index(
+                Index::create()
+                    .if_not_exists()
+                    .name("idx-task-semver-task-id")
+                    .table(TaskVersion::Table)
+                    .col(TaskVersion::TaskId)
                     .col(TaskVersion::Semver)
                     .unique()
                     .to_owned(),
@@ -74,6 +87,15 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        manager
+            .drop_index(
+                Index::drop()
+                    .if_exists()
+                    .name("idx-task-semver-task-id")
+                    .to_owned(),
+            )
+            .await?;
+
         manager
             .drop_index(
                 Index::drop()
