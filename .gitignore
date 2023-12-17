@@ -20,5 +20,7 @@ rust-project.json
 db-data
 .idea
 schema.graphql
-tokenspan-api/src/prisma/db.rs
 .env
+
+# HTTP
+**/*.private.env.json
