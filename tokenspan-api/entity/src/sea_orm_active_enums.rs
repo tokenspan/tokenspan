@@ -3,6 +3,14 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "execution_status")]
+pub enum ExecutionStatus {
+    #[sea_orm(string_value = "FAILURE")]
+    Failure,
+    #[sea_orm(string_value = "SUCCESS")]
+    Success,
+}
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(
     rs_type = "String",
     db_type = "Enum",

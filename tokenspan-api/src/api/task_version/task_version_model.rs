@@ -3,6 +3,7 @@ use async_graphql::{ComplexObject, Enum, SimpleObject};
 use chrono::NaiveDateTime;
 use sea_orm::prelude::Uuid;
 use strum_macros::EnumString;
+use tracing::info;
 
 use crate::api::models::{Message, Parameter, Task};
 use tokenspan_extra::pagination::{Cursor, CursorExt};
@@ -39,6 +40,7 @@ impl TaskVersion {
     }
 
     pub async fn parameters(&self) -> Result<Vec<Parameter>> {
+        info!("parameters: {:?}", self.parameters);
         let parameters: Vec<Parameter> = serde_json::from_value(self.parameters.clone())?;
 
         Ok(parameters)

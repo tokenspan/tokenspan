@@ -109,10 +109,9 @@ impl ExecutionServiceExt for ExecutionService {
             None
         };
 
-        let elapsed = serde_json::to_value(input.elapsed).map_err(|e| {
-            ExecutionError::Unknown(anyhow::anyhow!("Failed to serialize elapsed: {}", e))
-        })?;
-
+        let elapsed = serde_json::to_value(input.elapsed)?;
+        let messages = serde_json::to_value(input.messages.clone())?;
+        let parameter = serde_json::to_value(input.parameter.clone())?;
         let created_execution = entity::execution::ActiveModel {
             id: Set(Uuid::new_v4()),
             task_id: Set(input.task_id.into()),
@@ -121,9 +120,10 @@ impl ExecutionServiceExt for ExecutionService {
             usage: Set(usage),
             error: Set(input.error),
             elapsed: Set(elapsed),
-            messages: Set(input.messages),
-            parameter: Set(input.parameter),
+            messages: Set(messages),
+            parameter: Set(parameter),
             output: Set(input.output),
+            status: Set(input.status.into()),
             created_at: Set(Utc::now().naive_utc()),
             updated_at: Set(Utc::now().naive_utc()),
         }

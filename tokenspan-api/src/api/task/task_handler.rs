@@ -2,7 +2,7 @@ use axum::extract::State;
 use axum::routing::post;
 use axum::{Extension, Json, Router};
 
-use crate::api::models::ParsedToken;
+use crate::api::models::{Execution, ParsedToken};
 use crate::api::services::TaskServiceDyn;
 use crate::api::task::dto::TaskExecuteInput;
 use crate::api::task::handler::execute_task_v1;
@@ -16,7 +16,7 @@ async fn execute_task(
     State(task_service): State<TaskServiceDyn>,
     Extension(token): Extension<Option<ParsedToken>>,
     ValidJson(input): ValidJson<TaskExecuteInput>,
-) -> anyhow::Result<Json<serde_json::Value>, TaskError> {
+) -> anyhow::Result<Json<Execution>, TaskError> {
     match version {
         Version::V1 => execute_task_v1(task_service, input, token).await,
     }

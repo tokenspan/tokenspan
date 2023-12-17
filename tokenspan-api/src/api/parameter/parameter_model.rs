@@ -11,9 +11,10 @@ use crate::error::AppError;
 #[serde(rename(serialize = "camelCase"))]
 #[graphql(complex)]
 pub struct Parameter {
+    pub id: Uuid,
     pub name: String,
     pub temperature: f32,
-    pub max_tokens: u16,
+    pub max_tokens: u32,
     pub stop_sequences: Vec<String>,
     pub top_p: f32,
     pub frequency_penalty: f32,

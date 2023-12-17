@@ -1,4 +1,6 @@
+use std::str::FromStr;
 use std::sync::Arc;
+use std::time::Instant;
 
 use anyhow::Result;
 use async_openai::config::OpenAIConfig;
@@ -8,25 +10,30 @@ use async_openai::types::{
 use async_openai::Client;
 use axum::extract::FromRef;
 use chrono::{NaiveDateTime, Utc};
+use regex::Regex;
 use sea_orm::ActiveValue::Set;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
     PaginatorTrait, QueryFilter, QueryOrder, QuerySelect,
 };
+use serde_json::json;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
+use crate::api::api_key::api_key_error::ApiKeyError;
 use crate::api::caches::api_key_cache::ApiKeyCacheDyn;
 use crate::api::caches::model_cache::ModelCacheDyn;
 use crate::api::dto::parameter_input::ParameterCreateInput;
-use crate::api::dto::TaskVersionCreateInput;
-use crate::api::models::{Model, Parameter, Task};
+use crate::api::dto::{
+    ElapsedInput, ExecutionCreateInput, TaskExecuteInput, TaskVersionCreateInput,
+};
+use crate::api::models::{Execution, ExecutionStatus, Message, Model, Parameter, Task, Usage};
 use crate::api::services::{ExecutionServiceDyn, TaskVersionServiceDyn};
 use crate::api::task::dto::{TaskArgs, TaskCreateInput, TaskUpdateInput};
 use crate::api::task::task_error::TaskError;
-use crate::prompt::ChatMessage;
+use crate::prompt::{ChatMessage, PromptRole};
 use crate::state::AppState;
 
 #[async_trait::async_trait]
@@ -43,6 +50,7 @@ pub trait TaskServiceExt {
     async fn create(&self, input: TaskCreateInput, owner_id: Uuid) -> Result<Task>;
     async fn update_by_id(&self, id: Uuid, input: TaskUpdateInput) -> Result<Task>;
     async fn delete_by_id(&self, id: Uuid) -> Result<Task>;
+    async fn execute(&self, input: TaskExecuteInput, execute_by_id: Uuid) -> Result<Execution>;
 }
 
 pub type TaskServiceDyn = Arc<dyn TaskServiceExt + Send + Sync>;
@@ -81,7 +89,7 @@ impl TaskService {
 
         let request = CreateChatCompletionRequestArgs::default()
             .model(model.name.clone())
-            .max_tokens(parameter.max_tokens)
+            .max_tokens(parameter.max_tokens as u16)
             .temperature(parameter.temperature)
             .top_p(parameter.top_p)
             .frequency_penalty(parameter.frequency_penalty)
@@ -229,7 +237,10 @@ impl TaskServiceExt for TaskService {
             .await
             .ok_or(TaskError::Unknown(anyhow::anyhow!("Model not found")))?;
 
-        let parameter = ParameterCreateInput::builder().model_id(model.id).build();
+        let parameter = ParameterCreateInput::builder()
+            .id(Uuid::new_v4())
+            .model_id(model.id)
+            .build();
 
         self.task_version_service
             .create(
@@ -279,116 +290,113 @@ impl TaskServiceExt for TaskService {
         Ok(task.into())
     }
 
-    // async fn execute(&self, input: TaskExecuteInput, execute_by_id: Uuid) -> Result<Execution> {
-    //     let start = Instant::now();
-    //     let api_key = self
-    //         .api_key_cache
-    //         .get(input.api_key_id)
-    //         .await
-    //         .ok_or(ApiKeyError::Unknown(anyhow::anyhow!("API key not found")))?;
-    //
-    //     let task_version = self
-    //         .task_version_service
-    //         .find_by_id(input.task_version_id.clone())
-    //         .await?
-    //         .ok_or(TaskError::Unknown(anyhow::anyhow!(
-    //             "Task version not found"
-    //         )))?;
-    //
-    //     let re = Regex::new(r#"<var\sname="([a-zA-Z]+)"/>"#).unwrap();
-    //     let messages: Vec<ChatMessage> = task_version
-    //         .messages
-    //         .into_iter()
-    //         .map(|message| {
-    //             let mut content = message.content.clone();
-    //             for cap in re.captures_iter(&message.content) {
-    //                 let variable = input
-    //                     .variables
-    //                     .get(&cap[1])
-    //                     .ok_or(TaskError::Unknown(anyhow::anyhow!("Variable not found")))?;
-    //                 info!("{} {} {}", &cap[0], &cap[1], variable);
-    //                 content = content.replace(&cap[0], variable);
-    //             }
-    //
-    //             Ok(ChatMessage {
-    //                 content,
-    //                 raw: message.raw,
-    //                 role: message.role,
-    //             })
-    //         })
-    //         .collect::<anyhow::Result<Vec<ChatMessage>>>()?;
-    //
-    //     let parameter = task_version
-    //         .parameters
-    //         .into_iter()
-    //         .find(|parameter| parameter.id == input.parameter_id)
-    //         .ok_or(TaskError::Unknown(anyhow::anyhow!("Parameter not found")))?;
-    //
-    //     let model = self
-    //         .model_cache
-    //         .get(parameter.model_id.clone())
-    //         .await
-    //         .ok_or(TaskError::Unknown(anyhow::anyhow!("Model not found")))?;
-    //     let pre_elapsed = start.elapsed();
-    //
-    //     let start = Instant::now();
-    //     let response = self
-    //         .chat_completion(&messages, parameter.clone(), api_key, model)
-    //         .await;
-    //     let elapsed = start.elapsed();
-    //
-    //     let start = Instant::now();
-    //     let (status, output, usage, messages, error) = match response {
-    //         Err(e) => (
-    //             ExecutionStatus::Failure,
-    //             None,
-    //             None,
-    //             vec![],
-    //             Some(json!(e.to_string())),
-    //         ),
-    //         Ok(response) => (
-    //             ExecutionStatus::Success,
-    //             Some(json!(response.0)),
-    //             response.0.usage,
-    //             response.1.iter().map(|message| json!(message)).collect(),
-    //             None,
-    //         ),
-    //     };
-    //
-    //     let usage = usage.map(|usage| Usage {
-    //         input_tokens: usage.prompt_tokens,
-    //         output_tokens: usage.completion_tokens,
-    //         total_tokens: usage.total_tokens,
-    //     });
-    //     let parameter = json!(parameter);
-    //     let post_elapsed = start.elapsed();
-    //
-    //     let execution = self
-    //         .execution_service
-    //         .create(
-    //             ExecutionCreateInput {
-    //                 task_id: task_version.task_id,
-    //                 task_version_id: input.task_version_id,
-    //                 endpoint: Endpoint::Http,
-    //                 elapsed: ElapsedInput {
-    //                     pre_elapsed: pre_elapsed.as_secs_f64(),
-    //                     elapsed: elapsed.as_secs_f64(),
-    //                     post_elapsed: post_elapsed.as_secs_f64(),
-    //                 },
-    //                 variables: input.variables,
-    //                 parameter,
-    //                 status,
-    //                 output,
-    //                 error,
-    //                 messages,
-    //                 usage,
-    //             },
-    //             execute_by_id,
-    //         )
-    //         .await?;
-    //
-    //     Ok(execution)
-    // }
+    async fn execute(&self, input: TaskExecuteInput, execute_by_id: Uuid) -> Result<Execution> {
+        let start = Instant::now();
+        let api_key = self
+            .api_key_cache
+            .get(input.api_key_id)
+            .await
+            .ok_or(ApiKeyError::Unknown(anyhow::anyhow!("API key not found")))?;
+
+        let task_version = self
+            .task_version_service
+            .find_by_id(input.task_version_id.clone())
+            .await?
+            .ok_or(TaskError::Unknown(anyhow::anyhow!(
+                "Task version not found"
+            )))?;
+
+        let re = Regex::new(r#"<var\sname="([a-zA-Z]+)"/>"#).unwrap();
+        let messages: Vec<Message> = serde_json::from_value(task_version.messages.clone())?;
+        let chat_messages: Vec<ChatMessage> = messages
+            .into_iter()
+            .map(|message| {
+                let mut content = message.content.clone();
+                for cap in re.captures_iter(&message.content) {
+                    let variable = input
+                        .variables
+                        .get(&cap[1])
+                        .ok_or(TaskError::Unknown(anyhow::anyhow!("Variable not found")))?;
+                    content = content.replace(&cap[0], variable);
+                }
+
+                Ok(ChatMessage {
+                    content,
+                    role: PromptRole::from_str(message.role.as_str())?,
+                })
+            })
+            .collect::<Result<Vec<ChatMessage>>>()?;
+
+        let parameters: Vec<Parameter> = serde_json::from_value(task_version.parameters.clone())?;
+        let parameter = parameters
+            .iter()
+            .find(|parameter| parameter.id == input.parameter_id)
+            .ok_or(TaskError::Unknown(anyhow::anyhow!("Parameter not found")))?;
+
+        let model = self
+            .model_cache
+            .get(parameter.model_id.clone())
+            .await
+            .ok_or(TaskError::Unknown(anyhow::anyhow!("Model not found")))?;
+        let pre_elapsed = start.elapsed();
+
+        let start = Instant::now();
+        let response = self
+            .chat_completion(&chat_messages, parameter.clone(), api_key, model)
+            .await;
+        let elapsed = start.elapsed();
+
+        let start = Instant::now();
+        let (status, output, usage, error) = match response {
+            Err(e) => (
+                ExecutionStatus::Failure,
+                None,
+                None,
+                Some(json!(e.to_string())),
+            ),
+            Ok(response) => (
+                ExecutionStatus::Success,
+                Some(json!(response.0)),
+                response.0.usage,
+                None,
+            ),
+        };
+
+        let usage = usage.map(|usage| Usage {
+            input_tokens: usage.prompt_tokens,
+            output_tokens: usage.completion_tokens,
+            total_tokens: usage.total_tokens,
+        });
+        let post_elapsed = start.elapsed();
+
+        let elapsed = ElapsedInput {
+            pre_elapsed: pre_elapsed.as_secs_f64(),
+            elapsed: elapsed.as_secs_f64(),
+            post_elapsed: post_elapsed.as_secs_f64(),
+        };
+
+        let parameter = serde_json::to_value(parameter)?;
+        let execution = self
+            .execution_service
+            .create(
+                ExecutionCreateInput {
+                    task_id: task_version.task_id,
+                    task_version_id: input.task_version_id,
+                    variables: input.variables,
+                    messages: task_version.messages,
+                    parameter,
+                    elapsed,
+                    status,
+                    output,
+                    error,
+                    usage,
+                },
+                execute_by_id,
+            )
+            .await?;
+
+        Ok(execution)
+    }
 }
 
 impl From<TaskService> for TaskServiceDyn {
