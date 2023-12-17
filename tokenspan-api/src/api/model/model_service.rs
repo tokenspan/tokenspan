@@ -21,7 +21,7 @@ use crate::state::AppState;
 pub trait ModelServiceExt {
     async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Model>>;
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Model>>;
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Model>>;
     async fn find_by_slug(&self, slug: String) -> Result<Option<Model>>;
     async fn count(&self) -> Result<u64>;
     async fn create(&self, input: ModelCreateInput) -> Result<Model>;
@@ -96,9 +96,9 @@ impl ModelServiceExt for ModelService {
         Ok(model)
     }
 
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Model>> {
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Model>> {
         let models = entity::model::Entity::find()
-            .filter(entity::model::Column::Id.is_in(ids.to_vec()))
+            .filter(entity::model::Column::Id.is_in(ids))
             .all(&self.db)
             .await
             .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?

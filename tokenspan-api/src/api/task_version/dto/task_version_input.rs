@@ -4,6 +4,9 @@ use sea_orm::ActiveValue::Set;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
+use crate::api::dto::parameter_input::ParameterUpsertInput;
+use crate::api::dto::MessageUpsertInput;
+
 #[derive(InputObject, TypedBuilder)]
 pub struct TaskVersionCreateInput {
     pub task_id: Uuid,
@@ -21,27 +24,14 @@ pub struct TaskVersionCreateInput {
 
 #[derive(InputObject)]
 pub struct TaskVersionUpdateInput {
-    pub semver: Option<String>,
-    pub version: Option<u32>,
-    pub release_note: Option<String>,
     pub description: Option<String>,
     pub document: Option<String>,
+    pub messages: Option<Vec<MessageUpsertInput>>,
+    pub parameters: Option<Vec<ParameterUpsertInput>>,
 }
 
 impl TaskVersionUpdateInput {
     pub fn copy(&self, model: &mut entity::task_version::ActiveModel) {
-        if let Some(ref semver) = self.semver {
-            model.semver = Set(semver.clone());
-        }
-
-        if let Some(version) = self.version {
-            model.version = Set(version as i32);
-        }
-
-        if let Some(ref release_note) = self.release_note {
-            model.release_note = Set(Some(release_note.clone()));
-        }
-
         if let Some(ref description) = self.description {
             model.description = Set(Some(description.clone()));
         }

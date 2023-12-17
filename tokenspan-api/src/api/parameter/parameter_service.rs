@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use chrono::Utc;
+use futures_util::future::try_join_all;
 use sea_orm::ActiveValue::Set;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
@@ -9,7 +10,9 @@ use sea_orm::{
 };
 use uuid::Uuid;
 
-use crate::api::dto::parameter_input::{ParameterCreateInput, ParameterUpdateInput};
+use crate::api::dto::parameter_input::{
+    ParameterCreateInput, ParameterUpdateInput, ParameterUpsertInput,
+};
 use crate::api::models::Parameter;
 use crate::api::parameter::parameter_error::ParameterError;
 
@@ -17,8 +20,9 @@ use crate::api::parameter::parameter_error::ParameterError;
 pub trait ParameterServiceExt {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Parameter>>;
     async fn find_by_task_version_id(&self, id: Uuid) -> Result<Vec<Parameter>>;
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Parameter>>;
-    async fn create(&self, input: ParameterCreateInput) -> Result<Parameter>;
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Parameter>>;
+    async fn create(&self, inputs: ParameterCreateInput) -> Result<Parameter>;
+    async fn upsert_many(&self, inputs: Vec<ParameterUpsertInput>) -> Result<Vec<Parameter>>;
     async fn update_by_id(&self, id: Uuid, input: ParameterUpdateInput) -> Result<Parameter>;
     async fn delete_by_id(&self, id: Uuid) -> Result<Parameter>;
 }
@@ -60,9 +64,9 @@ impl ParameterServiceExt for ParameterService {
         Ok(parameter)
     }
 
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Parameter>> {
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Parameter>> {
         let parameters = entity::parameter::Entity::find()
-            .filter(entity::parameter::Column::Id.is_in(ids.to_vec()))
+            .filter(entity::parameter::Column::Id.is_in(ids))
             .all(&self.db)
             .await
             .map_err(|e| ParameterError::Unknown(anyhow::anyhow!(e)))?
@@ -97,8 +101,29 @@ impl ParameterServiceExt for ParameterService {
         Ok(created_parameter)
     }
 
+    async fn upsert_many(&self, inputs: Vec<ParameterUpsertInput>) -> Result<Vec<Parameter>> {
+        let mut futs = vec![];
+
+        for input in inputs {
+            let fut = if let Some(id) = input.id {
+                self.update_by_id(id, input.into())
+            } else {
+                self.create(input.try_into()?)
+            };
+
+            futs.push(fut);
+        }
+
+        try_join_all(futs).await
+    }
+
     async fn update_by_id(&self, id: Uuid, input: ParameterUpdateInput) -> Result<Parameter> {
-        let mut updated_parameter = entity::parameter::Entity::find_by_id(id)
+        let mut updated_parameter = entity::parameter::Entity::find()
+            .filter(
+                entity::parameter::Column::Id
+                    .eq(id)
+                    .and(entity::parameter::Column::TaskVersionId.eq(input.task_version_id)),
+            )
             .one(&self.db)
             .await
             .map_err(|e| ParameterError::Unknown(anyhow::anyhow!(e)))?

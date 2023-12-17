@@ -26,7 +26,7 @@ impl Loader<Uuid> for ModelLoader {
     async fn load(&self, keys: &[Uuid]) -> Result<HashMap<Uuid, Self::Value>, Self::Error> {
         let models = self
             .model_service
-            .find_by_ids(keys)
+            .find_by_ids(keys.to_vec())
             .await
             .map_err(|e| Arc::new(ModelError::Unknown(e)))?
             .into_iter()

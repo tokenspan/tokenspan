@@ -14,8 +14,8 @@ mutation CreateProvider($input: ProviderCreateInput!) {
 
 {
   "input": {
-    "name": "Cohere",
-    "slug": "cohere"
+    "name": "OpenAI",
+    "slug": "openai"
   }
 }
 

@@ -26,7 +26,7 @@ impl Loader<Uuid> for TaskLoader {
     async fn load(&self, keys: &[Uuid]) -> Result<HashMap<Uuid, Self::Value>, Self::Error> {
         let tasks = self
             .task_service
-            .find_by_ids(keys)
+            .find_by_ids(keys.to_vec())
             .await
             .map_err(|e| Arc::new(TaskError::Unknown(e)))?
             .into_iter()

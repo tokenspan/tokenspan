@@ -26,7 +26,7 @@ impl Loader<Uuid> for ExecutionLoader {
     async fn load(&self, keys: &[Uuid]) -> Result<HashMap<Uuid, Self::Value>, Self::Error> {
         let executions = self
             .execution_service
-            .find_by_ids(keys)
+            .find_by_ids(keys.to_vec())
             .await
             .map_err(|e| Arc::new(ExecutionError::Unknown(anyhow::anyhow!(e))))?
             .into_iter()

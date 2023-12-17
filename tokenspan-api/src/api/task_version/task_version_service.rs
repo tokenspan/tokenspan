@@ -5,14 +5,16 @@ use chrono::{NaiveDateTime, Utc};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
-    PaginatorTrait, QueryFilter, QueryOrder, QuerySelect,
+    PaginatorTrait, QueryFilter, QueryOrder, QuerySelect, TransactionTrait,
 };
+use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
 use entity::sea_orm_active_enums::TaskVersionStatus;
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
 use crate::api::models::TaskVersion;
+use crate::api::services::{MessageServiceDyn, ParameterServiceDyn};
 use crate::api::task_version::dto::{
     TaskVersionArgs, TaskVersionCreateInput, TaskVersionUpdateInput,
 };
@@ -24,7 +26,7 @@ pub trait TaskVersionServiceExt {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<TaskVersion>>;
     async fn find_by_semver(&self, task_id: Uuid, version: String) -> Result<Option<TaskVersion>>;
     async fn find_latest(&self, task_id: Uuid) -> Result<Option<TaskVersion>>;
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<TaskVersion>>;
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<TaskVersion>>;
     async fn create(&self, input: TaskVersionCreateInput, owner_id: Uuid) -> Result<TaskVersion>;
     async fn update_by_id(&self, id: Uuid, input: TaskVersionUpdateInput) -> Result<TaskVersion>;
     async fn delete_by_id(&self, id: Uuid) -> Result<TaskVersion>;
@@ -33,14 +35,12 @@ pub trait TaskVersionServiceExt {
 
 pub type TaskVersionServiceDyn = Arc<dyn TaskVersionServiceExt + Send + Sync>;
 
+#[derive(TypedBuilder)]
 pub struct TaskVersionService {
     db: DatabaseConnection,
-}
 
-impl TaskVersionService {
-    pub fn new(db: DatabaseConnection) -> Self {
-        Self { db }
-    }
+    parameter_service: ParameterServiceDyn,
+    message_service: MessageServiceDyn,
 }
 
 #[async_trait::async_trait]
@@ -119,9 +119,9 @@ impl TaskVersionServiceExt for TaskVersionService {
         Ok(task_version)
     }
 
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<TaskVersion>> {
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<TaskVersion>> {
         let task_versions = entity::task_version::Entity::find()
-            .filter(entity::task_version::Column::Id.is_in(ids.to_vec()))
+            .filter(entity::task_version::Column::Id.is_in(ids))
             .all(&self.db)
             .await
             .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?
@@ -156,22 +156,42 @@ impl TaskVersionServiceExt for TaskVersionService {
     }
 
     async fn update_by_id(&self, id: Uuid, input: TaskVersionUpdateInput) -> Result<TaskVersion> {
+        let tx = self.db.begin().await?;
+
+        // process messages
+        if let Some(mut messages) = input.messages.clone() {
+            for message in messages.iter_mut() {
+                message.task_version_id = id;
+            }
+
+            self.message_service.upsert_many(messages).await?;
+        }
+
+        // process parameters
+        if let Some(mut parameters) = input.parameters.clone() {
+            for parameter in parameters.iter_mut() {
+                parameter.task_version_id = id;
+            }
+
+            self.parameter_service.upsert_many(parameters).await?;
+        }
+
         let mut task_version = entity::task_version::Entity::find_by_id(id)
-            .one(&self.db)
+            .one(&tx)
             .await
             .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?
             .ok_or(TaskVersionError::Unknown(anyhow::anyhow!(
                 "TaskVersion not found"
             )))?
             .into_active_model();
-
         input.copy(&mut task_version);
-
         let updated_task_version = task_version
-            .update(&self.db)
+            .update(&tx)
             .await
             .map_err(|e| TaskVersionError::Unknown(anyhow::anyhow!(e)))?
             .into();
+
+        tx.commit().await?;
 
         Ok(updated_task_version)
     }

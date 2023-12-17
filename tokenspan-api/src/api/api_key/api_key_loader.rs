@@ -26,7 +26,7 @@ impl Loader<Uuid> for ApiKeyLoader {
     async fn load(&self, keys: &[Uuid]) -> Result<HashMap<Uuid, Self::Value>, Self::Error> {
         let api_keys = self
             .api_key_service
-            .find_by_ids(keys)
+            .find_by_ids(keys.to_vec())
             .await
             .map_err(|e| Arc::new(ApiKeyError::Unknown(anyhow::anyhow!(e))))?
             .into_iter()

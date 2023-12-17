@@ -26,10 +26,40 @@ pub struct ParameterCreateInput {
     pub model_id: Uuid,
 }
 
-#[derive(InputObject)]
+impl TryFrom<ParameterUpsertInput> for ParameterCreateInput {
+    type Error = anyhow::Error;
+
+    fn try_from(input: ParameterUpsertInput) -> Result<Self, Self::Error> {
+        Ok(Self {
+            name: input.name.ok_or(anyhow::anyhow!("name is required"))?,
+            temperature: input
+                .temperature
+                .ok_or(anyhow::anyhow!("temperature is required"))?,
+            max_tokens: input
+                .max_tokens
+                .ok_or(anyhow::anyhow!("max_tokens is required"))?,
+            stop_sequences: input
+                .stop_sequences
+                .ok_or(anyhow::anyhow!("stop_sequences is required"))?,
+            top_p: input.top_p.ok_or(anyhow::anyhow!("top_p is required"))?,
+            frequency_penalty: input
+                .frequency_penalty
+                .ok_or(anyhow::anyhow!("frequency_penalty is required"))?,
+            presence_penalty: input
+                .presence_penalty
+                .ok_or(anyhow::anyhow!("presence_penalty is required"))?,
+            extra: input.extra,
+            task_version_id: input.task_version_id,
+            model_id: input
+                .model_id
+                .ok_or(anyhow::anyhow!("model_id is required"))?,
+        })
+    }
+}
+
+#[derive(InputObject, Clone)]
 pub struct ParameterUpdateInput {
     pub name: Option<String>,
-    pub model_id: Option<Uuid>,
     pub temperature: Option<f32>,
     pub max_tokens: Option<u32>,
     pub stop_sequences: Option<Vec<String>>,
@@ -37,6 +67,9 @@ pub struct ParameterUpdateInput {
     pub frequency_penalty: Option<f32>,
     pub presence_penalty: Option<f32>,
     pub extra: Option<serde_json::Value>,
+    #[graphql(skip)]
+    pub task_version_id: Uuid,
+    pub model_id: Option<Uuid>,
 }
 
 impl ParameterUpdateInput {
@@ -76,4 +109,37 @@ impl ParameterUpdateInput {
         model.extra = Set(self.extra.clone());
         model.updated_at = Set(Utc::now().naive_utc());
     }
+}
+
+impl From<ParameterUpsertInput> for ParameterUpdateInput {
+    fn from(input: ParameterUpsertInput) -> Self {
+        Self {
+            name: input.name,
+            temperature: input.temperature,
+            max_tokens: input.max_tokens,
+            stop_sequences: input.stop_sequences,
+            top_p: input.top_p,
+            frequency_penalty: input.frequency_penalty,
+            presence_penalty: input.presence_penalty,
+            extra: input.extra,
+            model_id: input.model_id,
+            task_version_id: input.task_version_id,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct ParameterUpsertInput {
+    pub id: Option<Uuid>,
+    pub name: Option<String>,
+    pub temperature: Option<f32>,
+    pub max_tokens: Option<u32>,
+    pub stop_sequences: Option<Vec<String>>,
+    pub top_p: Option<f32>,
+    pub frequency_penalty: Option<f32>,
+    pub presence_penalty: Option<f32>,
+    pub extra: Option<serde_json::Value>,
+    #[graphql(skip)]
+    pub task_version_id: Uuid,
+    pub model_id: Option<Uuid>,
 }

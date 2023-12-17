@@ -28,7 +28,7 @@ impl Loader<Uuid> for TaskVersionLoader {
     async fn load(&self, keys: &[Uuid]) -> Result<HashMap<Uuid, Self::Value>, Self::Error> {
         let task_versions = self
             .task_version_service
-            .find_by_ids(keys)
+            .find_by_ids(keys.to_vec())
             .await
             .map_err(|e| Arc::new(TaskVersionError::Unknown(e)))?
             .into_iter()

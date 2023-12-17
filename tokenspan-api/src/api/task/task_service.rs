@@ -40,7 +40,7 @@ pub trait TaskServiceExt {
         args: TaskArgs,
     ) -> Result<Pagination<Cursor, Task>>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Task>>;
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Task>>;
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Task>>;
     async fn find_by_slug(&self, slug: String) -> Result<Option<Task>>;
     async fn create(&self, input: TaskCreateInput, owner_id: Uuid) -> Result<Task>;
     async fn update_by_id(&self, id: Uuid, input: TaskUpdateInput) -> Result<Task>;
@@ -188,9 +188,9 @@ impl TaskServiceExt for TaskService {
         Ok(task)
     }
 
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Task>> {
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Task>> {
         let tasks = entity::task::Entity::find()
-            .filter(entity::task::Column::Id.is_in(ids.to_vec()))
+            .filter(entity::task::Column::Id.is_in(ids))
             .all(&self.db)
             .await
             .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?

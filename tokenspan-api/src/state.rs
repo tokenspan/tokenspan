@@ -38,12 +38,18 @@ impl AppState {
         let model_cache: ModelCacheDyn = ModelCache::new(model_service.clone()).await?.into();
 
         let provider_service: ProviderServiceDyn = ProviderService::new(db.clone()).into();
-        let task_version_service: TaskVersionServiceDyn =
-            TaskVersionService::new(db.clone()).into();
+
         let execution_service: ExecutionServiceDyn = ExecutionService::new(db.clone()).into();
 
         let parameter_service: ParameterServiceDyn = ParameterService::new(db.clone()).into();
         let message_service: MessageServiceDyn = MessageService::new(db.clone()).into();
+
+        let task_version_service: TaskVersionServiceDyn = TaskVersionService::builder()
+            .db(db.clone())
+            .parameter_service(parameter_service.clone())
+            .message_service(message_service.clone())
+            .build()
+            .into();
 
         let task_service: TaskServiceDyn = TaskService::builder()
             .db(db.clone())

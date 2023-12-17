@@ -28,7 +28,7 @@ mutation CreateTask($input: TaskCreateInput!) {
     "name": "test 6",
     "private": false,
     "slug": "test",
-    "modelId": "2d06e1d2-fbf0-497c-8ba9-9610802850df"
+    "modelId": "7341142e-f67a-411f-9cd6-4d0b50b7dec7"
   }
 }
 

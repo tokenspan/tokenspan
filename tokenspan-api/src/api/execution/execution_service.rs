@@ -19,7 +19,7 @@ use crate::api::execution::execution_model::Execution;
 pub trait ExecutionServiceExt {
     async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Execution>>;
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Execution>>;
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Execution>>;
     async fn create(&self, input: ExecutionCreateInput, executor_id: Uuid) -> Result<Execution>;
     async fn delete_by_id(&self, id: Uuid) -> Result<Execution>;
 }
@@ -85,9 +85,9 @@ impl ExecutionServiceExt for ExecutionService {
         Ok(execution)
     }
 
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Execution>> {
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Execution>> {
         let executions = entity::execution::Entity::find()
-            .filter(entity::execution::Column::Id.is_in(ids.to_vec()))
+            .filter(entity::execution::Column::Id.is_in(ids))
             .all(&self.db)
             .await
             .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?

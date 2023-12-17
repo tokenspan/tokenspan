@@ -6,8 +6,8 @@ use strum_macros::EnumString;
 
 use tokenspan_extra::pagination::{Cursor, CursorExt};
 
-use crate::api::models::Parameter;
-use crate::api::services::ParameterServiceDyn;
+use crate::api::models::{Message, Parameter};
+use crate::api::services::{MessageServiceDyn, ParameterServiceDyn};
 use crate::error::AppError;
 
 #[derive(SimpleObject, Clone)]
@@ -33,6 +33,14 @@ impl TaskVersion {
             .map_err(|_| AppError::ContextExtractionError)?;
 
         parameter_service.find_by_task_version_id(self.id).await
+    }
+
+    pub async fn messages<'a>(&self, ctx: &Context<'a>) -> Result<Vec<Message>> {
+        let message_service = ctx
+            .data::<MessageServiceDyn>()
+            .map_err(|_| AppError::ContextExtractionError)?;
+
+        message_service.find_by_task_version_id(self.id).await
     }
 }
 

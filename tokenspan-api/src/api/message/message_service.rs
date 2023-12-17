@@ -7,11 +7,11 @@ use futures_util::StreamExt;
 use sea_orm::ActiveValue::Set;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
-    QueryFilter, TransactionTrait,
+    QueryFilter,
 };
 use uuid::Uuid;
 
-use crate::api::dto::{MessageCreateInput, MessageUpdateInput};
+use crate::api::dto::{MessageCreateInput, MessageUpdateInput, MessageUpsertInput};
 use crate::api::message::message_error::MessageError;
 use crate::api::models::Message;
 
@@ -19,8 +19,9 @@ use crate::api::models::Message;
 pub trait MessageServiceExt {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Message>>;
     async fn find_by_task_version_id(&self, id: Uuid) -> Result<Vec<Message>>;
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Message>>;
-    async fn create(&self, input: &[MessageCreateInput]) -> Result<Vec<Message>>;
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Message>>;
+    async fn create(&self, input: MessageCreateInput) -> Result<Message>;
+    async fn upsert_many(&self, inputs: Vec<MessageUpsertInput>) -> Result<Vec<Message>>;
     async fn update_by_id(&self, id: Uuid, input: MessageUpdateInput) -> Result<Message>;
     async fn delete_by_id(&self, id: Uuid) -> Result<Message>;
 }
@@ -62,9 +63,9 @@ impl MessageServiceExt for MessageService {
         Ok(message)
     }
 
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Message>> {
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Message>> {
         let messages = entity::message::Entity::find()
-            .filter(entity::message::Column::Id.is_in(ids.to_vec()))
+            .filter(entity::message::Column::Id.is_in(ids))
             .all(&self.db)
             .await
             .map_err(|e| MessageError::Unknown(anyhow::anyhow!(e)))?
@@ -75,41 +76,47 @@ impl MessageServiceExt for MessageService {
         Ok(messages)
     }
 
-    async fn create(&self, input: &[MessageCreateInput]) -> Result<Vec<Message>> {
-        let tx = self.db.begin().await?;
+    async fn create(&self, input: MessageCreateInput) -> Result<Message> {
+        let created_message = entity::message::ActiveModel {
+            id: Set(Uuid::new_v4()),
+            task_version_id: Set(input.task_version_id),
+            raw: Set(input.raw.clone()),
+            content: Set(input.content.clone()),
+            role: Set(input.role.clone()),
+            created_at: Set(Utc::now().naive_utc()),
+            updated_at: Set(Utc::now().naive_utc()),
+        }
+        .insert(&self.db)
+        .await
+        .map_err(|e| MessageError::Unknown(anyhow::anyhow!(e)))?
+        .into();
 
+        Ok(created_message)
+    }
+
+    async fn upsert_many(&self, inputs: Vec<MessageUpsertInput>) -> Result<Vec<Message>> {
         let mut futs = vec![];
-        for input in input {
-            let fut = async {
-                entity::message::ActiveModel {
-                    id: Set(Uuid::new_v4()),
-                    task_version_id: Set(input.task_version_id),
-                    raw: Set(input.raw.clone()),
-                    content: Set(input.content.clone()),
-                    role: Set(input.role.clone()),
-                    created_at: Set(Utc::now().naive_utc()),
-                    updated_at: Set(Utc::now().naive_utc()),
-                }
-                .insert(&tx)
-                .await
-                .map_err(|e| MessageError::Unknown(anyhow::anyhow!(e)))
+
+        for input in inputs {
+            let fut = if let Some(id) = input.id {
+                self.update_by_id(id, input.into())
+            } else {
+                self.create(input.try_into()?)
             };
+
             futs.push(fut);
         }
 
-        let messages = try_join_all(futs)
-            .await?
-            .into_iter()
-            .map(|item| item.into())
-            .collect::<Vec<_>>();
-
-        tx.commit().await?;
-
-        Ok(messages)
+        try_join_all(futs).await
     }
 
     async fn update_by_id(&self, id: Uuid, input: MessageUpdateInput) -> Result<Message> {
-        let mut updated_message = entity::message::Entity::find_by_id(id)
+        let mut updated_message = entity::message::Entity::find()
+            .filter(
+                entity::message::Column::Id
+                    .eq(id)
+                    .and(entity::message::Column::TaskVersionId.eq(input.task_version_id)),
+            )
             .one(&self.db)
             .await
             .map_err(|e| MessageError::Unknown(anyhow::anyhow!(e)))?

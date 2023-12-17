@@ -22,7 +22,7 @@ pub trait ApiKeyServiceExt {
     fn decrypt(&self, key: String) -> String;
     async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<Cursor, ApiKey>>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<ApiKey>>;
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<ApiKey>>;
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<ApiKey>>;
     async fn create(&self, input: ApiKeyCreateInput, owner_id: Uuid) -> Result<ApiKey>;
     async fn update_by_id(&self, id: Uuid, input: ApiKeyUpdateInput) -> Result<ApiKey>;
     async fn delete_by_id(&self, id: Uuid) -> Result<ApiKey>;
@@ -100,9 +100,9 @@ impl ApiKeyServiceExt for ApiKeyService {
         Ok(api_key)
     }
 
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<ApiKey>> {
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<ApiKey>> {
         let api_keys = entity::api_key::Entity::find()
-            .filter(entity::api_key::Column::Id.is_in(ids.to_vec()))
+            .filter(entity::api_key::Column::Id.is_in(ids))
             .all(&self.db)
             .await
             .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?

@@ -32,7 +32,7 @@ pub trait UserServiceExt {
         role: UserRole,
     ) -> Result<User>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>>;
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>>;
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<User>>;
     async fn find_by_email(&self, email: String) -> Result<Option<User>>;
     fn verify_password(&self, password: &str, salt: &str, hash_password: &str) -> Result<()>;
 }
@@ -153,9 +153,9 @@ impl UserServiceExt for UserService {
         Ok(user)
     }
 
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>> {
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<User>> {
         let users = entity::user::Entity::find()
-            .filter(entity::user::Column::Id.is_in(ids.to_vec()))
+            .filter(entity::user::Column::Id.is_in(ids))
             .all(&self.db)
             .await
             .map_err(|e| UserError::Unknown(anyhow::anyhow!(e)))?

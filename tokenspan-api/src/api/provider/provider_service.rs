@@ -20,7 +20,7 @@ pub trait ProviderServiceExt {
     async fn paginate(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Provider>>;
     async fn find_by_slug(&self, slug: String) -> Result<Option<Provider>>;
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Provider>>;
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Provider>>;
     async fn create(&self, input: ProviderCreateInput) -> Result<Provider>;
     async fn update_by_id(&self, id: Uuid, input: ProviderUpdateInput) -> Result<Provider>;
     async fn delete_by_id(&self, id: Uuid) -> Result<Provider>;
@@ -98,9 +98,9 @@ impl ProviderServiceExt for ProviderService {
         Ok(provider)
     }
 
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Provider>> {
+    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Provider>> {
         let providers = entity::provider::Entity::find()
-            .filter(entity::provider::Column::Id.is_in(ids.to_vec()))
+            .filter(entity::provider::Column::Id.is_in(ids))
             .all(&self.db)
             .await
             .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?
