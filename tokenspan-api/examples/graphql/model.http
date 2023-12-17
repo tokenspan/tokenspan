@@ -43,7 +43,7 @@ mutation CreateModel($input: ModelCreateInput!) {
       "currency": "USD"
     },
     "trainingAt": "2023-12-17T04:11:16.803571",
-    "providerId": "364a976f-1a4c-4cfa-8df1-e6ed58fb5f2f"
+    "providerId": "dd4c38ec-f6f2-447f-8b8e-94ae2f89b004"
   }
 }
 

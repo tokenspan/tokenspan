@@ -1,8 +1,10 @@
+use std::str::FromStr;
 use std::sync::Arc;
 
 use async_graphql::Result;
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use tracing::info;
 use uuid::Uuid;
 
 use crate::api::auth::auth_error::AuthError;
@@ -101,15 +103,12 @@ impl AuthService {
         validation.set_issuer(&[iss]);
         validation.set_audience(&[aud]);
 
+        info!("jwt: {:?}", jwt);
         let decoded = decode::<Claims>(jwt, &DecodingKey::from_secret(secret), &validation)
             .map_err(AuthError::JwtError)?;
+        info!("decoded: {:?}", decoded);
 
-        let role = match decoded.claims.role.as_str() {
-            "Admin" => UserRole::Admin,
-            "User" => UserRole::User,
-            _ => return Err(AuthError::Custom(anyhow::anyhow!("Invalid role"))),
-        };
-
+        let role = UserRole::from_str(&decoded.claims.role).map_err(|_| AuthError::InvalidToken)?;
         Ok(ParsedToken {
             role,
             user_id: decoded.claims.sub,
@@ -143,9 +142,11 @@ impl AuthServiceExt for AuthService {
     async fn sign_in(&self, email: String, password: String) -> Result<AuthPayload> {
         let user_service = self.user_service.clone();
         let user = user_service
-            .find_by_email(email.clone())
+            .find_by_email(email)
             .await?
             .ok_or(AuthError::InvalidCredentials)?;
+
+        info!("user: {:?}", user);
 
         user_service
             .verify_password(&password, &user.salt, &user.password)

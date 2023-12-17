@@ -140,8 +140,8 @@ pub enum TaskVersion {
 #[derive(Iden, EnumIter)]
 enum TaskVersionStatus {
     Table,
-    #[iden = "Draft"]
+    #[iden = "DRAFT"]
     Draft,
-    #[iden = "Released"]
+    #[iden = "RELEASED"]
     Released,
 }

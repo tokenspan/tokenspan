@@ -13,14 +13,19 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
     PaginatorTrait, QueryFilter, QueryOrder, QuerySelect,
 };
+use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
 use crate::api::caches::api_key_cache::ApiKeyCacheDyn;
 use crate::api::caches::model_cache::ModelCacheDyn;
+use crate::api::dto::parameter_input::ParameterCreateInput;
+use crate::api::dto::TaskVersionCreateInput;
 use crate::api::models::{Model, Parameter, Task};
-use crate::api::services::{ExecutionServiceDyn, TaskVersionServiceDyn};
+use crate::api::services::{
+    ExecutionServiceDyn, MessageServiceDyn, ParameterServiceDyn, TaskVersionServiceDyn,
+};
 use crate::api::task::dto::{TaskArgs, TaskCreateInput, TaskUpdateInput};
 use crate::api::task::task_error::TaskError;
 use crate::prompt::ChatMessage;
@@ -50,6 +55,7 @@ impl FromRef<AppState> for TaskServiceDyn {
     }
 }
 
+#[derive(TypedBuilder)]
 pub struct TaskService {
     db: DatabaseConnection,
     api_key_cache: ApiKeyCacheDyn,
@@ -57,26 +63,11 @@ pub struct TaskService {
 
     execution_service: ExecutionServiceDyn,
     task_version_service: TaskVersionServiceDyn,
+    parameter_service: ParameterServiceDyn,
+    message_service: MessageServiceDyn,
 }
 
 impl TaskService {
-    pub fn new(
-        db: DatabaseConnection,
-        api_key_cache: ApiKeyCacheDyn,
-        model_cache: ModelCacheDyn,
-
-        execution_service: ExecutionServiceDyn,
-        task_version_service: TaskVersionServiceDyn,
-    ) -> Self {
-        Self {
-            db,
-            api_key_cache,
-            model_cache,
-            execution_service,
-            task_version_service,
-        }
-    }
-
     pub async fn chat_completion(
         &self,
         chat_messages: &[ChatMessage],
@@ -222,7 +213,7 @@ impl TaskServiceExt for TaskService {
     }
 
     async fn create(&self, input: TaskCreateInput, owner_id: Uuid) -> Result<Task> {
-        let task = entity::task::ActiveModel {
+        let created_task: Task = entity::task::ActiveModel {
             id: Set(Uuid::new_v4()),
             name: Set(input.name.clone()),
             slug: Set(input.name),
@@ -236,7 +227,32 @@ impl TaskServiceExt for TaskService {
         .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?
         .into();
 
-        Ok(task)
+        let model = self
+            .model_cache
+            .get(input.model_id)
+            .await
+            .ok_or(TaskError::Unknown(anyhow::anyhow!("Model not found")))?;
+
+        let created_task_version = self
+            .task_version_service
+            .create(
+                TaskVersionCreateInput::builder()
+                    .task_id(created_task.id)
+                    .build(),
+                owner_id,
+            )
+            .await?;
+
+        self.parameter_service
+            .create(
+                ParameterCreateInput::builder()
+                    .task_version_id(created_task_version.id)
+                    .model_id(model.id)
+                    .build(),
+            )
+            .await?;
+
+        Ok(created_task)
     }
 
     async fn update_by_id(&self, id: Uuid, input: TaskUpdateInput) -> Result<Task> {
@@ -247,7 +263,7 @@ impl TaskServiceExt for TaskService {
             .ok_or(TaskError::Unknown(anyhow::anyhow!("Task not found")))?
             .into_active_model();
 
-        input.merge(&mut task);
+        input.copy(&mut task);
 
         let task = task
             .update(&self.db)

@@ -8,6 +8,7 @@ mod auth;
 mod cache;
 mod execution;
 mod health;
+mod message;
 mod model;
 mod parameter;
 mod provider;
@@ -19,6 +20,7 @@ pub mod services {
     pub use super::api_key::api_key_service::*;
     pub use super::auth::auth_service::*;
     pub use super::execution::execution_service::*;
+    pub use super::message::message_service::*;
     pub use super::model::model_service::*;
     pub use super::parameter::parameter_service::*;
     pub use super::provider::provider_service::*;
@@ -31,6 +33,7 @@ pub mod models {
     pub use super::api_key::api_key_model::*;
     pub use super::auth::auth_model::*;
     pub use super::execution::execution_model::*;
+    pub use super::message::message_model::*;
     pub use super::model::model_model::*;
     pub use super::parameter::parameter_model::*;
     pub use super::provider::provider_model::*;
@@ -43,6 +46,7 @@ pub mod dto {
     pub use super::api_key::dto::*;
     pub use super::auth::dto::*;
     pub use super::execution::dto::*;
+    pub use super::message::dto::*;
     pub use super::model::dto::*;
     pub use super::parameter::dto::*;
     pub use super::provider::dto::*;

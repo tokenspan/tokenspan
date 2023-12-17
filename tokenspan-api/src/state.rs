@@ -17,6 +17,7 @@ pub struct AppState {
     pub task_version_service: TaskVersionServiceDyn,
     pub task_service: TaskServiceDyn,
     pub execution_service: ExecutionServiceDyn,
+    pub message_service: MessageServiceDyn,
 
     pub api_key_cache: ApiKeyCacheDyn,
     pub model_cache: ModelCacheDyn,
@@ -40,16 +41,20 @@ impl AppState {
         let task_version_service: TaskVersionServiceDyn =
             TaskVersionService::new(db.clone()).into();
         let execution_service: ExecutionServiceDyn = ExecutionService::new(db.clone()).into();
-        let task_service: TaskServiceDyn = TaskService::new(
-            db.clone(),
-            api_key_cache.clone(),
-            model_cache.clone(),
-            execution_service.clone(),
-            task_version_service.clone(),
-        )
-        .into();
 
         let parameter_service: ParameterServiceDyn = ParameterService::new(db.clone()).into();
+        let message_service: MessageServiceDyn = MessageService::new(db.clone()).into();
+
+        let task_service: TaskServiceDyn = TaskService::builder()
+            .db(db.clone())
+            .api_key_cache(api_key_cache.clone())
+            .model_cache(model_cache.clone())
+            .execution_service(execution_service.clone())
+            .task_version_service(task_version_service.clone())
+            .parameter_service(parameter_service.clone())
+            .message_service(message_service.clone())
+            .build()
+            .into();
 
         Ok(Self {
             user_service,
@@ -61,6 +66,7 @@ impl AppState {
             task_service,
             execution_service,
             parameter_service,
+            message_service,
 
             api_key_cache,
             model_cache,

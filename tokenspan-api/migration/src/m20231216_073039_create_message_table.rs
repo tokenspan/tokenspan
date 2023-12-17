@@ -18,6 +18,8 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Message::Raw).string())
                     .col(ColumnDef::new(Message::Content).string().not_null())
                     .col(ColumnDef::new(Message::Role).string().not_null())
+                    .col(ColumnDef::new(Message::CreatedAt).timestamp().not_null())
+                    .col(ColumnDef::new(Message::UpdatedAt).timestamp().not_null())
                     .to_owned(),
             )
             .await?;
@@ -48,4 +50,6 @@ enum Message {
     Raw,
     Content,
     Role,
+    CreatedAt,
+    UpdatedAt,
 }

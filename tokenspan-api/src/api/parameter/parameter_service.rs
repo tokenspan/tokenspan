@@ -107,7 +107,7 @@ impl ParameterServiceExt for ParameterService {
             )))?
             .into_active_model();
 
-        input.merge(&mut updated_parameter);
+        input.copy(&mut updated_parameter);
 
         let updated_parameter = updated_parameter
             .update(&self.db)

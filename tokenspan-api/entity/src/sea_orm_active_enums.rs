@@ -9,16 +9,16 @@ use sea_orm::entity::prelude::*;
     enum_name = "task_version_status"
 )]
 pub enum TaskVersionStatus {
-    #[sea_orm(string_value = "Draft")]
+    #[sea_orm(string_value = "DRAFT")]
     Draft,
-    #[sea_orm(string_value = "Released")]
+    #[sea_orm(string_value = "RELEASED")]
     Released,
 }
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "user_role")]
 pub enum UserRole {
-    #[sea_orm(string_value = "Admin")]
+    #[sea_orm(string_value = "ADMIN")]
     Admin,
-    #[sea_orm(string_value = "User")]
+    #[sea_orm(string_value = "USER")]
     User,
 }

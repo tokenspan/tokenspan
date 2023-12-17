@@ -62,6 +62,8 @@ impl From<entity::task_version::Model> for TaskVersion {
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString)]
 #[graphql(remote = "entity::sea_orm_active_enums::TaskVersionStatus")]
 pub enum TaskVersionStatus {
+    #[strum(serialize = "DRAFT", serialize = "DRAFT")]
     Draft,
+    #[strum(serialize = "RELEASED", serialize = "RELEASED")]
     Released,
 }

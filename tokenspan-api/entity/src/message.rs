@@ -11,6 +11,8 @@ pub struct Model {
     pub raw: Option<String>,
     pub content: String,
     pub role: String,
+    pub created_at: DateTime,
+    pub updated_at: DateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

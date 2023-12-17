@@ -41,6 +41,8 @@ impl From<entity::user::Model> for User {
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Display)]
 #[graphql(remote = "entity::sea_orm_active_enums::UserRole")]
 pub enum UserRole {
+    #[strum(serialize = "ADMIN", serialize = "ADMIN")]
     Admin,
+    #[strum(serialize = "USER", serialize = "USER")]
     User,
 }

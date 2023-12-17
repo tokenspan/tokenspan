@@ -107,8 +107,8 @@ pub enum User {
 #[derive(Iden, EnumIter)]
 enum UserRole {
     Table,
-    #[iden = "Admin"]
+    #[iden = "ADMIN"]
     Admin,
-    #[iden = "User"]
+    #[iden = "USER"]
     User,
 }

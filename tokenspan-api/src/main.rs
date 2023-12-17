@@ -61,7 +61,7 @@ async fn main() -> Result<()> {
         .idle_timeout(Duration::from_secs(8))
         .max_lifetime(Duration::from_secs(8))
         .sqlx_logging(true)
-        .sqlx_logging_level(LevelFilter::Info);
+        .sqlx_logging_level(LevelFilter::Trace);
 
     let db = Database::connect(opt).await?;
     migration::Migrator::up(&db, None).await?;

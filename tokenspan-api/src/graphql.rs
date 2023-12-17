@@ -52,7 +52,6 @@ pub async fn build_schema(app_state: AppState) -> AppSchema {
         ExecutionLoader::new(app_state.execution_service.clone()),
         tokio::spawn,
     );
-
     Schema::build(
         QueryRoot::default(),
         MutationRoot::default(),
@@ -68,6 +67,7 @@ pub async fn build_schema(app_state: AppState) -> AppSchema {
     .data(app_state.task_service)
     .data(app_state.execution_service)
     .data(app_state.parameter_service)
+    .data(app_state.message_service)
     .data(api_key_loader)
     .data(model_loader)
     .data(provider_loader)

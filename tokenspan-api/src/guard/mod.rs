@@ -5,6 +5,7 @@ use axum::middleware::Next;
 use axum::response::Response;
 use axum_extra::headers::authorization::Bearer;
 use axum_extra::headers::{Authorization, HeaderMapExt};
+use tracing::info;
 
 use crate::api::models::{ParsedToken, UserRole};
 use crate::api::services::AuthService;
@@ -55,7 +56,7 @@ impl Guard for RoleGuard {
         let parsed_token = ctx.data_opt::<Option<ParsedToken>>();
 
         if let Some(Some(parsed_token)) = parsed_token {
-            println!("parsed_token: {:?}", parsed_token);
+            info!("parsed_token: {:?}", parsed_token);
             return match self.role {
                 UserRole::Admin if parsed_token.role == UserRole::Admin => Ok(()),
                 UserRole::User if parsed_token.role == UserRole::Admin => Ok(()),

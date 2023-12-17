@@ -1,4 +1,5 @@
 use async_graphql::InputObject;
+use chrono::Utc;
 use sea_orm::ActiveValue::Set;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
@@ -28,25 +29,27 @@ pub struct TaskVersionUpdateInput {
 }
 
 impl TaskVersionUpdateInput {
-    pub fn merge(&self, input: &mut entity::task_version::ActiveModel) {
+    pub fn copy(&self, model: &mut entity::task_version::ActiveModel) {
         if let Some(ref semver) = self.semver {
-            input.semver = Set(semver.clone());
+            model.semver = Set(semver.clone());
         }
 
         if let Some(version) = self.version {
-            input.version = Set(version as i32);
+            model.version = Set(version as i32);
         }
 
         if let Some(ref release_note) = self.release_note {
-            input.release_note = Set(Some(release_note.clone()));
+            model.release_note = Set(Some(release_note.clone()));
         }
 
         if let Some(ref description) = self.description {
-            input.description = Set(Some(description.clone()));
+            model.description = Set(Some(description.clone()));
         }
 
         if let Some(ref document) = self.document {
-            input.document = Set(Some(document.clone()));
+            model.document = Set(Some(document.clone()));
         }
+
+        model.updated_at = Set(Utc::now().naive_utc());
     }
 }

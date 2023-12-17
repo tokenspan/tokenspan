@@ -40,9 +40,7 @@ pub struct ParameterUpdateInput {
 }
 
 impl ParameterUpdateInput {
-    pub fn merge(&self, model: &mut entity::parameter::ActiveModel) {
-        model.updated_at = Set(Utc::now().naive_utc());
-
+    pub fn copy(&self, model: &mut entity::parameter::ActiveModel) {
         if let Some(ref name) = self.name {
             model.name = Set(name.clone());
         }
@@ -76,5 +74,6 @@ impl ParameterUpdateInput {
         }
 
         model.extra = Set(self.extra.clone());
+        model.updated_at = Set(Utc::now().naive_utc());
     }
 }

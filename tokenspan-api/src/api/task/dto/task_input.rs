@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use async_graphql::InputObject;
+use chrono::Utc;
 use sea_orm::ActiveValue::Set;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -11,6 +12,7 @@ pub struct TaskCreateInput {
     pub name: String,
     pub slug: String,
     pub private: bool,
+    pub model_id: Uuid,
 }
 
 #[derive(InputObject)]
@@ -20,14 +22,16 @@ pub struct TaskUpdateInput {
 }
 
 impl TaskUpdateInput {
-    pub fn merge(&self, task: &mut entity::task::ActiveModel) {
+    pub fn copy(&self, model: &mut entity::task::ActiveModel) {
         if let Some(ref name) = self.name {
-            task.name = Set(name.clone());
+            model.name = Set(name.clone());
         }
 
         if let Some(private) = self.private {
-            task.private = Set(private);
+            model.private = Set(private);
         }
+
+        model.updated_at = Set(Utc::now().naive_utc());
     }
 }
 

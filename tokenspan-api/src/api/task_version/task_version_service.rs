@@ -165,7 +165,7 @@ impl TaskVersionServiceExt for TaskVersionService {
             )))?
             .into_active_model();
 
-        input.merge(&mut task_version);
+        input.copy(&mut task_version);
 
         let updated_task_version = task_version
             .update(&self.db)

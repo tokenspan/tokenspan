@@ -2,23 +2,34 @@
 GRAPHQL {{host}}/graphql
 Authorization: Bearer {{token}}
 
-mutation CreateTask($input: TaskCreateInput!, $modelId: UUID!) {
-  createTask(input: $input, modelId: $modelId) {
+mutation CreateTask($input: TaskCreateInput!) {
+  createTask(input: $input) {
     id
     name
     slug
     createdAt
     updatedAt
+    version {
+      id
+      version
+      releaseNote
+      description
+      document
+      status
+      taskId
+      createdAt
+      updatedAt
+    }
   }
 }
 
 {
   "input": {
-    "name": "test",
+    "name": "test 6",
     "private": false,
-    "slug": "test"
-  },
-  "modelId": "62116abf-b1d1-4e70-a860-121ed3b4acf8"
+    "slug": "test",
+    "modelId": "2d06e1d2-fbf0-497c-8ba9-9610802850df"
+  }
 }
 
 ### Get tasks
