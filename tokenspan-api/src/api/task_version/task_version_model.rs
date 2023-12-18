@@ -2,6 +2,7 @@ use async_graphql::{ComplexObject, Enum, SimpleObject};
 use async_graphql::{Context, Result};
 use chrono::NaiveDateTime;
 use sea_orm::prelude::Uuid;
+use serde::Deserialize;
 use strum_macros::EnumString;
 
 use crate::api::models::{Message, Parameter, Task};
@@ -77,11 +78,13 @@ impl From<entity::task_version::Model> for TaskVersion {
     }
 }
 
-#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString)]
+#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Deserialize)]
 #[graphql(remote = "entity::sea_orm_active_enums::TaskVersionStatus")]
 pub enum TaskVersionStatus {
     #[strum(serialize = "DRAFT")]
+    #[serde(rename = "DRAFT")]
     Draft,
     #[strum(serialize = "RELEASED")]
+    #[serde(rename = "RELEASED")]
     Released,
 }

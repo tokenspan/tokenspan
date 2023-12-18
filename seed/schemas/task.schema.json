@@ -54,8 +54,11 @@
         "owner": {
           "$ref": "#/definitions/Owner"
         },
-        "version": {
+        "semver": {
           "type": "string"
+        },
+        "version": {
+          "type": "integer"
         },
         "releaseNote": {
           "type": "string"
@@ -67,7 +70,7 @@
           "type": "string"
         },
         "status": {
-          "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+          "enum": ["DRAFT", "RELEASED", "ARCHIVED"]
         },
         "releaseAt": {
           "type": "null"
@@ -94,6 +97,7 @@
         "releaseAt",
         "releaseNote",
         "status",
+        "semver",
         "version"
       ],
       "title": "Version"

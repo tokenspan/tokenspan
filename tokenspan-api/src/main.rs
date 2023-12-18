@@ -7,19 +7,17 @@ use axum::http::{Request, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::{middleware, Extension, Json, Router};
-use sea_orm::{ConnectOptions, Database};
 use serde_json::json;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace;
 use tower_http::trace::TraceLayer;
-use tracing::log::LevelFilter;
 use tracing::{info, info_span, Level};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-use migration::MigratorTrait;
+use tokenspan_api::db::connect_db;
 use tokenspan_api::graphql::*;
 use tokenspan_api::{api, configs, guard, state};
 
@@ -34,17 +32,17 @@ async fn handler_404() -> impl IntoResponse {
     )
 }
 
-pub fn register_tracing(config: configs::AppConfig) {
+pub fn register_tracing(env: AppEnv, config: &configs::LogConfig) {
     let trace = tracing_subscriber::registry().with(
         tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
             // axum logs rejections from built-in extractors with the `axum::rejection`
             // target, at `TRACE` level.
             // `axum::rejection=trace` enables showing those events
-            tracing_subscriber::EnvFilter::new(config.log.filter.clone())
+            tracing_subscriber::EnvFilter::new(config.filter.clone())
         }),
     );
 
-    if config.env == AppEnv::Production {
+    if env == AppEnv::Production {
         trace.with(tracing_subscriber::fmt::layer().json()).init();
     } else {
         trace.with(tracing_subscriber::fmt::layer().pretty()).init();
@@ -53,22 +51,10 @@ pub fn register_tracing(config: configs::AppConfig) {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let mut opt = ConnectOptions::new("postgres://postgres:123456@localhost:5432/tokenspan");
-    opt.max_connections(100)
-        .min_connections(5)
-        .connect_timeout(Duration::from_secs(8))
-        .acquire_timeout(Duration::from_secs(8))
-        .idle_timeout(Duration::from_secs(8))
-        .max_lifetime(Duration::from_secs(8))
-        .sqlx_logging(true)
-        .sqlx_logging_level(LevelFilter::Trace);
+    let config = configs::AppConfig::new().expect("Failed to load config");
+    register_tracing(config.env, &config.log);
 
-    let db = Database::connect(opt).await?;
-    migration::Migrator::up(&db, None).await?;
-
-    let config = configs::AppConfig::new().unwrap();
-
-    register_tracing(config.clone());
+    let db = connect_db(&config.database).await?;
 
     let trace_layer = TraceLayer::new_for_http()
         .make_span_with(|request: &Request<_>| {
@@ -90,7 +76,7 @@ async fn main() -> Result<()> {
     let cors_layer = CorsLayer::permissive();
     let timeout_layer = TimeoutLayer::new(Duration::from_secs(10));
 
-    let app_state = state::AppState::new(db.clone(), config.clone()).await?;
+    let app_state = state::AppState::new(db, &config).await?;
     let schema = build_schema(app_state.clone()).await;
 
     let app = Router::new()

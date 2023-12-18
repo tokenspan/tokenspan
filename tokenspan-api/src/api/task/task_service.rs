@@ -23,9 +23,7 @@ use uuid::Uuid;
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
 use crate::api::api_key::api_key_error::ApiKeyError;
-use crate::api::dto::{
-    ElapsedInput, ExecutionCreateInput, TaskExecuteInput, TaskVersionCreateInput,
-};
+use crate::api::dto::{ElapsedInput, ExecutionCreateInput, TaskExecuteInput};
 use crate::api::models::{Execution, ExecutionStatus, Message, Model, Parameter, Task, Usage};
 use crate::api::services::{
     ApiKeyServiceDyn, ExecutionServiceDyn, ModelServiceDyn, ParameterServiceDyn,
@@ -230,16 +228,6 @@ impl TaskServiceExt for TaskService {
         .await
         .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?
         .into();
-
-        self.task_version_service
-            .create(
-                TaskVersionCreateInput::builder()
-                    .task_id(created_task.id)
-                    .messages(vec![])
-                    .build(),
-                owner_id,
-            )
-            .await?;
 
         Ok(created_task)
     }

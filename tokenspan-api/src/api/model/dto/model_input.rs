@@ -3,7 +3,7 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(InputObject, Clone, Serialize, Deserialize)]
+#[derive(InputObject, Clone, Serialize, Deserialize, Debug)]
 pub struct PricingInput {
     pub price: f64,
     pub tokens: u32,

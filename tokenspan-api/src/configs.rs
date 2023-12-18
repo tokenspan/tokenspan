@@ -2,7 +2,7 @@ use config::{Config, Environment, File};
 use dotenv::dotenv;
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Copy)]
 pub enum AppEnv {
     #[serde(rename = "development")]
     Development,
@@ -18,6 +18,14 @@ pub struct ServerConfig {
 #[derive(Debug, Deserialize, Clone)]
 pub struct DatabaseConfig {
     pub url: String,
+    pub max_connections: Option<u32>,
+    pub min_connections: Option<u32>,
+    pub connect_timeout: Option<u64>,
+    pub acquire_timeout: Option<u64>,
+    pub idle_timeout: Option<u64>,
+    pub max_lifetime: Option<u64>,
+    pub sqlx_logging: Option<bool>,
+    pub sqlx_logging_level: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]

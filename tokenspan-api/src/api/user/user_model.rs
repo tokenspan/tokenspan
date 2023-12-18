@@ -1,6 +1,7 @@
 use async_graphql::{Enum, SimpleObject};
 use chrono::NaiveDateTime;
 use sea_orm::prelude::Uuid;
+use serde::Deserialize;
 use strum_macros::{Display, EnumString};
 
 use tokenspan_extra::pagination::{Cursor, CursorExt};
@@ -38,11 +39,13 @@ impl From<entity::user::Model> for User {
     }
 }
 
-#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Display)]
+#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Display, Deserialize)]
 #[graphql(remote = "entity::sea_orm_active_enums::UserRole")]
 pub enum UserRole {
     #[strum(serialize = "ADMIN")]
+    #[serde(rename = "ADMIN")]
     Admin,
     #[strum(serialize = "USER")]
+    #[serde(rename = "USER")]
     User,
 }

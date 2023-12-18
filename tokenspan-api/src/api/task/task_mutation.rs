@@ -1,8 +1,9 @@
+use crate::api::dto::TaskVersionCreateInput;
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 use uuid::Uuid;
 
 use crate::api::models::{ParsedToken, UserRole};
-use crate::api::services::TaskServiceDyn;
+use crate::api::services::{TaskServiceDyn, TaskVersionServiceDyn};
 use crate::api::task::dto::{TaskCreateInput, TaskUpdateInput};
 use crate::api::task::task_model::Task;
 use crate::error::AppError;
@@ -25,7 +26,21 @@ impl TaskMutation {
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
+        let task_version_service = ctx
+            .data::<TaskVersionServiceDyn>()
+            .map_err(|_| AppError::ContextExtractionError)?;
+
         let created_task = task_service.create(input, parsed_token.user_id).await?;
+
+        task_version_service
+            .create(
+                TaskVersionCreateInput::builder()
+                    .task_id(created_task.id)
+                    .messages(vec![])
+                    .build(),
+                parsed_token.user_id,
+            )
+            .await?;
 
         Ok(created_task)
     }

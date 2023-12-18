@@ -7,9 +7,6 @@ use uuid::Uuid;
 
 #[derive(InputObject, TypedBuilder, Serialize, Clone, Debug)]
 pub struct ParameterCreateInput {
-    #[graphql(skip, default_with = "Uuid::new_v4()")]
-    #[builder(default = Uuid::new_v4())]
-    pub id: Uuid,
     #[builder(default = "untitled".to_string())]
     pub name: String,
     #[builder(default = 1.0)]
@@ -32,7 +29,6 @@ pub struct ParameterCreateInput {
 
 #[derive(InputObject, TypedBuilder, Serialize, Clone)]
 pub struct ParameterUpdateInput {
-    pub id: Uuid,
     #[builder(setter(strip_option))]
     pub name: Option<String>,
     #[builder(setter(strip_option))]

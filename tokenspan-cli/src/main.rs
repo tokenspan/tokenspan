@@ -1,12 +1,14 @@
 use crate::seed::prelude::*;
 use anyhow::Result;
+use tokenspan_api::db::connect_db;
 
 mod seed;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let config = tokenspan_api::configs::AppConfig::new()?;
-    let state = tokenspan_api::state::AppState::new(config.clone()).await?;
+    let db = connect_db(&config.database).await?;
+    let state = tokenspan_api::state::AppState::new(db, &config).await?;
 
     let user_seed = UserSeed::new(config.clone(), state.clone()).await?;
     user_seed.save().await?;

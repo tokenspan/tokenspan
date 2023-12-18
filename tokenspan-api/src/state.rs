@@ -19,7 +19,7 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new(db: DatabaseConnection, app_config: AppConfig) -> Result<Self> {
+    pub async fn new(db: DatabaseConnection, app_config: &AppConfig) -> Result<Self> {
         let mc = new_magic_crypt!(app_config.encryption.secret.clone(), 256);
 
         let user_service: UserServiceDyn = UserService::builder().db(db.clone()).build().into();

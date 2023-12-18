@@ -6,11 +6,12 @@ private: false
 versions:
   - owner:
       email: wang_yu_meng@gmail.com
-    version: 0.0.0
+    semver: 0.0.0
+    version: 0
     releaseNote: ""
     description: Convert ungrammatical statements into standard English.
     document: ""
-    status: PUBLISHED
+    status: RELEASED
     releaseAt: null
     parameters:
       - name: default

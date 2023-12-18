@@ -133,8 +133,8 @@ impl TaskVersionServiceExt for TaskVersionService {
 
         let created_task_version = entity::task_version::ActiveModel {
             id: Set(Uuid::new_v4()),
-            task_id: Set(input.task_id.into()),
-            owner_id: Set(owner_id.into()),
+            task_id: Set(input.task_id),
+            owner_id: Set(owner_id),
             semver: Set(input.semver),
             version: Set(input.version as i32),
             description: Set(input.description),

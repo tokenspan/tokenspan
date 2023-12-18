@@ -1,13 +1,14 @@
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use serde::Deserialize;
 use tokio_stream::StreamExt;
 
-use crate::seed::prelude::ProviderRef;
-use crate::seed::Seed;
 use tokenspan_api::api::dto::{ModelCreateInput, PricingInput};
 use tokenspan_api::configs::AppConfig;
 use tokenspan_api::state::AppState;
+
+use crate::seed::prelude::ProviderRef;
+use crate::seed::Seed;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct ModelRef {
@@ -24,7 +25,7 @@ pub struct Model {
     pub context: u32,
     pub input_pricing: PricingInput,
     pub output_pricing: PricingInput,
-    pub training_at: DateTime<Utc>,
+    pub training_at: NaiveDateTime,
 }
 
 pub struct ModelSeed {
