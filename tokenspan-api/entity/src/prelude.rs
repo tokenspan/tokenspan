@@ -3,6 +3,7 @@
 pub use super::api_key::Entity as ApiKey;
 pub use super::execution::Entity as Execution;
 pub use super::model::Entity as Model;
+pub use super::parameter::Entity as Parameter;
 pub use super::provider::Entity as Provider;
 pub use super::task::Entity as Task;
 pub use super::task_version::Entity as TaskVersion;

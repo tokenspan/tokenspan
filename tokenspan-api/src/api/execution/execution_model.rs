@@ -104,8 +104,8 @@ impl From<entity::execution::Model> for Execution {
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Display, Serialize)]
 #[graphql(remote = "entity::sea_orm_active_enums::ExecutionStatus")]
 pub enum ExecutionStatus {
-    #[strum(serialize = "SUCCESS", serialize = "SUCCESS")]
+    #[strum(serialize = "SUCCESS")]
     Success,
-    #[strum(serialize = "FAILURE", serialize = "FAILURE")]
+    #[strum(serialize = "FAILURE")]
     Failure,
 }

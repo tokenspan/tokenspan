@@ -12,7 +12,6 @@ pub struct TaskCreateInput {
     pub name: String,
     pub slug: String,
     pub private: bool,
-    pub model_id: Uuid,
 }
 
 #[derive(InputObject)]

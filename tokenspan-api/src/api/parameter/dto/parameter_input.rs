@@ -1,4 +1,6 @@
-use async_graphql::{InputObject, OneofObject};
+use async_graphql::InputObject;
+use chrono::Utc;
+use sea_orm::ActiveValue::Set;
 use serde::Serialize;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
@@ -25,6 +27,7 @@ pub struct ParameterCreateInput {
     #[builder(default)]
     pub extra: Option<serde_json::Value>,
     pub model_id: Uuid,
+    pub task_version_id: Uuid,
 }
 
 #[derive(InputObject, TypedBuilder, Serialize, Clone)]
@@ -49,9 +52,41 @@ pub struct ParameterUpdateInput {
     pub model_id: Option<Uuid>,
 }
 
-#[derive(OneofObject)]
-pub enum ParameterMutationInput {
-    Create(ParameterCreateInput),
-    Update(ParameterUpdateInput),
-    Delete(Uuid),
+impl ParameterUpdateInput {
+    pub fn copy(self, model: &mut entity::parameter::ActiveModel) {
+        if let Some(name) = self.name {
+            model.name = Set(name);
+        }
+
+        if let Some(temperature) = self.temperature {
+            model.temperature = Set(temperature);
+        }
+
+        if let Some(max_tokens) = self.max_tokens {
+            model.max_tokens = Set(max_tokens as i32);
+        }
+
+        if let Some(ref stop_sequences) = self.stop_sequences {
+            model.stop_sequences = Set(stop_sequences.clone());
+        }
+
+        if let Some(top_p) = self.top_p {
+            model.top_p = Set(top_p);
+        }
+
+        if let Some(frequency_penalty) = self.frequency_penalty {
+            model.frequency_penalty = Set(frequency_penalty);
+        }
+
+        if let Some(presence_penalty) = self.presence_penalty {
+            model.presence_penalty = Set(presence_penalty);
+        }
+
+        if let Some(model_id) = self.model_id {
+            model.model_id = Set(model_id);
+        }
+
+        model.extra = Set(self.extra.clone());
+        model.updated_at = Set(Utc::now().naive_utc());
+    }
 }

@@ -8,6 +8,7 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
     PaginatorTrait, QueryFilter, QueryOrder, QuerySelect,
 };
+use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
 use tokenspan_extra::pagination::{Cursor, Pagination};
@@ -37,14 +38,9 @@ impl FromRef<AppState> for ModelServiceDyn {
     }
 }
 
+#[derive(TypedBuilder)]
 pub struct ModelService {
     db: DatabaseConnection,
-}
-
-impl ModelService {
-    pub fn new(db: DatabaseConnection) -> Self {
-        Self { db }
-    }
 }
 
 #[async_trait::async_trait]

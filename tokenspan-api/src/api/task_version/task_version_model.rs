@@ -1,9 +1,8 @@
-use async_graphql::Result;
 use async_graphql::{ComplexObject, Enum, SimpleObject};
+use async_graphql::{Context, Result};
 use chrono::NaiveDateTime;
 use sea_orm::prelude::Uuid;
 use strum_macros::EnumString;
-use tracing::info;
 
 use crate::api::models::{Message, Parameter, Task};
 use tokenspan_extra::pagination::{Cursor, CursorExt};
@@ -21,8 +20,6 @@ pub struct TaskVersion {
     pub task_id: Uuid,
     #[graphql(skip)]
     pub messages: serde_json::Value,
-    #[graphql(skip)]
-    pub parameters: serde_json::Value,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -39,9 +36,12 @@ impl TaskVersion {
         Ok(task)
     }
 
-    pub async fn parameters(&self) -> Result<Vec<Parameter>> {
-        info!("parameters: {:?}", self.parameters);
-        let parameters: Vec<Parameter> = serde_json::from_value(self.parameters.clone())?;
+    pub async fn parameters<'a>(&self, ctx: &Context<'a>) -> Result<Vec<Parameter>> {
+        let parameter_service = ctx
+            .data::<crate::api::services::ParameterServiceDyn>()
+            .map_err(|_| crate::error::AppError::ContextExtractionError)?;
+
+        let parameters = parameter_service.find_by_task_version_id(self.id).await?;
 
         Ok(parameters)
     }
@@ -71,7 +71,6 @@ impl From<entity::task_version::Model> for TaskVersion {
             status: TaskVersionStatus::from(value.status),
             task_id: value.task_id,
             messages: value.messages,
-            parameters: value.parameters,
             created_at: value.created_at,
             updated_at: value.updated_at,
         }

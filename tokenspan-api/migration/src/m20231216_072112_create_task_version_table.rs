@@ -45,7 +45,6 @@ impl MigrationTrait for Migration {
                             .not_null(),
                     )
                     .col(ColumnDef::new(TaskVersion::Messages).json().not_null())
-                    .col(ColumnDef::new(TaskVersion::Parameters).json().not_null())
                     .col(ColumnDef::new(TaskVersion::ReleasedAt).timestamp())
                     .col(
                         ColumnDef::new(TaskVersion::CreatedAt)
@@ -135,7 +134,6 @@ pub enum TaskVersion {
     Document,
     Status,
     Messages,
-    Parameters,
     ReleasedAt,
     CreatedAt,
     UpdatedAt,

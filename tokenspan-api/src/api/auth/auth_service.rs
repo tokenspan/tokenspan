@@ -5,6 +5,7 @@ use async_graphql::Result;
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use tracing::info;
+use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
 use crate::api::auth::auth_error::AuthError;
@@ -30,18 +31,10 @@ pub trait AuthServiceExt {
 
 pub type AuthServiceDyn = Arc<dyn AuthServiceExt + Send + Sync>;
 
+#[derive(TypedBuilder)]
 pub struct AuthService {
     user_service: UserServiceDyn,
     auth_config: AuthConfig,
-}
-
-impl AuthService {
-    pub fn new(user_service: UserServiceDyn, auth_config: AuthConfig) -> Self {
-        Self {
-            user_service,
-            auth_config,
-        }
-    }
 }
 
 impl AuthService {

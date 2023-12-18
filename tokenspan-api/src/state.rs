@@ -1,8 +1,7 @@
 use anyhow::Result;
+use magic_crypt::new_magic_crypt;
 use sea_orm::DatabaseConnection;
 
-use crate::api::caches::api_key_cache::{ApiKeyCache, ApiKeyCacheDyn};
-use crate::api::caches::model_cache::{ModelCache, ModelCacheDyn};
 use crate::api::services::*;
 use crate::configs::AppConfig;
 
@@ -16,41 +15,47 @@ pub struct AppState {
     pub task_version_service: TaskVersionServiceDyn,
     pub task_service: TaskServiceDyn,
     pub execution_service: ExecutionServiceDyn,
-
-    pub api_key_cache: ApiKeyCacheDyn,
-    pub model_cache: ModelCacheDyn,
+    pub parameter_service: ParameterServiceDyn,
 }
 
 impl AppState {
     pub async fn new(db: DatabaseConnection, app_config: AppConfig) -> Result<Self> {
-        let user_service: UserServiceDyn = UserService::new(db.clone()).into();
-        let auth_service: AuthServiceDyn =
-            AuthService::new(user_service.clone(), app_config.auth.clone()).into();
+        let mc = new_magic_crypt!(app_config.encryption.secret.clone(), 256);
 
-        let api_key_service: ApiKeyServiceDyn =
-            ApiKeyService::new(db.clone(), app_config.encryption.clone()).into();
-
-        let api_key_cache: ApiKeyCacheDyn = ApiKeyCache::new(api_key_service.clone()).await?.into();
-
-        let model_service: ModelServiceDyn = ModelService::new(db.clone()).into();
-        let model_cache: ModelCacheDyn = ModelCache::new(model_service.clone()).await?.into();
-
-        let provider_service: ProviderServiceDyn = ProviderService::new(db.clone()).into();
-
-        let execution_service: ExecutionServiceDyn = ExecutionService::new(db.clone()).into();
-
-        let task_version_service: TaskVersionServiceDyn = TaskVersionService::builder()
-            .db(db.clone())
-            .model_cache(model_cache.clone())
+        let user_service: UserServiceDyn = UserService::builder().db(db.clone()).build().into();
+        let auth_service: AuthServiceDyn = AuthService::builder()
+            .user_service(user_service.clone())
+            .auth_config(app_config.auth.clone())
             .build()
             .into();
 
+        let api_key_service: ApiKeyServiceDyn = ApiKeyService::builder()
+            .db(db.clone())
+            .mc(mc)
+            .build()
+            .into();
+
+        let model_service: ModelServiceDyn = ModelService::builder().db(db.clone()).build().into();
+
+        let provider_service: ProviderServiceDyn =
+            ProviderService::builder().db(db.clone()).build().into();
+
+        let execution_service: ExecutionServiceDyn =
+            ExecutionService::builder().db(db.clone()).build().into();
+
+        let task_version_service: TaskVersionServiceDyn =
+            TaskVersionService::builder().db(db.clone()).build().into();
+
+        let parameter_service: ParameterServiceDyn =
+            ParameterService::builder().db(db.clone()).build().into();
+
         let task_service: TaskServiceDyn = TaskService::builder()
             .db(db.clone())
-            .api_key_cache(api_key_cache.clone())
-            .model_cache(model_cache.clone())
+            .api_key_service(api_key_service.clone())
+            .model_service(model_service.clone())
             .execution_service(execution_service.clone())
             .task_version_service(task_version_service.clone())
+            .parameter_service(parameter_service.clone())
             .build()
             .into();
 
@@ -63,9 +68,7 @@ impl AppState {
             task_version_service,
             task_service,
             execution_service,
-
-            api_key_cache,
-            model_cache,
+            parameter_service,
         })
     }
 }

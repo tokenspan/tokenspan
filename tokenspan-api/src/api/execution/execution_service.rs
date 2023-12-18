@@ -7,6 +7,7 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, PaginatorTrait,
     QueryFilter, QueryOrder, QuerySelect,
 };
+use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
 use tokenspan_extra::pagination::{Cursor, Pagination};
@@ -26,14 +27,9 @@ pub trait ExecutionServiceExt {
 
 pub type ExecutionServiceDyn = Arc<dyn ExecutionServiceExt + Send + Sync>;
 
+#[derive(TypedBuilder)]
 pub struct ExecutionService {
     db: DatabaseConnection,
-}
-
-impl ExecutionService {
-    pub fn new(db: DatabaseConnection) -> Self {
-        Self { db }
-    }
 }
 
 #[async_trait::async_trait]

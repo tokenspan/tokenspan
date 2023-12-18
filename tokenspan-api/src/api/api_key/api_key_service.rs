@@ -2,12 +2,13 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use chrono::{NaiveDateTime, Utc};
-use magic_crypt::{new_magic_crypt, MagicCrypt256, MagicCryptTrait};
+use magic_crypt::{MagicCrypt256, MagicCryptTrait};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
     PaginatorTrait, QueryFilter, QueryOrder, QuerySelect,
 };
+use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
 use tokenspan_extra::pagination::{Cursor, Pagination};
@@ -15,7 +16,6 @@ use tokenspan_extra::pagination::{Cursor, Pagination};
 use crate::api::api_key::api_key_error::ApiKeyError;
 use crate::api::api_key::api_key_model::ApiKey;
 use crate::api::api_key::dto::{ApiKeyArgs, ApiKeyCreateInput, ApiKeyUpdateInput};
-use crate::configs::EncryptionConfig;
 
 #[async_trait::async_trait]
 pub trait ApiKeyServiceExt {
@@ -30,18 +30,13 @@ pub trait ApiKeyServiceExt {
 
 pub type ApiKeyServiceDyn = Arc<dyn ApiKeyServiceExt + Send + Sync>;
 
+#[derive(TypedBuilder)]
 pub struct ApiKeyService {
     db: DatabaseConnection,
     mc: MagicCrypt256,
 }
 
 impl ApiKeyService {
-    pub fn new(db: DatabaseConnection, encryption_config: EncryptionConfig) -> Self {
-        let mc = new_magic_crypt!(encryption_config.secret.clone(), 256);
-
-        Self { mc, db }
-    }
-
     pub fn encrypt(&self, key: String) -> String {
         self.mc.encrypt_str_to_base64(key.as_str())
     }

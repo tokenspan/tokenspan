@@ -23,14 +23,14 @@ use uuid::Uuid;
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
 use crate::api::api_key::api_key_error::ApiKeyError;
-use crate::api::caches::api_key_cache::ApiKeyCacheDyn;
-use crate::api::caches::model_cache::ModelCacheDyn;
-use crate::api::dto::parameter_input::ParameterCreateInput;
 use crate::api::dto::{
     ElapsedInput, ExecutionCreateInput, TaskExecuteInput, TaskVersionCreateInput,
 };
 use crate::api::models::{Execution, ExecutionStatus, Message, Model, Parameter, Task, Usage};
-use crate::api::services::{ExecutionServiceDyn, TaskVersionServiceDyn};
+use crate::api::services::{
+    ApiKeyServiceDyn, ExecutionServiceDyn, ModelServiceDyn, ParameterServiceDyn,
+    TaskVersionServiceDyn,
+};
 use crate::api::task::dto::{TaskArgs, TaskCreateInput, TaskUpdateInput};
 use crate::api::task::task_error::TaskError;
 use crate::prompt::{ChatMessage, PromptRole};
@@ -64,9 +64,9 @@ impl FromRef<AppState> for TaskServiceDyn {
 #[derive(TypedBuilder)]
 pub struct TaskService {
     db: DatabaseConnection,
-    api_key_cache: ApiKeyCacheDyn,
-    model_cache: ModelCacheDyn,
-
+    api_key_service: ApiKeyServiceDyn,
+    model_service: ModelServiceDyn,
+    parameter_service: ParameterServiceDyn,
     execution_service: ExecutionServiceDyn,
     task_version_service: TaskVersionServiceDyn,
 }
@@ -231,22 +231,10 @@ impl TaskServiceExt for TaskService {
         .map_err(|e| TaskError::Unknown(anyhow::anyhow!(e)))?
         .into();
 
-        let model = self
-            .model_cache
-            .get(input.model_id)
-            .await
-            .ok_or(TaskError::Unknown(anyhow::anyhow!("Model not found")))?;
-
-        let parameter = ParameterCreateInput::builder()
-            .id(Uuid::new_v4())
-            .model_id(model.id)
-            .build();
-
         self.task_version_service
             .create(
                 TaskVersionCreateInput::builder()
                     .task_id(created_task.id)
-                    .parameters(vec![parameter])
                     .messages(vec![])
                     .build(),
                 owner_id,
@@ -293,9 +281,9 @@ impl TaskServiceExt for TaskService {
     async fn execute(&self, input: TaskExecuteInput, execute_by_id: Uuid) -> Result<Execution> {
         let start = Instant::now();
         let api_key = self
-            .api_key_cache
-            .get(input.api_key_id)
-            .await
+            .api_key_service
+            .find_by_id(input.api_key_id)
+            .await?
             .ok_or(ApiKeyError::Unknown(anyhow::anyhow!("API key not found")))?;
 
         let task_version = self
@@ -327,22 +315,22 @@ impl TaskServiceExt for TaskService {
             })
             .collect::<Result<Vec<ChatMessage>>>()?;
 
-        let parameters: Vec<Parameter> = serde_json::from_value(task_version.parameters.clone())?;
-        let parameter = parameters
-            .iter()
-            .find(|parameter| parameter.id == input.parameter_id)
+        let parameter = self
+            .parameter_service
+            .find_by_id(input.parameter_id)
+            .await?
             .ok_or(TaskError::Unknown(anyhow::anyhow!("Parameter not found")))?;
 
         let model = self
-            .model_cache
-            .get(parameter.model_id.clone())
-            .await
+            .model_service
+            .find_by_id(parameter.model_id)
+            .await?
             .ok_or(TaskError::Unknown(anyhow::anyhow!("Model not found")))?;
         let pre_elapsed = start.elapsed();
 
         let start = Instant::now();
         let response = self
-            .chat_completion(&chat_messages, parameter.clone(), api_key, model)
+            .chat_completion(&chat_messages, parameter.clone(), api_key.key, model)
             .await;
         let elapsed = start.elapsed();
 

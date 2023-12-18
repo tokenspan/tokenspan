@@ -21,6 +21,7 @@ pub mod services {
     pub use super::auth::auth_service::*;
     pub use super::execution::execution_service::*;
     pub use super::model::model_service::*;
+    pub use super::parameter::parameter_service::*;
     pub use super::provider::provider_service::*;
     pub use super::task::task_service::*;
     pub use super::task_version::task_version_service::*;

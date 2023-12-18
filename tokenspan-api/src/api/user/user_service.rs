@@ -11,6 +11,7 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter,
     QueryOrder, QuerySelect,
 };
+use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
 use tokenspan_extra::pagination::{Cursor, Pagination};
@@ -39,6 +40,7 @@ pub trait UserServiceExt {
 
 pub type UserServiceDyn = Arc<dyn UserServiceExt + Send + Sync>;
 
+#[derive(TypedBuilder)]
 pub struct UserService {
     db: DatabaseConnection,
 }
@@ -46,10 +48,6 @@ pub struct UserService {
 impl UserService {
     const CREDENTIAL_LEN: usize = digest::SHA512_OUTPUT_LEN;
     const ITERATIONS: u32 = 100_000;
-
-    pub fn new(db: DatabaseConnection) -> Self {
-        Self { db }
-    }
 
     fn derive_password(&self, password: String) -> Result<([u8; 64], [u8; 64])> {
         let iterations = NonZeroU32::new(Self::ITERATIONS).ok_or(UserError::InvalidIterations)?;

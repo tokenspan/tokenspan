@@ -17,7 +17,6 @@ pub struct Model {
     pub document: Option<String>,
     pub status: TaskVersionStatus,
     pub messages: Json,
-    pub parameters: Json,
     pub released_at: Option<DateTime>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
@@ -27,11 +26,19 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "super::execution::Entity")]
     Execution,
+    #[sea_orm(has_many = "super::parameter::Entity")]
+    Parameter,
 }
 
 impl Related<super::execution::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Execution.def()
+    }
+}
+
+impl Related<super::parameter::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Parameter.def()
     }
 }
 

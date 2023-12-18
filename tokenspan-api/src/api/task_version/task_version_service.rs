@@ -7,16 +7,13 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
     PaginatorTrait, QueryFilter, QueryOrder, QuerySelect, TransactionTrait,
 };
-use tracing::info;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use crate::api::dto::parameter_input::ParameterMutationInput;
-use crate::api::model::model_cache::ModelCacheDyn;
+use crate::api::models::TaskVersion;
 use entity::sea_orm_active_enums::TaskVersionStatus;
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
-use crate::api::models::{Parameter, TaskVersion};
 use crate::api::task_version::dto::{
     TaskVersionArgs, TaskVersionCreateInput, TaskVersionUpdateInput,
 };
@@ -40,7 +37,6 @@ pub type TaskVersionServiceDyn = Arc<dyn TaskVersionServiceExt + Send + Sync>;
 #[derive(TypedBuilder)]
 pub struct TaskVersionService {
     db: DatabaseConnection,
-    model_cache: ModelCacheDyn,
 }
 
 #[async_trait::async_trait]
@@ -134,7 +130,6 @@ impl TaskVersionServiceExt for TaskVersionService {
 
     async fn create(&self, input: TaskVersionCreateInput, owner_id: Uuid) -> Result<TaskVersion> {
         let messages = serde_json::to_value(input.messages)?;
-        let parameters = serde_json::to_value(input.parameters)?;
 
         let created_task_version = entity::task_version::ActiveModel {
             id: Set(Uuid::new_v4()),
@@ -148,7 +143,6 @@ impl TaskVersionServiceExt for TaskVersionService {
             status: Set(TaskVersionStatus::Draft),
             released_at: Set(None),
             messages: Set(messages),
-            parameters: Set(parameters),
             created_at: Set(Utc::now().naive_utc()),
             updated_at: Set(Utc::now().naive_utc()),
         }
@@ -177,98 +171,6 @@ impl TaskVersionServiceExt for TaskVersionService {
         if let Some(message) = input.messages {
             let messages = serde_json::to_value(message)?;
             active_model.messages = Set(messages);
-        }
-
-        let mut parameters: Vec<Parameter> =
-            serde_json::from_value(task_version.parameters.clone())?;
-        let mut new_parameters = vec![];
-
-        for parameter in parameters.iter() {
-            let value = serde_json::to_value(parameter)?;
-            new_parameters.push(value);
-        }
-
-        if let Some(mutations) = input.parameters {
-            for mutation in mutations.into_iter() {
-                match mutation {
-                    ParameterMutationInput::Create(mut input) => {
-                        self.model_cache.get(input.model_id).await.ok_or(
-                            TaskVersionError::Unknown(anyhow::anyhow!("Model not found")),
-                        )?;
-
-                        info!("input: {:?}", input);
-                        input.id = Uuid::new_v4();
-                        let value = serde_json::to_value(input)?;
-                        new_parameters.push(value);
-                    }
-                    ParameterMutationInput::Update(input) => {
-                        let parameter = parameters
-                            .iter_mut()
-                            .find(|parameter| parameter.id == input.id)
-                            .ok_or(TaskVersionError::Unknown(anyhow::anyhow!(
-                                "Parameter not found"
-                            )))?;
-
-                        if let Some(model_id) = input.model_id {
-                            self.model_cache.get(model_id).await.ok_or(
-                                TaskVersionError::Unknown(anyhow::anyhow!("Model not found")),
-                            )?;
-                            parameter.model_id = model_id;
-                        }
-
-                        if let Some(ref name) = input.name {
-                            parameter.name = name.clone();
-                        }
-
-                        if let Some(temperature) = input.temperature {
-                            parameter.temperature = temperature;
-                        }
-
-                        if let Some(max_tokens) = input.max_tokens {
-                            parameter.max_tokens = max_tokens;
-                        }
-
-                        if let Some(stop_sequences) = input.stop_sequences {
-                            parameter.stop_sequences = stop_sequences.clone();
-                        }
-
-                        if let Some(top_p) = input.top_p {
-                            parameter.top_p = top_p;
-                        }
-
-                        if let Some(frequency_penalty) = input.frequency_penalty {
-                            parameter.frequency_penalty = frequency_penalty;
-                        }
-
-                        if let Some(presence_penalty) = input.presence_penalty {
-                            parameter.presence_penalty = presence_penalty;
-                        }
-
-                        parameter.extra = input.extra.clone();
-
-                        let pos = new_parameters
-                            .iter()
-                            .position(|p| p["id"] == parameter.id.to_string())
-                            .ok_or(TaskVersionError::Unknown(anyhow::anyhow!(
-                                "Parameter not found"
-                            )))?;
-                        let value = serde_json::to_value(parameter)?;
-                        new_parameters[pos] = value;
-                    }
-                    ParameterMutationInput::Delete(id) => {
-                        let parameter = parameters.iter().find(|parameter| parameter.id == id);
-
-                        if parameter.is_none() {
-                            return Err(TaskVersionError::Unknown(anyhow::anyhow!(
-                                "Parameter not found"
-                            )))?;
-                        }
-                    }
-                };
-            }
-
-            let new_parameters = serde_json::to_value(new_parameters.clone())?;
-            active_model.parameters = Set(new_parameters);
         }
 
         let updated_task_version = active_model
