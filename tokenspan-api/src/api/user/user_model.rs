@@ -2,11 +2,17 @@ use async_graphql::{Enum, SimpleObject};
 use chrono::NaiveDateTime;
 use sea_orm::prelude::Uuid;
 use serde::Deserialize;
+use sqlx::FromRow;
 use strum_macros::{Display, EnumString};
 
 use tokenspan_extra::pagination::{Cursor, CursorExt};
+use tokenspan_macros::FieldNames;
 
-#[derive(SimpleObject, Clone, Debug)]
+pub trait Updater {
+    fn set_id(&mut self, id: Option<Uuid>);
+}
+
+#[derive(SimpleObject, Clone, Debug, FromRow, FieldNames)]
 pub struct User {
     pub id: Uuid,
     pub email: String,
@@ -17,6 +23,7 @@ pub struct User {
     pub salt: String,
     pub role: UserRole,
     pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 impl CursorExt<Cursor> for User {
@@ -25,27 +32,11 @@ impl CursorExt<Cursor> for User {
     }
 }
 
-impl From<entity::user::Model> for User {
-    fn from(value: entity::user::Model) -> Self {
-        Self {
-            id: value.id.into(),
-            email: value.email,
-            username: value.username,
-            password: value.password,
-            salt: value.salt,
-            role: UserRole::from(value.role),
-            created_at: value.created_at,
-        }
-    }
-}
-
-#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Display, Deserialize)]
-#[graphql(remote = "entity::sea_orm_active_enums::UserRole")]
+#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Display, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "user_role", rename_all = "UPPERCASE")]
 pub enum UserRole {
     #[strum(serialize = "ADMIN")]
-    #[serde(rename = "ADMIN")]
     Admin,
     #[strum(serialize = "USER")]
-    #[serde(rename = "USER")]
     User,
 }

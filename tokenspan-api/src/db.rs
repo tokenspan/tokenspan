@@ -1,6 +1,5 @@
 use crate::configs;
 use futures_util::TryFutureExt;
-use migration::MigratorTrait;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use std::str::FromStr;
 use std::time::Duration;
@@ -25,9 +24,9 @@ pub async fn connect_db(config: &configs::DatabaseConfig) -> anyhow::Result<Data
     let db = Database::connect(opt)
         .map_err(|e| anyhow::anyhow!(e))
         .await?;
-    migration::Migrator::up(&db, None)
-        .await
-        .map_err(|e| anyhow::anyhow!(e))?;
+    // migration::Migrator::up(&db, None)
+    //     .await
+    //     .map_err(|e| anyhow::anyhow!(e))?;
 
     Ok(db)
 }

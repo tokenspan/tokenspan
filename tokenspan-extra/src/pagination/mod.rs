@@ -13,7 +13,7 @@ pub trait CursorExt<C: CursorType> {
     fn cursor(&self) -> C;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Cursor {
     pub id: i64,
 }

@@ -69,6 +69,10 @@ pub mod loaders {
     pub use super::user::user_loader::*;
 }
 
+pub mod repos {
+    pub use super::user::user_repository::*;
+}
+
 #[derive(MergedObject, Default)]
 pub struct QueryRoot(
     pub auth::AuthQuery,

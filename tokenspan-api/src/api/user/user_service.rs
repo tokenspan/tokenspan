@@ -2,24 +2,22 @@ use std::num::NonZeroU32;
 use std::sync::Arc;
 
 use anyhow::Result;
-use chrono::{NaiveDateTime, Utc};
+use chrono::Utc;
 use data_encoding::HEXUPPER;
 use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2, rand};
-use sea_orm::ActiveValue::Set;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter,
-    QueryOrder, QuerySelect,
-};
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
 use tokenspan_extra::pagination::{Cursor, Pagination};
 
-use crate::api::dto::UserArgs;
+use crate::api::dto::{UserArgs, UserUpdateInput};
 use crate::api::models::UserRole;
 use crate::api::user::user_error::UserError;
 use crate::api::user::user_model::User;
+use crate::api::user::user_repository::UserRepository;
+use crate::repository::RepositoryExt;
+use crate::set_optional;
 
 #[async_trait::async_trait]
 pub trait UserServiceExt {
@@ -32,8 +30,9 @@ pub trait UserServiceExt {
         password: String,
         role: UserRole,
     ) -> Result<User>;
+    async fn update_by_id(&self, id: Uuid, input: UserUpdateInput) -> Result<User>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>>;
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<User>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>>;
     async fn find_by_email(&self, email: String) -> Result<Option<User>>;
     fn verify_password(&self, password: &str, salt: &str, hash_password: &str) -> Result<()>;
 }
@@ -42,7 +41,7 @@ pub type UserServiceDyn = Arc<dyn UserServiceExt + Send + Sync>;
 
 #[derive(TypedBuilder)]
 pub struct UserService {
-    db: DatabaseConnection,
+    user_repo: UserRepository,
 }
 
 impl UserService {
@@ -72,40 +71,9 @@ impl UserService {
 #[async_trait::async_trait]
 impl UserServiceExt for UserService {
     async fn paginate(&self, args: UserArgs) -> Result<Pagination<Cursor, User>> {
-        let take = args.take.unwrap_or(10);
-        let limit = take
-            + if args.after.is_some() || args.before.is_some() {
-                2
-            } else {
-                1
-            };
-        let mut select = entity::user::Entity::find()
-            .limit(Some(limit))
-            .order_by_desc(entity::user::Column::CreatedAt);
-
-        if let Some(after) = args.after.clone() {
-            let after: NaiveDateTime = after.try_into()?;
-            select = select.filter(entity::user::Column::CreatedAt.lte(after));
-        }
-
-        if let Some(before) = args.before.clone() {
-            let before: NaiveDateTime = before.try_into()?;
-            select = select.filter(entity::user::Column::CreatedAt.gte(before));
-        }
-
-        let count_fut = entity::user::Entity::find().count(&self.db);
-        let select_fut = select.all(&self.db);
-
-        let (count, items) = tokio::join!(count_fut, select_fut);
-
-        let count = count.map_err(|e| UserError::Unknown(anyhow::anyhow!(e)))?;
-        let items = items
-            .map_err(|e| UserError::Unknown(anyhow::anyhow!(e)))?
-            .into_iter()
-            .map(|execution| execution.into())
-            .collect::<Vec<_>>();
-
-        Ok(Pagination::new(items, args.before, args.after, take, count))
+        self.user_repo
+            .paginate(args.take.unwrap_or(10), args.after, args.before)
+            .await
     }
 
     async fn create(&self, email: String, username: String, password: String) -> Result<User> {
@@ -124,55 +92,45 @@ impl UserServiceExt for UserService {
         let hash_password = HEXUPPER.encode(&hash_password);
         let salt = HEXUPPER.encode(&salt);
 
-        let created_user = entity::user::ActiveModel {
-            id: Set(Uuid::new_v4()),
-            email: Set(email),
-            username: Set(username),
-            password: Set(hash_password),
-            salt: Set(salt),
-            role: Set(role.into()),
-            created_at: Set(Utc::now().naive_utc()),
-            updated_at: Set(Utc::now().naive_utc()),
-        }
-        .insert(&self.db)
-        .await
-        .map_err(|e| UserError::Unknown(anyhow::anyhow!(e)))?;
+        let user = self
+            .user_repo
+            .create(|s| {
+                s.push_bind(Uuid::new_v4());
+                s.push_bind(email);
+                s.push_bind(username);
+                s.push_bind(hash_password);
+                s.push_bind(salt);
+                s.push_bind(role);
+                s.push_bind(Utc::now().naive_utc());
+                s.push_bind(Utc::now().naive_utc());
+            })
+            .await?;
 
-        Ok(created_user.into())
+        Ok(user)
+    }
+
+    async fn update_by_id(&self, id: Uuid, input: UserUpdateInput) -> Result<User> {
+        let user = self
+            .user_repo
+            .update_by_id(id, |sep| {
+                set_optional!(sep, "email", input.email);
+                set_optional!(sep, "username", input.username);
+            })
+            .await?;
+
+        Ok(user)
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>> {
-        let user = entity::user::Entity::find_by_id(id)
-            .one(&self.db)
-            .await
-            .map_err(|e| UserError::Unknown(anyhow::anyhow!(e)))?
-            .map(|user| user.into());
-
-        Ok(user)
+        self.user_repo.find_by_id(id).await
     }
 
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<User>> {
-        let users = entity::user::Entity::find()
-            .filter(entity::user::Column::Id.is_in(ids))
-            .all(&self.db)
-            .await
-            .map_err(|e| UserError::Unknown(anyhow::anyhow!(e)))?
-            .into_iter()
-            .map(|user| user.into())
-            .collect();
-
-        Ok(users)
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>> {
+        self.user_repo.find_by_ids(ids).await
     }
 
     async fn find_by_email(&self, email: String) -> Result<Option<User>> {
-        let user = entity::user::Entity::find()
-            .filter(entity::user::Column::Email.eq(email))
-            .one(&self.db)
-            .await
-            .map_err(|e| UserError::Unknown(anyhow::anyhow!(e)))?
-            .map(|user| user.into());
-
-        Ok(user)
+        self.user_repo.find_by("email", email).await
     }
 
     fn verify_password(&self, password: &str, salt: &str, hash_password: &str) -> Result<()> {

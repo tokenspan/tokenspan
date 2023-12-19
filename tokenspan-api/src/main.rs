@@ -8,6 +8,7 @@ use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::{middleware, Extension, Json, Router};
 use serde_json::json;
+use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 use tower_http::timeout::TimeoutLayer;
@@ -54,6 +55,12 @@ async fn main() -> Result<()> {
     let config = configs::AppConfig::new().expect("Failed to load config");
     register_tracing(config.env, &config.log);
 
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect("postgres://postgres:123456@localhost/tokenspan")
+        .await?;
+    sqlx::migrate!("./migrations").run(&pool).await?;
+
     let db = connect_db(&config.database).await?;
 
     let trace_layer = TraceLayer::new_for_http()
@@ -76,7 +83,7 @@ async fn main() -> Result<()> {
     let cors_layer = CorsLayer::permissive();
     let timeout_layer = TimeoutLayer::new(Duration::from_secs(10));
 
-    let app_state = state::AppState::new(db, &config).await?;
+    let app_state = state::AppState::new(db, pool, &config).await?;
     let schema = build_schema(app_state.clone()).await;
 
     let app = Router::new()

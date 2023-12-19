@@ -3,7 +3,7 @@ use chrono::Utc;
 use uuid::Uuid;
 
 use crate::api::models::UserRole;
-use crate::api::user::dto::CreateUserInput;
+use crate::api::user::dto::UserCreateInput;
 use crate::api::user::user_model::User;
 
 #[derive(Default)]
@@ -11,7 +11,7 @@ pub struct UserMutation;
 
 #[Object]
 impl UserMutation {
-    async fn create_user<'a>(&self, _ctx: &Context<'a>, input: CreateUserInput) -> Result<User> {
+    async fn create_user<'a>(&self, _ctx: &Context<'a>, input: UserCreateInput) -> Result<User> {
         Ok(User {
             id: Uuid::new_v4(),
             email: input.email,
@@ -20,6 +20,7 @@ impl UserMutation {
             salt: "".to_string(),
             role: UserRole::User,
             created_at: Utc::now().naive_utc(),
+            updated_at: Utc::now().naive_utc(),
         })
     }
 }

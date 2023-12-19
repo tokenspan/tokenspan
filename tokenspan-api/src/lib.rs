@@ -8,4 +8,5 @@ pub mod extractor;
 pub mod graphql;
 pub mod guard;
 pub mod prompt;
+mod repository;
 pub mod state;
