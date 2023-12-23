@@ -1,6 +1,6 @@
-use crate::api::repos::UserRepository;
 use anyhow::Result;
 use magic_crypt::new_magic_crypt;
+use rabbit_orm::Db;
 use sea_orm::DatabaseConnection;
 use sqlx::{Pool, Postgres};
 
@@ -27,10 +27,9 @@ impl AppState {
         app_config: &AppConfig,
     ) -> Result<Self> {
         let mc = new_magic_crypt!(app_config.encryption.secret.clone(), 256);
+        let db1 = Db::new(pool);
 
-        let user_repo = UserRepository::builder().pool(pool.clone()).build();
-        let user_service: UserServiceDyn =
-            UserService::builder().user_repo(user_repo).build().into();
+        let user_service: UserServiceDyn = UserService::builder().db(db1.clone()).build().into();
         let auth_service: AuthServiceDyn = AuthService::builder()
             .user_service(user_service.clone())
             .auth_config(app_config.auth.clone())
@@ -46,7 +45,7 @@ impl AppState {
         let model_service: ModelServiceDyn = ModelService::builder().db(db.clone()).build().into();
 
         let provider_service: ProviderServiceDyn =
-            ProviderService::builder().db(db.clone()).build().into();
+            ProviderService::builder().db(db1.clone()).build().into();
 
         let execution_service: ExecutionServiceDyn =
             ExecutionService::builder().db(db.clone()).build().into();

@@ -4,20 +4,17 @@ use std::sync::Arc;
 use anyhow::Result;
 use chrono::Utc;
 use data_encoding::HEXUPPER;
+use rabbit_orm::pagination::{Cursor, Pagination};
+use rabbit_orm::{Db, Order};
 use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2, rand};
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use tokenspan_extra::pagination::{Cursor, Pagination};
-
 use crate::api::dto::{UserArgs, UserUpdateInput};
 use crate::api::models::UserRole;
 use crate::api::user::user_error::UserError;
 use crate::api::user::user_model::User;
-use crate::api::user::user_repository::UserRepository;
-use crate::repository::RepositoryExt;
-use crate::set_optional;
 
 #[async_trait::async_trait]
 pub trait UserServiceExt {
@@ -41,7 +38,7 @@ pub type UserServiceDyn = Arc<dyn UserServiceExt + Send + Sync>;
 
 #[derive(TypedBuilder)]
 pub struct UserService {
-    user_repo: UserRepository,
+    db: Db,
 }
 
 impl UserService {
@@ -71,9 +68,13 @@ impl UserService {
 #[async_trait::async_trait]
 impl UserServiceExt for UserService {
     async fn paginate(&self, args: UserArgs) -> Result<Pagination<Cursor, User>> {
-        self.user_repo
-            .paginate(args.take.unwrap_or(10), args.after, args.before)
+        self.db
+            .table::<User>()
+            .limit(args.take.unwrap_or(10))
+            .order_by("created_at", Order::Desc)
+            .cursor_paginate(args.before, args.after)
             .await
+            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn create(&self, email: String, username: String, password: String) -> Result<User> {
@@ -92,45 +93,57 @@ impl UserServiceExt for UserService {
         let hash_password = HEXUPPER.encode(&hash_password);
         let salt = HEXUPPER.encode(&salt);
 
-        let user = self
-            .user_repo
-            .create(|s| {
-                s.push_bind(Uuid::new_v4());
-                s.push_bind(email);
-                s.push_bind(username);
-                s.push_bind(hash_password);
-                s.push_bind(salt);
-                s.push_bind(role);
-                s.push_bind(Utc::now().naive_utc());
-                s.push_bind(Utc::now().naive_utc());
-            })
-            .await?;
+        let input = User {
+            id: Uuid::new_v4(),
+            email,
+            username,
+            password: hash_password,
+            salt,
+            role,
+            created_at: Utc::now().naive_utc(),
+            updated_at: Utc::now().naive_utc(),
+        };
 
-        Ok(user)
+        self.db
+            .table::<User>()
+            .insert(input)
+            .await
+            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn update_by_id(&self, id: Uuid, input: UserUpdateInput) -> Result<User> {
-        let user = self
-            .user_repo
-            .update_by_id(id, |sep| {
-                set_optional!(sep, "email", input.email);
-                set_optional!(sep, "username", input.username);
-            })
-            .await?;
-
-        Ok(user)
+        self.db
+            .table::<User>()
+            .where_("id", "=", id)
+            .update(input)
+            .await
+            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>> {
-        self.user_repo.find_by_id(id).await
+        self.db
+            .table::<User>()
+            .find(id)
+            .await
+            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>> {
-        self.user_repo.find_by_ids(ids).await
+        self.db
+            .table::<User>()
+            .where_("id", "in", ids)
+            .get()
+            .await
+            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_email(&self, email: String) -> Result<Option<User>> {
-        self.user_repo.find_by("email", email).await
+        self.db
+            .table::<User>()
+            .where_("email", "=", email)
+            .first()
+            .await
+            .map_err(|e| anyhow::anyhow!(e))
     }
 
     fn verify_password(&self, password: &str, salt: &str, hash_password: &str) -> Result<()> {

@@ -1,4 +1,5 @@
 use async_graphql::InputObject;
+use rabbit_macros::UpdateModel;
 
 #[derive(InputObject)]
 pub struct UserCreateInput {
@@ -7,7 +8,7 @@ pub struct UserCreateInput {
     pub password: String,
 }
 
-#[derive(InputObject)]
+#[derive(InputObject, UpdateModel)]
 pub struct UserUpdateInput {
     pub email: Option<String>,
     pub username: Option<String>,

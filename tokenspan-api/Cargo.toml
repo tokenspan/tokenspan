@@ -9,7 +9,7 @@ async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "su
 async-graphql-axum = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom" }
 async-openai = "0.17.1"
 async-stream = "0.3.5"
-async-trait = "0.1.74"
+async-trait = "0.1.75"
 axum = { git = "https://github.com/linrium/axum", branch = "feat/support-custom-sse-event", features = ["ws"] }
 axum-extra = { version = "0.9.0", features = ["typed-header"] }
 axum-macros = "0.4.0"
@@ -43,6 +43,8 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "ansi"
 uuid = { version = "1.6.1", features = ["v4"] }
 validator = { version = "0.16", features = ["derive"] }
 typed-builder = "0.18.0"
+rabbit-orm = { path = "../../rabbit-orm/rabbit-orm" }
+rabbit-macros = { path = "../../rabbit-orm/rabbit-macros" }
 
 [dependencies.sqlx]
 version = "0.7.3"

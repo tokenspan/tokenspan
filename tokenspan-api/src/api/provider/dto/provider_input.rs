@@ -1,4 +1,5 @@
 use async_graphql::InputObject;
+use rabbit_macros::UpdateModel;
 
 #[derive(InputObject)]
 pub struct ProviderCreateInput {
@@ -6,7 +7,7 @@ pub struct ProviderCreateInput {
     pub slug: String,
 }
 
-#[derive(InputObject)]
+#[derive(InputObject, UpdateModel)]
 pub struct ProviderUpdateInput {
     pub name: Option<String>,
     pub slug: Option<String>,

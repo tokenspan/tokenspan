@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use std::time::Duration;
 
 use anyhow::Result;
@@ -8,12 +9,14 @@ use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::{middleware, Extension, Json, Router};
 use serde_json::json;
-use sqlx::postgres::PgPoolOptions;
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
+use sqlx::ConnectOptions;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace;
 use tower_http::trace::TraceLayer;
+use tracing::log::LevelFilter;
 use tracing::{info, info_span, Level};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -55,9 +58,11 @@ async fn main() -> Result<()> {
     let config = configs::AppConfig::new().expect("Failed to load config");
     register_tracing(config.env, &config.log);
 
+    let url = "postgres://postgres:123456@localhost:5432/tokenspan";
+    let pg_conn_opts = PgConnectOptions::from_str(url)?.log_statements(LevelFilter::Info);
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect("postgres://postgres:123456@localhost/tokenspan")
+        .connect_with(pg_conn_opts)
         .await?;
     sqlx::migrate!("./migrations").run(&pool).await?;
 

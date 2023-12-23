@@ -15,7 +15,7 @@ mutation SignIn($input: SignInInput!) {
 
 {
   "input": {
-    "email": "linh@gmail.com",
+    "email": "linh2@gmail.com",
     "password": "123"
   }
 }

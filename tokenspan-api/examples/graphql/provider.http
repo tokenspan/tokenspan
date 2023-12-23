@@ -14,8 +14,8 @@ mutation CreateProvider($input: ProviderCreateInput!) {
 
 {
   "input": {
-    "name": "OpenAI",
-    "slug": "openai"
+    "name": "AWS",
+    "slug": "aws"
   }
 }
 
@@ -24,13 +24,22 @@ GRAPHQL {{host}}/graphql
 Authorization: Bearer {{token}}
 
 query GetProviders {
-  providers {
-    nodes {
-      id
-      name
-      slug
-      createdAt
-      updatedAt
+  providers(args: {take: 1, before: "Y3JlYXRlZF9hdDoxNzAzMzI1MzE2MzQwOTA4"}) {
+    edges {
+      node {
+        id
+        name
+        slug
+        createdAt
+        updatedAt
+      }
+      cursor
+    }
+    pageInfo {
+      endCursor
+      startCursor
+      hasNextPage
+      hasPreviousPage
     }
   }
 }

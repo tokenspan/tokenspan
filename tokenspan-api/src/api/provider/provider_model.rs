@@ -1,10 +1,12 @@
 use async_graphql::SimpleObject;
 use chrono::NaiveDateTime;
-use sea_orm::prelude::Uuid;
+use rabbit_macros::Model;
+use rabbit_orm::pagination::{Cursor, CursorExt};
+use sqlx::FromRow;
+use uuid::Uuid;
 
-use tokenspan_extra::pagination::{Cursor, CursorExt};
-
-#[derive(SimpleObject, Debug, Clone)]
+#[derive(SimpleObject, Debug, Clone, FromRow, Model)]
+#[model(name = "providers")]
 pub struct Provider {
     pub id: Uuid,
     pub name: String,
@@ -15,18 +17,6 @@ pub struct Provider {
 
 impl CursorExt<Cursor> for Provider {
     fn cursor(&self) -> Cursor {
-        self.created_at.into()
-    }
-}
-
-impl From<entity::provider::Model> for Provider {
-    fn from(value: entity::provider::Model) -> Self {
-        Self {
-            id: value.id,
-            name: value.name,
-            slug: value.slug,
-            updated_at: value.updated_at,
-            created_at: value.created_at,
-        }
+        Cursor::new("created_at".to_string(), self.created_at.timestamp_micros())
     }
 }
