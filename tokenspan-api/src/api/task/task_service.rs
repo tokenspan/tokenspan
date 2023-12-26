@@ -267,7 +267,7 @@ impl TaskServiceExt for TaskService {
         let start = Instant::now();
         let (status, output, usage, error) = match response {
             Err(e) => (
-                ExecutionStatus::Failure,
+                ExecutionStatus::Failed,
                 None,
                 None,
                 Some(json!(e.to_string())),

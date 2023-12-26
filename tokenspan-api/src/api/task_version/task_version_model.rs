@@ -60,12 +60,12 @@ impl CursorExt<Cursor> for TaskVersion {
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "task_version_status", rename_all = "SCREAMING_SNAKE_CASE")]
+#[sqlx(type_name = "task_version_status", rename_all = "lowercase")]
 pub enum TaskVersionStatus {
-    #[strum(serialize = "DRAFT")]
-    #[serde(rename = "DRAFT")]
+    #[strum(serialize = "draft")]
+    #[serde(rename = "published")]
     Draft,
-    #[strum(serialize = "RELEASED")]
-    #[serde(rename = "RELEASED")]
-    Released,
+    #[strum(serialize = "published")]
+    #[serde(rename = "published")]
+    Published,
 }

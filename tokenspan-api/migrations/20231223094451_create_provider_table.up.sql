@@ -10,4 +10,5 @@ CREATE TABLE IF NOT EXISTS providers
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+CREATE UNIQUE INDEX idx_provider_slug ON providers (slug);
 CREATE INDEX idx_provider_created_at ON providers (created_at);

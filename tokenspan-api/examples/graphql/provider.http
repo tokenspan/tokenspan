@@ -24,7 +24,7 @@ GRAPHQL {{host}}/graphql
 Authorization: Bearer {{token}}
 
 query GetProviders {
-  providers(args: {take: 1, before: "Y3JlYXRlZF9hdDoxNzAzMzI1MzE2MzQwOTA4"}) {
+  providers {
     edges {
       node {
         id

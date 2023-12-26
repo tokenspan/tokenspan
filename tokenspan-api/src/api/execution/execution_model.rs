@@ -52,10 +52,10 @@ impl CursorExt<Cursor> for Execution {
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Display, Serialize, sqlx::Type)]
-#[sqlx(type_name = "execution_status", rename_all = "SCREAMING_SNAKE_CASE")]
+#[sqlx(type_name = "execution_status", rename_all = "lowercase")]
 pub enum ExecutionStatus {
-    #[strum(serialize = "SUCCESS")]
+    #[strum(serialize = "success")]
     Success,
-    #[strum(serialize = "FAILURE")]
-    Failure,
+    #[strum(serialize = "failed")]
+    Failed,
 }

@@ -1,7 +1,7 @@
 -- Add up migration script here
 
 -- create enum type for user role
-CREATE TYPE user_role AS ENUM ('ADMIN', 'USER');
+CREATE TYPE user_role AS ENUM ('admin', 'user');
 
 -- create user table
 CREATE TABLE IF NOT EXISTS users

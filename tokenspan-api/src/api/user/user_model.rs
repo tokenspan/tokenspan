@@ -28,10 +28,10 @@ impl CursorExt<Cursor> for User {
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Display, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "user_role", rename_all = "UPPERCASE")]
+#[sqlx(type_name = "user_role", rename_all = "lowercase")]
 pub enum UserRole {
-    #[strum(serialize = "ADMIN")]
+    #[strum(serialize = "admin")]
     Admin,
-    #[strum(serialize = "USER")]
+    #[strum(serialize = "user")]
     User,
 }
