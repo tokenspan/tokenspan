@@ -1,17 +1,18 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::{ComplexObject, Context, Result, SimpleObject};
 use chrono::NaiveDateTime;
-use sea_orm::prelude::Uuid;
-
-use tokenspan_extra::pagination::{Cursor, CursorExt};
+use rabbit_macros::Model;
+use rabbit_orm::pagination::{Cursor, CursorExt};
+use uuid::Uuid;
 
 use crate::api::loaders::{ProviderLoader, UserLoader};
 use crate::api::models::{Provider, User};
 use crate::api::user::user_error::UserError;
 use crate::error::AppError;
 
-#[derive(SimpleObject, Clone)]
+#[derive(SimpleObject, Clone, Model)]
 #[graphql(complex)]
+#[rabbit(name = "api_keys")]
 pub struct ApiKey {
     pub id: Uuid,
     pub name: String,
@@ -51,20 +52,6 @@ impl ApiKey {
 
 impl CursorExt<Cursor> for ApiKey {
     fn cursor(&self) -> Cursor {
-        self.created_at.clone().into()
-    }
-}
-
-impl From<entity::api_key::Model> for ApiKey {
-    fn from(value: entity::api_key::Model) -> Self {
-        Self {
-            id: value.id.into(),
-            name: value.name,
-            key: value.key,
-            owner_id: value.owner_id.into(),
-            provider_id: value.provider_id.into(),
-            created_at: value.created_at,
-            updated_at: value.updated_at,
-        }
+        Cursor::new("created_at".to_string(), self.created_at.timestamp_micros())
     }
 }

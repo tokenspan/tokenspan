@@ -21,7 +21,6 @@ use tracing::{info, info_span, Level};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-use tokenspan_api::db::connect_db;
 use tokenspan_api::graphql::*;
 use tokenspan_api::{api, configs, guard, state};
 
@@ -66,8 +65,6 @@ async fn main() -> Result<()> {
         .await?;
     sqlx::migrate!("./migrations").run(&pool).await?;
 
-    let db = connect_db(&config.database).await?;
-
     let trace_layer = TraceLayer::new_for_http()
         .make_span_with(|request: &Request<_>| {
             // Log the matched route's path (with placeholders not filled in).
@@ -88,7 +85,7 @@ async fn main() -> Result<()> {
     let cors_layer = CorsLayer::permissive();
     let timeout_layer = TimeoutLayer::new(Duration::from_secs(10));
 
-    let app_state = state::AppState::new(db, pool, &config).await?;
+    let app_state = state::AppState::new(pool, &config).await?;
     let schema = build_schema(app_state.clone()).await;
 
     let app = Router::new()

@@ -1,20 +1,23 @@
 use async_graphql::{ComplexObject, Context, Result, SimpleObject};
 use chrono::NaiveDateTime;
-use sea_orm::prelude::Uuid;
+use rabbit_macros::Model;
 use serde::Serialize;
 
-use tokenspan_extra::pagination::{Cursor, CursorExt};
+use rabbit_orm::pagination::{Cursor, CursorExt};
+use uuid::Uuid;
 
 use crate::api::models::TaskVersion;
 use crate::api::services::TaskVersionServiceDyn;
 use crate::error::AppError;
 
-#[derive(SimpleObject, Clone, Serialize)]
+#[derive(SimpleObject, Clone, Serialize, Model)]
 #[graphql(complex)]
+#[rabbit(name = "tasks")]
 pub struct Task {
     pub id: Uuid,
     pub name: String,
     pub slug: String,
+    pub owner_id: Uuid,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -44,18 +47,6 @@ impl Task {
 
 impl CursorExt<Cursor> for Task {
     fn cursor(&self) -> Cursor {
-        self.created_at.into()
-    }
-}
-
-impl From<entity::task::Model> for Task {
-    fn from(input: entity::task::Model) -> Self {
-        Self {
-            id: input.id,
-            name: input.name,
-            slug: input.slug,
-            created_at: input.created_at,
-            updated_at: input.updated_at,
-        }
+        Cursor::new("created_at".to_string(), self.created_at.timestamp_micros())
     }
 }

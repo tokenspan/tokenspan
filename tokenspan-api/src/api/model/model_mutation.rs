@@ -34,7 +34,7 @@ impl ModelMutation {
         ctx: &Context<'a>,
         id: Uuid,
         input: ModelUpdateInput,
-    ) -> Result<Model> {
+    ) -> Result<Option<Model>> {
         let model_service = ctx
             .data::<ModelServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -45,7 +45,7 @@ impl ModelMutation {
     }
 
     #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
-    pub async fn delete_model<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Model> {
+    pub async fn delete_model<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<Model>> {
         let model_service = ctx
             .data::<ModelServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

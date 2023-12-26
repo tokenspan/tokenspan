@@ -2,13 +2,12 @@ use async_graphql::{Enum, SimpleObject};
 use chrono::NaiveDateTime;
 use rabbit_macros::Model;
 use rabbit_orm::pagination::{Cursor, CursorExt};
-use sea_orm::prelude::Uuid;
 use serde::Deserialize;
-use sqlx::FromRow;
 use strum_macros::{Display, EnumString};
+use uuid::Uuid;
 
-#[derive(SimpleObject, Clone, Debug, FromRow, Model)]
-#[model(name = "users")]
+#[derive(SimpleObject, Clone, Debug, Model)]
+#[rabbit(name = "users")]
 pub struct User {
     pub id: Uuid,
     pub email: String,

@@ -42,7 +42,7 @@ impl ApiKeyMutation {
         ctx: &Context<'a>,
         id: Uuid,
         input: ApiKeyUpdateInput,
-    ) -> Result<ApiKey> {
+    ) -> Result<Option<ApiKey>> {
         let api_key_service = ctx
             .data::<ApiKeyServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -53,7 +53,7 @@ impl ApiKeyMutation {
     }
 
     #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
-    pub async fn delete_api_key<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<ApiKey> {
+    pub async fn delete_api_key<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<ApiKey>> {
         let api_key_service = ctx
             .data::<ApiKeyServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

@@ -7,8 +7,8 @@ use rabbit_orm::{Db, Order};
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
+use crate::api::models::Provider;
 use crate::api::provider::dto::{ProviderArgs, ProviderCreateInput, ProviderUpdateInput};
-use crate::api::provider::provider_model::Provider;
 
 #[async_trait::async_trait]
 pub trait ProviderServiceExt {
@@ -17,8 +17,8 @@ pub trait ProviderServiceExt {
     async fn find_by_slug(&self, slug: String) -> Result<Option<Provider>>;
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Provider>>;
     async fn create(&self, input: ProviderCreateInput) -> Result<Provider>;
-    async fn update_by_id(&self, id: Uuid, input: ProviderUpdateInput) -> Result<Provider>;
-    async fn delete_by_id(&self, id: Uuid) -> Result<Provider>;
+    async fn update_by_id(&self, id: Uuid, input: ProviderUpdateInput) -> Result<Option<Provider>>;
+    async fn delete_by_id(&self, id: Uuid) -> Result<Option<Provider>>;
 }
 
 pub type ProviderServiceDyn = Arc<dyn ProviderServiceExt + Send + Sync>;
@@ -32,17 +32,21 @@ pub struct ProviderService {
 impl ProviderServiceExt for ProviderService {
     async fn paginate(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>> {
         self.db
-            .table::<Provider>()
-            .limit(args.take.unwrap_or(10))
+            .clone()
+            .from::<Provider>()
+            .select_all()
+            .cursor(args.before, args.after)
             .order_by("created_at", Order::Desc)
-            .cursor_paginate(args.before, args.after)
+            .limit(args.take.unwrap_or(10))
             .await
             .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Provider>> {
         self.db
-            .table::<Provider>()
+            .clone()
+            .from::<Provider>()
+            .select_all()
             .find(id)
             .await
             .map_err(|e| anyhow::anyhow!(e))
@@ -50,8 +54,10 @@ impl ProviderServiceExt for ProviderService {
 
     async fn find_by_slug(&self, slug: String) -> Result<Option<Provider>> {
         self.db
-            .table::<Provider>()
-            .where_("slug", "=", slug)
+            .clone()
+            .from::<Provider>()
+            .select_all()
+            .and_where("slug", "=", slug)
             .first()
             .await
             .map_err(|e| anyhow::anyhow!(e))
@@ -59,9 +65,11 @@ impl ProviderServiceExt for ProviderService {
 
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Provider>> {
         self.db
-            .table::<Provider>()
-            .where_("id", "in", ids)
-            .get()
+            .clone()
+            .from::<Provider>()
+            .select_all()
+            .and_where("id", "in", ids)
+            .all()
             .await
             .map_err(|e| anyhow::anyhow!(e))
     }
@@ -76,31 +84,33 @@ impl ProviderServiceExt for ProviderService {
         };
 
         self.db
-            .table::<Provider>()
+            .clone()
+            .from::<Provider>()
             .insert(input)
             .await
             .map_err(|e| anyhow::anyhow!(e))
     }
 
-    async fn update_by_id(&self, id: Uuid, input: ProviderUpdateInput) -> Result<Provider> {
+    async fn update_by_id(&self, id: Uuid, input: ProviderUpdateInput) -> Result<Option<Provider>> {
         self.db
-            .table::<Provider>()
-            .where_("id", "=", id)
+            .clone()
+            .from::<Provider>()
             .update(input)
+            .and_where("id", "=", id)
+            .first()
             .await
             .map_err(|e| anyhow::anyhow!(e))
     }
 
-    async fn delete_by_id(&self, id: Uuid) -> Result<Provider> {
+    async fn delete_by_id(&self, id: Uuid) -> Result<Option<Provider>> {
         self.db
-            .table::<Provider>()
-            .where_("id", "=", id)
+            .clone()
+            .from::<Provider>()
             .delete()
-            .await
-            .map_err(|e| anyhow::anyhow!(e))?
+            .and_where("id", "=", id)
             .first()
-            .cloned()
-            .ok_or(anyhow::anyhow!("Provider not found"))
+            .await
+            .map_err(|e| anyhow::anyhow!(e))
     }
 }
 

@@ -12,9 +12,8 @@ use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
 use crate::api::dto::{UserArgs, UserUpdateInput};
-use crate::api::models::UserRole;
+use crate::api::models::{User, UserRole};
 use crate::api::user::user_error::UserError;
-use crate::api::user::user_model::User;
 
 #[async_trait::async_trait]
 pub trait UserServiceExt {
@@ -27,7 +26,7 @@ pub trait UserServiceExt {
         password: String,
         role: UserRole,
     ) -> Result<User>;
-    async fn update_by_id(&self, id: Uuid, input: UserUpdateInput) -> Result<User>;
+    async fn update_by_id(&self, id: Uuid, input: UserUpdateInput) -> Result<Option<User>>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>>;
     async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>>;
     async fn find_by_email(&self, email: String) -> Result<Option<User>>;
@@ -69,10 +68,12 @@ impl UserService {
 impl UserServiceExt for UserService {
     async fn paginate(&self, args: UserArgs) -> Result<Pagination<Cursor, User>> {
         self.db
-            .table::<User>()
-            .limit(args.take.unwrap_or(10))
+            .clone()
+            .from::<User>()
+            .select_all()
+            .cursor(args.before, args.after)
             .order_by("created_at", Order::Desc)
-            .cursor_paginate(args.before, args.after)
+            .limit(args.take.unwrap_or(10))
             .await
             .map_err(|e| anyhow::anyhow!(e))
     }
@@ -105,24 +106,29 @@ impl UserServiceExt for UserService {
         };
 
         self.db
-            .table::<User>()
+            .clone()
+            .from::<User>()
             .insert(input)
             .await
             .map_err(|e| anyhow::anyhow!(e))
     }
 
-    async fn update_by_id(&self, id: Uuid, input: UserUpdateInput) -> Result<User> {
+    async fn update_by_id(&self, id: Uuid, input: UserUpdateInput) -> Result<Option<User>> {
         self.db
-            .table::<User>()
-            .where_("id", "=", id)
+            .clone()
+            .from::<User>()
             .update(input)
+            .and_where("id", "=", id)
+            .first()
             .await
             .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>> {
         self.db
-            .table::<User>()
+            .clone()
+            .from::<User>()
+            .select_all()
             .find(id)
             .await
             .map_err(|e| anyhow::anyhow!(e))
@@ -130,17 +136,21 @@ impl UserServiceExt for UserService {
 
     async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>> {
         self.db
-            .table::<User>()
-            .where_("id", "in", ids)
-            .get()
+            .clone()
+            .from::<User>()
+            .select_all()
+            .and_where("id", "in", ids)
+            .all()
             .await
             .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_email(&self, email: String) -> Result<Option<User>> {
         self.db
-            .table::<User>()
-            .where_("email", "=", email)
+            .clone()
+            .from::<User>()
+            .select_all()
+            .and_where("email", "=", email)
             .first()
             .await
             .map_err(|e| anyhow::anyhow!(e))

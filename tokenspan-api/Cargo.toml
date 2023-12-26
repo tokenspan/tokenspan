@@ -18,18 +18,15 @@ chrono = { version = "0.4.31", features = ["serde"] }
 config = "0.13.1"
 data-encoding = "2.4.0"
 dotenv = "0.15.0"
-entity = { path = "./entity" }
 futures = "0.3"
 futures-util = "0.3.29"
 jsonwebtoken = "9"
 magic-crypt = "3.1.13"
-migration = { path = "./migration" }
 openssl = { version = "0.10.59", features = ["vendored"] }
 regex = "1.10.2"
 ring = "0.17.5"
-sea-orm = { version = "0.12", features = ["sqlx-postgres", "runtime-tokio-native-tls", "macros", "debug-print", "with-chrono", "with-json", "with-uuid"] }
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde_json = { version = "1.0", features = ["raw_value"] }
 strum = "0.25"
 strum_macros = "0.25"
 thiserror = "1.0.50"

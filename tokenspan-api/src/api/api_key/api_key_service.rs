@@ -1,19 +1,13 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use chrono::{NaiveDateTime, Utc};
+use chrono::Utc;
 use magic_crypt::{MagicCrypt256, MagicCryptTrait};
-use sea_orm::ActiveValue::Set;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
-    PaginatorTrait, QueryFilter, QueryOrder, QuerySelect,
-};
+use rabbit_orm::pagination::{Cursor, Pagination};
+use rabbit_orm::{Db, Order};
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use tokenspan_extra::pagination::{Cursor, Pagination};
-
-use crate::api::api_key::api_key_error::ApiKeyError;
 use crate::api::api_key::api_key_model::ApiKey;
 use crate::api::api_key::dto::{ApiKeyArgs, ApiKeyCreateInput, ApiKeyUpdateInput};
 
@@ -24,15 +18,15 @@ pub trait ApiKeyServiceExt {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<ApiKey>>;
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<ApiKey>>;
     async fn create(&self, input: ApiKeyCreateInput, owner_id: Uuid) -> Result<ApiKey>;
-    async fn update_by_id(&self, id: Uuid, input: ApiKeyUpdateInput) -> Result<ApiKey>;
-    async fn delete_by_id(&self, id: Uuid) -> Result<ApiKey>;
+    async fn update_by_id(&self, id: Uuid, input: ApiKeyUpdateInput) -> Result<Option<ApiKey>>;
+    async fn delete_by_id(&self, id: Uuid) -> Result<Option<ApiKey>>;
 }
 
 pub type ApiKeyServiceDyn = Arc<dyn ApiKeyServiceExt + Send + Sync>;
 
 #[derive(TypedBuilder)]
 pub struct ApiKeyService {
-    db: DatabaseConnection,
+    db: Db,
     mc: MagicCrypt256,
 }
 
@@ -49,120 +43,77 @@ impl ApiKeyServiceExt for ApiKeyService {
     }
 
     async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<Cursor, ApiKey>> {
-        let take = args.take.unwrap_or(10);
-        let limit = take
-            + if args.after.is_some() || args.before.is_some() {
-                2
-            } else {
-                1
-            };
-        let mut select = entity::api_key::Entity::find()
-            .limit(Some(limit))
-            .order_by_desc(entity::api_key::Column::CreatedAt);
-
-        if let Some(after) = args.after.clone() {
-            let after: NaiveDateTime = after.try_into()?;
-            select = select.filter(entity::api_key::Column::CreatedAt.lte(after));
-        }
-
-        if let Some(before) = args.before.clone() {
-            let before: NaiveDateTime = before.try_into()?;
-            select = select.filter(entity::api_key::Column::CreatedAt.gte(before));
-        }
-
-        let count_fut = entity::api_key::Entity::find().count(&self.db);
-        let select_fut = select.all(&self.db);
-
-        let (count, items) = tokio::join!(count_fut, select_fut);
-
-        let count = count.map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?;
-        let items = items
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
-            .into_iter()
-            .map(|api_key| api_key.into())
-            .collect::<Vec<_>>();
-
-        Ok(Pagination::new(items, args.before, args.after, take, count))
+        self.db
+            .clone()
+            .from::<ApiKey>()
+            .select_all()
+            .cursor(args.before, args.after)
+            .order_by("created_at", Order::Desc)
+            .limit(args.take.unwrap_or(10))
+            .await
+            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<ApiKey>> {
-        let api_key = entity::api_key::Entity::find_by_id(id)
-            .one(&self.db)
+        self.db
+            .clone()
+            .from::<ApiKey>()
+            .select_all()
+            .find(id)
             .await
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
-            .map(|api_key| api_key.into());
-
-        Ok(api_key)
+            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<ApiKey>> {
-        let api_keys = entity::api_key::Entity::find()
-            .filter(entity::api_key::Column::Id.is_in(ids))
-            .all(&self.db)
+        self.db
+            .clone()
+            .from::<ApiKey>()
+            .select_all()
+            .and_where("id", "in", ids)
+            .all()
             .await
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
-            .into_iter()
-            .map(|api_key| api_key.into())
-            .collect();
-
-        Ok(api_keys)
+            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn create(&self, input: ApiKeyCreateInput, owner_id: Uuid) -> Result<ApiKey> {
-        let created_api_key = entity::api_key::ActiveModel {
-            id: Set(Uuid::new_v4()),
-            name: Set(input.name),
-            key: Set(self.encrypt(input.key)),
-            owner_id: Set(owner_id.into()),
-            provider_id: Set(input.provider_id.into()),
-            created_at: Set(Utc::now().naive_utc()),
-            updated_at: Set(Utc::now().naive_utc()),
-        }
-        .insert(&self.db)
-        .await
-        .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
-        .into();
+        let input = ApiKey {
+            id: Uuid::new_v4(),
+            owner_id,
+            name: input.name,
+            key: self.encrypt(input.key),
+            provider_id: input.provider_id,
+            created_at: Utc::now().naive_utc(),
+            updated_at: Utc::now().naive_utc(),
+        };
 
-        Ok(created_api_key)
-    }
-
-    async fn update_by_id(&self, id: Uuid, input: ApiKeyUpdateInput) -> Result<ApiKey> {
-        let mut api_key = entity::api_key::Entity::find_by_id(id)
-            .one(&self.db)
-            .await
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
-            .ok_or(ApiKeyError::Unknown(anyhow::anyhow!("ApiKey not found")))?
-            .into_active_model();
-
-        api_key.updated_at = Set(Utc::now().naive_utc());
-
-        if let Some(name) = input.name {
-            api_key.name = Set(name);
-        }
-
-        let updated_api_key = api_key
-            .update(&self.db)
-            .await
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
-            .into();
-
-        Ok(updated_api_key)
-    }
-
-    async fn delete_by_id(&self, id: Uuid) -> Result<ApiKey> {
-        let deleted_api_key = entity::api_key::Entity::find_by_id(id)
-            .one(&self.db)
-            .await
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
-            .ok_or(ApiKeyError::Unknown(anyhow::anyhow!("ApiKey not found")))?;
-
-        deleted_api_key
+        self.db
             .clone()
-            .delete(&self.db)
+            .from::<ApiKey>()
+            .insert(input)
             .await
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?;
+            .map_err(|e| anyhow::anyhow!(e))
+    }
 
-        Ok(deleted_api_key.into())
+    async fn update_by_id(&self, id: Uuid, input: ApiKeyUpdateInput) -> Result<Option<ApiKey>> {
+        self.db
+            .clone()
+            .from::<ApiKey>()
+            .update(input)
+            .and_where("id", "=", id)
+            .first()
+            .await
+            .map_err(|e| anyhow::anyhow!(e))
+    }
+
+    async fn delete_by_id(&self, id: Uuid) -> Result<Option<ApiKey>> {
+        self.db
+            .clone()
+            .from::<ApiKey>()
+            .delete()
+            .and_where("id", "=", id)
+            .first()
+            .await
+            .map_err(|e| anyhow::anyhow!(e))
     }
 }
 

@@ -1,6 +1,5 @@
 use async_graphql::InputObject;
-use chrono::Utc;
-use sea_orm::ActiveValue::Set;
+use rabbit_macros::UpdateModel;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
@@ -12,7 +11,7 @@ pub struct TaskVersionCreateInput {
     #[builder(default = "0.0.0".to_string())]
     pub semver: String,
     #[builder(default = 0)]
-    pub version: u32,
+    pub version: i32,
     #[builder(default)]
     pub release_note: Option<String>,
     #[builder(default)]
@@ -22,23 +21,10 @@ pub struct TaskVersionCreateInput {
     pub messages: Vec<MessageCreateInput>,
 }
 
-#[derive(InputObject)]
+#[derive(InputObject, UpdateModel)]
 pub struct TaskVersionUpdateInput {
     pub description: Option<String>,
     pub document: Option<String>,
+    #[rabbit(embedded)]
     pub messages: Option<Vec<MessageCreateInput>>,
-}
-
-impl TaskVersionUpdateInput {
-    pub fn copy(&self, model: &mut entity::task_version::ActiveModel) {
-        if let Some(ref description) = self.description {
-            model.description = Set(Some(description.clone()));
-        }
-
-        if let Some(ref document) = self.document {
-            model.document = Set(Some(document.clone()));
-        }
-
-        model.updated_at = Set(Utc::now().naive_utc());
-    }
 }

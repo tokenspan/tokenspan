@@ -1,7 +1,7 @@
 use async_graphql::connection::Connection;
 use async_graphql::{Context, Object, Result};
 
-use tokenspan_extra::pagination::{AdditionalFields, Cursor};
+use rabbit_orm::pagination::{AdditionalFields, Cursor};
 
 use crate::api::dto::TaskVersionBy;
 use crate::api::models::TaskVersion;

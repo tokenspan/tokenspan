@@ -6,7 +6,7 @@ use crate::api::provider::dto::ProviderArgs;
 use crate::api::provider::provider_model::Provider;
 use crate::api::services::ProviderServiceDyn;
 use crate::error::AppError;
-use rabbit_orm::pagination::{AdditionalFields1, Cursor};
+use rabbit_orm::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct ProviderQuery;
@@ -17,7 +17,7 @@ impl ProviderQuery {
         &self,
         ctx: &Context<'a>,
         #[graphql(default)] args: ProviderArgs,
-    ) -> Result<Connection<Cursor, Provider, AdditionalFields1>> {
+    ) -> Result<Connection<Cursor, Provider, AdditionalFields>> {
         let provider_service = ctx
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

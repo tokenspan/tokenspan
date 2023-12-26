@@ -51,7 +51,7 @@ impl TaskMutation {
         ctx: &Context<'a>,
         id: Uuid,
         input: TaskUpdateInput,
-    ) -> Result<Task> {
+    ) -> Result<Option<Task>> {
         let task_service = ctx
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
@@ -62,7 +62,7 @@ impl TaskMutation {
     }
 
     #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
-    pub async fn delete_task<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Task> {
+    pub async fn delete_task<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<Task>> {
         let task_service = ctx
             .data::<TaskServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;

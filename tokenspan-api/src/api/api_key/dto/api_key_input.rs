@@ -1,4 +1,5 @@
 use async_graphql::InputObject;
+use rabbit_macros::UpdateModel;
 use uuid::Uuid;
 
 #[derive(InputObject)]
@@ -9,7 +10,7 @@ pub struct ApiKeyCreateInput {
     pub provider_id: Uuid,
 }
 
-#[derive(InputObject)]
+#[derive(InputObject, UpdateModel)]
 pub struct ApiKeyUpdateInput {
     pub name: Option<String>,
 }

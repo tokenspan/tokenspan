@@ -1,12 +1,12 @@
 use async_graphql::connection::Connection;
 use async_graphql::{Context, Object, Result};
+use rabbit_orm::pagination::{AdditionalFields, Cursor};
 use uuid::Uuid;
 
 use crate::api::execution::dto::ExecutionArgs;
 use crate::api::execution::execution_model::Execution;
 use crate::api::services::ExecutionServiceDyn;
 use crate::error::AppError;
-use tokenspan_extra::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct ExecutionQuery;

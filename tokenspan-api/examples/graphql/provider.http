@@ -43,3 +43,24 @@ query GetProviders {
     }
   }
 }
+
+### Update provider by id
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation UpdateProvider($id: UUID!, $input: ProviderUpdateInput!) {
+  updateProvider(id: $id, input: $input) {
+    id
+    name
+    slug
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "id": "c0660675-0b86-4bb2-aaed-f806e2823e2d",
+  "input": {
+    "slug": "zzz"
+  }
+}
