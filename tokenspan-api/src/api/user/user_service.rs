@@ -4,8 +4,9 @@ use std::sync::Arc;
 use anyhow::Result;
 use chrono::Utc;
 use data_encoding::HEXUPPER;
-use rabbit_orm::pagination::{Cursor, Pagination};
-use rabbit_orm::{Db, Order};
+use dojo_orm::ops::{and, eq, in_list};
+use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::Database;
 use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2, rand};
 use typed_builder::TypedBuilder;
@@ -37,7 +38,7 @@ pub type UserServiceDyn = Arc<dyn UserServiceExt + Send + Sync>;
 
 #[derive(TypedBuilder)]
 pub struct UserService {
-    db: Db,
+    db: Database,
 }
 
 impl UserService {
@@ -68,14 +69,11 @@ impl UserService {
 impl UserServiceExt for UserService {
     async fn paginate(&self, args: UserArgs) -> Result<Pagination<Cursor, User>> {
         self.db
-            .clone()
-            .from::<User>()
-            .select_all()
-            .cursor(args.before, args.after)
-            .order_by("created_at", Order::Desc)
+            .bind::<User>()
+            .cursor(&args.before, &args.after)
             .limit(args.take.unwrap_or(10))
+            .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn create(&self, email: String, username: String, password: String) -> Result<User> {
@@ -105,55 +103,39 @@ impl UserServiceExt for UserService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db
-            .clone()
-            .from::<User>()
-            .insert(input)
-            .await
-            .map_err(|e| anyhow::anyhow!(e))
+        self.db.insert(&input).await
     }
 
     async fn update_by_id(&self, id: Uuid, input: UserUpdateInput) -> Result<Option<User>> {
         self.db
-            .clone()
-            .from::<User>()
-            .update(input)
-            .and_where("id", "=", id)
+            .update(&input)
+            .where_by(and(vec![eq("id", &id)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>> {
         self.db
-            .clone()
-            .from::<User>()
-            .select_all()
-            .find(id)
+            .bind::<User>()
+            .where_by(and(vec![eq("id", &id)]))
+            .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>> {
         self.db
-            .clone()
-            .from::<User>()
-            .select_all()
-            .and_where("id", "in", ids)
+            .bind::<User>()
+            .where_by(and(vec![in_list("id", &ids.to_vec())]))
             .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_email(&self, email: String) -> Result<Option<User>> {
         self.db
-            .clone()
-            .from::<User>()
-            .select_all()
-            .and_where("email", "=", email)
+            .bind::<User>()
+            .where_by(and(vec![eq("email", &email)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     fn verify_password(&self, password: &str, salt: &str, hash_password: &str) -> Result<()> {

@@ -1,11 +1,11 @@
 use async_graphql::SimpleObject;
 use chrono::NaiveDateTime;
-use rabbit_macros::Model;
-use rabbit_orm::pagination::{Cursor, CursorExt};
+use dojo_macros::Model;
+use dojo_orm::pagination::{Cursor, CursorExt};
 use uuid::Uuid;
 
 #[derive(SimpleObject, Debug, Clone, Model)]
-#[rabbit(name = "providers")]
+#[dojo(name = "providers")]
 pub struct Provider {
     pub id: Uuid,
     pub name: String,

@@ -3,9 +3,9 @@ use std::sync::Arc;
 use anyhow::Result;
 use axum::extract::FromRef;
 use chrono::Utc;
-use futures_util::TryFutureExt;
-use rabbit_orm::pagination::{Cursor, Pagination};
-use rabbit_orm::{Db, Order};
+use dojo_orm::ops::{and, eq, in_list};
+use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::Database;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
@@ -34,53 +34,42 @@ impl FromRef<AppState> for ModelServiceDyn {
 
 #[derive(TypedBuilder)]
 pub struct ModelService {
-    db: Db,
+    db: Database,
 }
 
 #[async_trait::async_trait]
 impl ModelServiceExt for ModelService {
     async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>> {
         self.db
-            .clone()
-            .from::<Model>()
-            .select_all()
-            .cursor(args.before, args.after)
-            .order_by("created_at", Order::Desc)
+            .bind::<Model>()
+            .cursor(&args.before, &args.after)
             .limit(args.take.unwrap_or(10))
+            .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Model>> {
         self.db
-            .clone()
-            .from::<Model>()
-            .select_all()
-            .find(id)
-            .map_err(|e| anyhow::anyhow!(e))
+            .bind::<Model>()
+            .where_by(and(vec![eq("id", &id)]))
+            .first()
             .await
     }
 
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Model>> {
         self.db
-            .clone()
-            .from::<Model>()
-            .select_all()
-            .and_where("id", "in", ids)
+            .bind::<Model>()
+            .where_by(and(vec![in_list("id", &ids)]))
             .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_slug(&self, slug: String) -> Result<Option<Model>> {
         self.db
-            .clone()
-            .from::<Model>()
-            .select_all()
-            .and_where("slug", "=", slug)
+            .bind::<Model>()
+            .where_by(and(vec![eq("slug", &slug)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn create(&self, input: ModelCreateInput) -> Result<Model> {
@@ -98,34 +87,23 @@ impl ModelServiceExt for ModelService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db
-            .clone()
-            .from::<Model>()
-            .insert(input)
-            .await
-            .map_err(|e| anyhow::anyhow!(e))
+        self.db.insert(&input).await
     }
 
     async fn update_by_id(&self, id: Uuid, input: ModelUpdateInput) -> Result<Option<Model>> {
         self.db
-            .clone()
-            .from::<Model>()
-            .update(input)
-            .and_where("id", "=", id)
+            .update(&input)
+            .where_by(and(vec![eq("id", &id)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<Model>> {
         self.db
-            .clone()
-            .from::<Model>()
             .delete()
-            .and_where("id", "=", id)
+            .where_by(and(vec![eq("id", &id)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 }
 

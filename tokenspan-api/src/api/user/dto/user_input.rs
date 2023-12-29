@@ -1,5 +1,5 @@
 use async_graphql::InputObject;
-use rabbit_macros::UpdateModel;
+use dojo_macros::UpdateModel;
 
 #[derive(InputObject)]
 pub struct UserCreateInput {

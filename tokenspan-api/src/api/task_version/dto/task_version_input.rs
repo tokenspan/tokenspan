@@ -1,5 +1,5 @@
 use async_graphql::InputObject;
-use rabbit_macros::UpdateModel;
+use dojo_macros::UpdateModel;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
@@ -25,6 +25,5 @@ pub struct TaskVersionCreateInput {
 pub struct TaskVersionUpdateInput {
     pub description: Option<String>,
     pub document: Option<String>,
-    #[rabbit(embedded)]
     pub messages: Option<Vec<MessageCreateInput>>,
 }

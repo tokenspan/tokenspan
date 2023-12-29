@@ -2,8 +2,9 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use chrono::Utc;
-use rabbit_orm::pagination::{Cursor, Pagination};
-use rabbit_orm::{Db, Order};
+use dojo_orm::ops::{and, eq};
+use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::Database;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
@@ -23,43 +24,34 @@ pub type ExecutionServiceDyn = Arc<dyn ExecutionServiceExt + Send + Sync>;
 
 #[derive(TypedBuilder)]
 pub struct ExecutionService {
-    db: Db,
+    db: Database,
 }
 
 #[async_trait::async_trait]
 impl ExecutionServiceExt for ExecutionService {
     async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>> {
         self.db
-            .clone()
-            .from::<Execution>()
-            .select_all()
-            .cursor(args.before, args.after)
-            .order_by("created_at", Order::Desc)
+            .bind::<Execution>()
+            .cursor(&args.before, &args.after)
             .limit(args.take.unwrap_or(10))
+            .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Execution>> {
         self.db
-            .clone()
-            .from::<Execution>()
-            .select_all()
-            .find(id)
+            .bind::<Execution>()
+            .where_by(and(vec![eq("id", &id)]))
+            .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Execution>> {
         self.db
-            .clone()
-            .from::<Execution>()
-            .select_all()
-            .and_where("id", "in", ids)
-            .order_by("created_at", Order::Desc)
+            .bind::<Execution>()
+            .where_by(and(vec![eq("id", &ids)]))
             .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn create(&self, input: ExecutionCreateInput, executor_id: Uuid) -> Result<Execution> {
@@ -82,23 +74,15 @@ impl ExecutionServiceExt for ExecutionService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db
-            .clone()
-            .from::<Execution>()
-            .insert(input)
-            .await
-            .map_err(|e| anyhow::anyhow!(e))
+        self.db.insert(&input).await
     }
 
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<Execution>> {
         self.db
-            .clone()
-            .from()
             .delete()
-            .and_where("id", "=", id)
+            .where_by(and(vec![eq("id", &id)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 }
 

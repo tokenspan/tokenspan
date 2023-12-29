@@ -1,6 +1,6 @@
 use crate::api::models::Parameter;
 use async_graphql::InputObject;
-use rabbit_macros::UpdateModel;
+use dojo_macros::UpdateModel;
 use serde::Serialize;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;

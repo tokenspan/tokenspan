@@ -1,14 +1,14 @@
 use async_graphql::SimpleObject;
 use chrono::NaiveDateTime;
-use rabbit_macros::Model;
+use dojo_macros::Model;
 use serde::{Deserialize, Serialize};
 
-use rabbit_orm::pagination::{Cursor, CursorExt};
+use dojo_orm::pagination::{Cursor, CursorExt};
 use uuid::Uuid;
 
 #[derive(SimpleObject, Clone, Serialize, Deserialize, Model)]
 #[serde(rename(serialize = "camelCase"))]
-#[rabbit(name = "parameters")]
+#[dojo(name = "parameters")]
 pub struct Parameter {
     pub id: Uuid,
     pub name: String,

@@ -1,8 +1,9 @@
 use crate::api::models::Message;
 use async_graphql::InputObject;
+use dojo_macros::EmbeddedModel;
 use serde::{Deserialize, Serialize};
 
-#[derive(InputObject, Clone, Serialize, Deserialize, Debug)]
+#[derive(InputObject, Clone, Serialize, Deserialize, Debug, EmbeddedModel)]
 pub struct MessageCreateInput {
     pub raw: Option<String>,
     pub content: String,

@@ -1,7 +1,7 @@
 use async_graphql::{InputObject, OneofObject};
 use uuid::Uuid;
 
-use rabbit_orm::pagination::Cursor;
+use dojo_orm::pagination::Cursor;
 
 #[derive(InputObject)]
 pub struct TaskVersionArgs {

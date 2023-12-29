@@ -38,8 +38,8 @@ mutation SignUp($input: SignUpInput!) {
 
 {
   "input": {
-    "email": "linh2@gmail.com",
-    "username": "linh2",
+    "email": "linh1@gmail.com",
+    "username": "linh1",
     "password": "123"
   }
 }

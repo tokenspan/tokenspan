@@ -2,8 +2,9 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use chrono::Utc;
-use rabbit_orm::pagination::{Cursor, Pagination};
-use rabbit_orm::{Db, Order};
+use dojo_orm::ops::{and, eq, in_list};
+use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::Database;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
@@ -25,53 +26,42 @@ pub type ProviderServiceDyn = Arc<dyn ProviderServiceExt + Send + Sync>;
 
 #[derive(TypedBuilder)]
 pub struct ProviderService {
-    db: Db,
+    db: Database,
 }
 
 #[async_trait::async_trait]
 impl ProviderServiceExt for ProviderService {
     async fn paginate(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>> {
         self.db
-            .clone()
-            .from::<Provider>()
-            .select_all()
-            .cursor(args.before, args.after)
-            .order_by("created_at", Order::Desc)
+            .bind::<Provider>()
+            .cursor(&args.before, &args.after)
             .limit(args.take.unwrap_or(10))
+            .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Provider>> {
         self.db
-            .clone()
-            .from::<Provider>()
-            .select_all()
-            .find(id)
+            .bind::<Provider>()
+            .where_by(and(vec![eq("id", &id)]))
+            .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_slug(&self, slug: String) -> Result<Option<Provider>> {
         self.db
-            .clone()
-            .from::<Provider>()
-            .select_all()
-            .and_where("slug", "=", slug)
+            .bind::<Provider>()
+            .where_by(and(vec![eq("slug", &slug)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Provider>> {
         self.db
-            .clone()
-            .from::<Provider>()
-            .select_all()
-            .and_where("id", "in", ids)
+            .bind::<Provider>()
+            .where_by(and(vec![in_list("id", &ids)]))
             .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn create(&self, input: ProviderCreateInput) -> Result<Provider> {
@@ -83,34 +73,23 @@ impl ProviderServiceExt for ProviderService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db
-            .clone()
-            .from::<Provider>()
-            .insert(input)
-            .await
-            .map_err(|e| anyhow::anyhow!(e))
+        self.db.insert(&input).await
     }
 
     async fn update_by_id(&self, id: Uuid, input: ProviderUpdateInput) -> Result<Option<Provider>> {
         self.db
-            .clone()
-            .from::<Provider>()
-            .update(input)
-            .and_where("id", "=", id)
+            .update(&input)
+            .where_by(and(vec![eq("id", &id)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<Provider>> {
         self.db
-            .clone()
-            .from::<Provider>()
             .delete()
-            .and_where("id", "=", id)
+            .where_by(and(vec![eq("id", &id)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 }
 

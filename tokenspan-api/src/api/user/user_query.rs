@@ -3,7 +3,7 @@ use crate::api::models::User;
 use crate::api::services::UserServiceDyn;
 use async_graphql::connection::Connection;
 use async_graphql::{Context, Object, Result};
-use rabbit_orm::pagination::{AdditionalFields, Cursor};
+use dojo_orm::pagination::{AdditionalFields, Cursor};
 use uuid::Uuid;
 
 use crate::error::AppError;

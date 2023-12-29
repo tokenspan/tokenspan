@@ -2,8 +2,9 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use chrono::Utc;
-use rabbit_orm::pagination::{Cursor, Pagination};
-use rabbit_orm::{Db, Order};
+use dojo_orm::ops::{and, eq, in_list};
+use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::Database;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
@@ -29,53 +30,42 @@ pub type ParameterServiceDyn = Arc<dyn ParameterServiceExt + Send + Sync>;
 
 #[derive(TypedBuilder)]
 pub struct ParameterService {
-    db: Db,
+    db: Database,
 }
 
 #[async_trait::async_trait]
 impl ParameterServiceExt for ParameterService {
     async fn paginate(&self, args: ParameterArgs) -> Result<Pagination<Cursor, Parameter>> {
         self.db
-            .clone()
-            .from::<Parameter>()
-            .select_all()
-            .cursor(args.before, args.after)
-            .order_by("created_at", Order::Desc)
+            .bind::<Parameter>()
+            .cursor(&args.before, &args.after)
             .limit(args.take.unwrap_or(10))
+            .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Parameter>> {
         self.db
-            .clone()
-            .from::<Parameter>()
-            .select_all()
-            .find(id)
+            .bind::<Parameter>()
+            .where_by(and(vec![eq("id", &id)]))
+            .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_task_version_id(&self, id: Uuid) -> Result<Vec<Parameter>> {
         self.db
-            .clone()
-            .from::<Parameter>()
-            .select_all()
-            .and_where("task_version_id", "=", id)
+            .bind::<Parameter>()
+            .where_by(and(vec![eq("task_version_id", &id)]))
             .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Parameter>> {
         self.db
-            .clone()
-            .from::<Parameter>()
-            .select_all()
-            .and_where("id", "in", ids)
+            .bind::<Parameter>()
+            .where_by(and(vec![in_list("id", &ids)]))
             .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn create(&self, input: ParameterCreateInput) -> Result<Parameter> {
@@ -95,12 +85,7 @@ impl ParameterServiceExt for ParameterService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db
-            .clone()
-            .from::<Parameter>()
-            .insert(input)
-            .await
-            .map_err(|e| anyhow::anyhow!(e))
+        self.db.insert(&input).await
     }
 
     async fn update_by_id(
@@ -109,24 +94,18 @@ impl ParameterServiceExt for ParameterService {
         input: ParameterUpdateInput,
     ) -> Result<Option<Parameter>> {
         self.db
-            .clone()
-            .from::<Parameter>()
-            .update(input)
-            .and_where("id", "=", id)
+            .update(&input)
+            .where_by(and(vec![eq("id", &id)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<Parameter>> {
         self.db
-            .clone()
-            .from::<Parameter>()
             .delete()
-            .and_where("id", "=", id)
+            .where_by(and(vec![eq("id", &id)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 }
 

@@ -1,5 +1,5 @@
 use async_graphql::InputObject;
-use rabbit_orm::pagination::Cursor;
+use dojo_orm::pagination::Cursor;
 
 #[derive(InputObject, Default)]
 pub struct ProviderArgs {

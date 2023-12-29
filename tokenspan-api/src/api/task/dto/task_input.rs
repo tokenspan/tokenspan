@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use async_graphql::InputObject;
-use rabbit_macros::UpdateModel;
+use dojo_macros::UpdateModel;
 use serde::Deserialize;
 use uuid::Uuid;
 use validator::Validate;

@@ -7,7 +7,7 @@ use crate::api::services::TaskServiceDyn;
 use crate::api::task::dto::TaskArgs;
 use crate::api::task::task_model::Task;
 use crate::error::AppError;
-use rabbit_orm::pagination::{AdditionalFields, Cursor};
+use dojo_orm::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct TaskQuery;

@@ -10,8 +10,9 @@ use async_openai::types::{
 use async_openai::Client;
 use axum::extract::FromRef;
 use chrono::Utc;
-use rabbit_orm::pagination::{Cursor, Pagination};
-use rabbit_orm::{Db, Order};
+use dojo_orm::ops::{and, eq, in_list};
+use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::Database;
 use regex::Regex;
 use serde_json::json;
 use typed_builder::TypedBuilder;
@@ -56,7 +57,7 @@ impl FromRef<AppState> for TaskServiceDyn {
 
 #[derive(TypedBuilder)]
 pub struct TaskService {
-    db: Db,
+    db: Database,
     api_key_service: ApiKeyServiceDyn,
     model_service: ModelServiceDyn,
     parameter_service: ParameterServiceDyn,
@@ -108,14 +109,11 @@ impl TaskService {
 impl TaskServiceExt for TaskService {
     async fn paginate(&self, args: TaskArgs) -> Result<Pagination<Cursor, Task>> {
         self.db
-            .clone()
-            .from::<Task>()
-            .select_all()
-            .cursor(args.before, args.after)
-            .order_by("created_at", Order::Desc)
+            .bind::<Task>()
+            .cursor(&args.before, &args.after)
             .limit(args.take.unwrap_or(10))
+            .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_owner(
@@ -124,47 +122,36 @@ impl TaskServiceExt for TaskService {
         args: TaskArgs,
     ) -> Result<Pagination<Cursor, Task>> {
         self.db
-            .clone()
-            .from::<Task>()
-            .select_all()
-            .and_where("owner_id", "=", user_id)
-            .cursor(args.before, args.after)
-            .order_by("created_at", Order::Desc)
+            .bind::<Task>()
+            .where_by(and(vec![eq("owner_id", &user_id)]))
+            .cursor(&args.before, &args.after)
             .limit(args.take.unwrap_or(10))
+            .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Task>> {
         self.db
-            .clone()
-            .from::<Task>()
-            .select_all()
-            .find(id)
+            .bind::<Task>()
+            .where_by(and(vec![eq("id", &id)]))
+            .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Task>> {
         self.db
-            .clone()
-            .from::<Task>()
-            .select_all()
-            .and_where("id", "in", ids)
+            .bind::<Task>()
+            .where_by(and(vec![in_list("id", &ids)]))
             .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_slug(&self, slug: String) -> Result<Option<Task>> {
         self.db
-            .clone()
-            .from::<Task>()
-            .select_all()
-            .and_where("slug", "=", slug)
+            .bind::<Task>()
+            .where_by(and(vec![eq("slug", &slug)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn create(&self, input: TaskCreateInput, owner_id: Uuid) -> Result<Task> {
@@ -177,34 +164,23 @@ impl TaskServiceExt for TaskService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db
-            .clone()
-            .from::<Task>()
-            .insert(input)
-            .await
-            .map_err(|e| anyhow::anyhow!(e))
+        self.db.insert(&input).await
     }
 
     async fn update_by_id(&self, id: Uuid, input: TaskUpdateInput) -> Result<Option<Task>> {
         self.db
-            .clone()
-            .from::<Task>()
-            .update(input)
-            .and_where("id", "=", id)
+            .update(&input)
+            .where_by(and(vec![eq("id", &id)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<Task>> {
         self.db
-            .clone()
-            .from::<Task>()
             .delete()
-            .and_where("id", "=", id)
+            .where_by(and(vec![eq("id", &id)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn execute(&self, input: TaskExecuteInput, execute_by_id: Uuid) -> Result<Execution> {

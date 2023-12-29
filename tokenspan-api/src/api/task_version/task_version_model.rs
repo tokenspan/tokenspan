@@ -1,8 +1,8 @@
 use async_graphql::{ComplexObject, Enum, SimpleObject};
 use async_graphql::{Context, Result};
 use chrono::NaiveDateTime;
-use rabbit_macros::Model;
-use rabbit_orm::pagination::{Cursor, CursorExt};
+use dojo_macros::{Model, Type};
+use dojo_orm::pagination::{Cursor, CursorExt};
 use serde::Deserialize;
 use strum_macros::EnumString;
 use uuid::Uuid;
@@ -13,7 +13,7 @@ use crate::error::AppError;
 
 #[derive(SimpleObject, Clone, Model)]
 #[graphql(complex)]
-#[rabbit(name = "task_versions")]
+#[dojo(name = "task_versions")]
 pub struct TaskVersion {
     pub id: Uuid,
     pub semver: String,
@@ -24,7 +24,7 @@ pub struct TaskVersion {
     pub status: TaskVersionStatus,
     pub task_id: Uuid,
     pub owner_id: Uuid,
-    #[rabbit(embedded)]
+    #[dojo(embedded)]
     pub messages: Vec<Message>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -59,8 +59,8 @@ impl CursorExt<Cursor> for TaskVersion {
     }
 }
 
-#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "task_version_status", rename_all = "lowercase")]
+#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Deserialize, Type)]
+#[dojo(name = "task_version_status", rename_all = "lowercase")]
 pub enum TaskVersionStatus {
     #[strum(serialize = "draft")]
     #[serde(rename = "published")]

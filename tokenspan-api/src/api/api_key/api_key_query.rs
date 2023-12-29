@@ -6,7 +6,7 @@ use crate::api::api_key::api_key_model::ApiKey;
 use crate::api::api_key::dto::ApiKeyArgs;
 use crate::api::services::ApiKeyServiceDyn;
 use crate::error::AppError;
-use rabbit_orm::pagination::{AdditionalFields, Cursor};
+use dojo_orm::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct ApiKeyQuery;

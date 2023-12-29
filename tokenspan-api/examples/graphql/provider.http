@@ -64,3 +64,21 @@ mutation UpdateProvider($id: UUID!, $input: ProviderUpdateInput!) {
     "slug": "zzz"
   }
 }
+
+### Delete provider by id
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation DeleteProvider($id: UUID!) {
+  deleteProvider(id: $id) {
+    id
+    name
+    slug
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "id": "1a67e2ca-750e-4870-b976-195da7a6e03d"
+}

@@ -1,12 +1,12 @@
 use async_graphql::InputObject;
 use chrono::NaiveDateTime;
-use rabbit_macros::UpdateModel;
+use dojo_macros::{EmbeddedModel, UpdateModel};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::api::models::Pricing;
 
-#[derive(InputObject, Clone, Serialize, Deserialize, Debug)]
+#[derive(InputObject, Clone, Serialize, Deserialize, Debug, EmbeddedModel)]
 pub struct PricingInput {
     pub price: f64,
     pub tokens: u32,
@@ -41,9 +41,9 @@ pub struct ModelUpdateInput {
     pub description: Option<String>,
     pub slug: Option<String>,
     pub context: Option<i32>,
-    #[rabbit(embedded)]
+    #[dojo(embedded)]
     pub input_pricing: Option<PricingInput>,
-    #[rabbit(embedded)]
+    #[dojo(embedded)]
     pub output_pricing: Option<PricingInput>,
     pub training_at: Option<NaiveDateTime>,
 }

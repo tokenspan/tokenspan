@@ -2,9 +2,10 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use chrono::Utc;
+use dojo_orm::ops::{and, eq, in_list};
+use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::Database;
 use magic_crypt::{MagicCrypt256, MagicCryptTrait};
-use rabbit_orm::pagination::{Cursor, Pagination};
-use rabbit_orm::{Db, Order};
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
@@ -26,7 +27,7 @@ pub type ApiKeyServiceDyn = Arc<dyn ApiKeyServiceExt + Send + Sync>;
 
 #[derive(TypedBuilder)]
 pub struct ApiKeyService {
-    db: Db,
+    db: Database,
     mc: MagicCrypt256,
 }
 
@@ -44,35 +45,27 @@ impl ApiKeyServiceExt for ApiKeyService {
 
     async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<Cursor, ApiKey>> {
         self.db
-            .clone()
-            .from::<ApiKey>()
-            .select_all()
-            .cursor(args.before, args.after)
-            .order_by("created_at", Order::Desc)
+            .bind::<ApiKey>()
+            .cursor(&args.before, &args.after)
             .limit(args.take.unwrap_or(10))
+            .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<ApiKey>> {
         self.db
-            .clone()
-            .from::<ApiKey>()
-            .select_all()
-            .find(id)
+            .bind::<ApiKey>()
+            .where_by(and(vec![eq("id", &id)]))
+            .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<ApiKey>> {
         self.db
-            .clone()
-            .from::<ApiKey>()
-            .select_all()
-            .and_where("id", "in", ids)
+            .bind::<ApiKey>()
+            .where_by(and(vec![in_list("id", &ids)]))
             .all()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn create(&self, input: ApiKeyCreateInput, owner_id: Uuid) -> Result<ApiKey> {
@@ -86,34 +79,23 @@ impl ApiKeyServiceExt for ApiKeyService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db
-            .clone()
-            .from::<ApiKey>()
-            .insert(input)
-            .await
-            .map_err(|e| anyhow::anyhow!(e))
+        self.db.insert(&input).await
     }
 
     async fn update_by_id(&self, id: Uuid, input: ApiKeyUpdateInput) -> Result<Option<ApiKey>> {
         self.db
-            .clone()
-            .from::<ApiKey>()
-            .update(input)
-            .and_where("id", "=", id)
+            .update(&input)
+            .where_by(and(vec![eq("id", &id)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<ApiKey>> {
         self.db
-            .clone()
-            .from::<ApiKey>()
             .delete()
-            .and_where("id", "=", id)
+            .where_by(and(vec![eq("id", &id)]))
             .first()
             .await
-            .map_err(|e| anyhow::anyhow!(e))
     }
 }
 

@@ -6,7 +6,7 @@ use crate::api::provider::dto::ProviderArgs;
 use crate::api::provider::provider_model::Provider;
 use crate::api::services::ProviderServiceDyn;
 use crate::error::AppError;
-use rabbit_orm::pagination::{AdditionalFields, Cursor};
+use dojo_orm::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct ProviderQuery;

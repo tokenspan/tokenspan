@@ -1,8 +1,8 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::{ComplexObject, Context, Result, SimpleObject};
 use chrono::NaiveDateTime;
-use rabbit_macros::Model;
-use rabbit_orm::pagination::{Cursor, CursorExt};
+use dojo_macros::Model;
+use dojo_orm::pagination::{Cursor, CursorExt};
 use uuid::Uuid;
 
 use crate::api::loaders::{ProviderLoader, UserLoader};
@@ -12,7 +12,7 @@ use crate::error::AppError;
 
 #[derive(SimpleObject, Clone, Model)]
 #[graphql(complex)]
-#[rabbit(name = "api_keys")]
+#[dojo(name = "api_keys")]
 pub struct ApiKey {
     pub id: Uuid,
     pub name: String,

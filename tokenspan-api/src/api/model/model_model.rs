@@ -1,11 +1,11 @@
 use async_graphql::SimpleObject;
 use chrono::NaiveDateTime;
-use rabbit_macros::Model;
-use rabbit_orm::pagination::{Cursor, CursorExt};
+use dojo_macros::{EmbeddedModel, Model};
+use dojo_orm::pagination::{Cursor, CursorExt};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(SimpleObject, Clone, Serialize, Deserialize)]
+#[derive(SimpleObject, Clone, Debug, Serialize, Deserialize, EmbeddedModel)]
 pub struct Pricing {
     pub price: f64,
     pub tokens: u32,
@@ -13,16 +13,16 @@ pub struct Pricing {
 }
 
 #[derive(SimpleObject, Clone, Model)]
-#[rabbit(name = "models")]
+#[dojo(name = "models")]
 pub struct Model {
     pub id: Uuid,
     pub name: String,
     pub description: String,
     pub slug: String,
     pub context: i32,
-    #[rabbit(embedded)]
+    #[dojo(embedded)]
     pub input_pricing: Pricing,
-    #[rabbit(embedded)]
+    #[dojo(embedded)]
     pub output_pricing: Pricing,
     pub training_at: NaiveDateTime,
     pub provider_id: Uuid,

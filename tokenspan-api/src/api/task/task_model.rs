@@ -1,9 +1,9 @@
 use async_graphql::{ComplexObject, Context, Result, SimpleObject};
 use chrono::NaiveDateTime;
-use rabbit_macros::Model;
+use dojo_macros::Model;
 use serde::Serialize;
 
-use rabbit_orm::pagination::{Cursor, CursorExt};
+use dojo_orm::pagination::{Cursor, CursorExt};
 use uuid::Uuid;
 
 use crate::api::models::TaskVersion;
@@ -12,7 +12,7 @@ use crate::error::AppError;
 
 #[derive(SimpleObject, Clone, Serialize, Model)]
 #[graphql(complex)]
-#[rabbit(name = "tasks")]
+#[dojo(name = "tasks")]
 pub struct Task {
     pub id: Uuid,
     pub name: String,
