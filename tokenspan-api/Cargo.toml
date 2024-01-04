@@ -39,9 +39,15 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "ansi"
 uuid = { version = "1.6.1", features = ["v4"] }
 validator = { version = "0.16", features = ["derive"] }
 typed-builder = "0.18.0"
-dojo-orm = { git = "https://github.com/tokenspan/dojo-orm.git" }
-dojo-macros = { git = "https://github.com/tokenspan/dojo-orm.git" }
 refinery = { version = "0.8.11", features = ["tokio-postgres"] }
+
+[dependencies.dojo-orm]
+#path = "../../dojo-orm/dojo-orm"
+git = "https://github.com/tokenspan/dojo-orm.git"
+
+[dependencies.dojo-macros]
+#path = "../../dojo-orm/dojo-macros"
+git = "https://github.com/tokenspan/dojo-orm.git"
 
 [dependencies.tokio-postgres]
 version = "0.7.2"

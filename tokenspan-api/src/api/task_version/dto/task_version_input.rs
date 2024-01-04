@@ -21,7 +21,7 @@ pub struct TaskVersionCreateInput {
     pub messages: Vec<MessageCreateInput>,
 }
 
-#[derive(InputObject, UpdateModel)]
+#[derive(InputObject, UpdateModel, Debug)]
 pub struct TaskVersionUpdateInput {
     pub description: Option<String>,
     pub document: Option<String>,

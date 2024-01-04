@@ -140,9 +140,9 @@ impl UserServiceExt for UserService {
 
     fn verify_password(&self, password: &str, salt: &str, hash_password: &str) -> Result<()> {
         let iterations = NonZeroU32::new(Self::ITERATIONS).ok_or(UserError::InvalidIterations)?;
-        let hash_password = HEXUPPER.decode(hash_password.as_bytes()).map_err(|e| {
-            UserError::Unknown(anyhow::anyhow!("failed to decode hash password: {}", e))
-        })?;
+        let hash_password = HEXUPPER
+            .decode(hash_password.as_bytes())
+            .map_err(|e| anyhow::anyhow!("failed to decode hash password: {}", e))?;
         let salt = HEXUPPER.decode(salt.as_bytes()).unwrap();
         pbkdf2::verify(
             pbkdf2::PBKDF2_HMAC_SHA512,

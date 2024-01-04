@@ -17,6 +17,7 @@ use crate::state::AppState;
 pub trait ModelServiceExt {
     async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Model>>;
+    async fn find_first(&self) -> Result<Option<Model>>;
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Model>>;
     async fn find_by_slug(&self, slug: String) -> Result<Option<Model>>;
     async fn create(&self, input: ModelCreateInput) -> Result<Model>;
@@ -54,6 +55,10 @@ impl ModelServiceExt for ModelService {
             .where_by(and(&[eq("id", &id)]))
             .first()
             .await
+    }
+
+    async fn find_first(&self) -> Result<Option<Model>> {
+        self.db.bind::<Model>().first().await
     }
 
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Model>> {

@@ -79,6 +79,7 @@ pub struct QueryRoot(
     pub model::ModelQuery,
     pub task_version::TaskVersionQuery,
     pub execution::ExecutionQuery,
+    pub parameter::ParameterQuery,
 );
 
 #[derive(MergedObject, Default)]
@@ -90,6 +91,7 @@ pub struct MutationRoot(
     pub provider::ProviderMutation,
     pub model::ModelMutation,
     pub task_version::TaskVersionMutation,
+    pub parameter::ParameterMutation,
 );
 
 #[derive(MergedSubscription, Default)]

@@ -97,7 +97,6 @@ pub async fn graphql_sandbox(Host(hostname): Host) -> impl IntoResponse {
     )
 }
 
-#[debug_handler]
 pub async fn graphql_handler(
     Extension(schema): Extension<AppSchema>,
     Extension(config): Extension<AppConfig>,

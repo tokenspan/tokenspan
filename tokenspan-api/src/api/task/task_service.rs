@@ -19,7 +19,10 @@ use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
 use crate::api::api_key::api_key_error::ApiKeyError;
-use crate::api::dto::{ElapsedInput, ExecutionCreateInput, TaskExecuteInput, UsageInput};
+use crate::api::dto::{
+    ElapsedInput, ExecutionCreateInput, ParameterCreateInput, TaskExecuteInput,
+    TaskVersionCreateInput, UsageInput,
+};
 use crate::api::models::{Execution, ExecutionStatus, Model, Parameter, Task};
 use crate::api::services::{
     ApiKeyServiceDyn, ExecutionServiceDyn, ModelServiceDyn, ParameterServiceDyn,
@@ -42,6 +45,7 @@ pub trait TaskServiceExt {
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Task>>;
     async fn find_by_slug(&self, slug: String) -> Result<Option<Task>>;
     async fn create(&self, input: TaskCreateInput, owner_id: Uuid) -> Result<Task>;
+    async fn new(&self, input: TaskCreateInput, owner_id: Uuid) -> Result<Task>;
     async fn update_by_id(&self, id: Uuid, input: TaskUpdateInput) -> Result<Option<Task>>;
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<Task>>;
     async fn execute(&self, input: TaskExecuteInput, execute_by_id: Uuid) -> Result<Execution>;
@@ -165,6 +169,38 @@ impl TaskServiceExt for TaskService {
         };
 
         self.db.insert(&input).await
+    }
+
+    async fn new(&self, input: TaskCreateInput, owner_id: Uuid) -> Result<Task> {
+        // TODO: tx
+        let created_task = self.create(input, owner_id).await?;
+        let created_task_version = self
+            .task_version_service
+            .create(
+                TaskVersionCreateInput::builder()
+                    .task_id(created_task.id)
+                    .messages(vec![])
+                    .build(),
+                owner_id,
+            )
+            .await?;
+
+        let model = self
+            .model_service
+            .find_first()
+            .await?
+            .ok_or(anyhow::anyhow!("model not found"))?;
+
+        self.parameter_service
+            .create(
+                ParameterCreateInput::builder()
+                    .model_id(model.id)
+                    .task_version_id(created_task_version.id)
+                    .build(),
+            )
+            .await?;
+
+        Ok(created_task)
     }
 
     async fn update_by_id(&self, id: Uuid, input: TaskUpdateInput) -> Result<Option<Task>> {

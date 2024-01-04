@@ -5,6 +5,7 @@ use chrono::Utc;
 use dojo_orm::ops::{and, desc, eq, in_list};
 use dojo_orm::pagination::{Cursor, Pagination};
 use dojo_orm::Database;
+use tracing::info;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
@@ -111,6 +112,7 @@ impl TaskVersionServiceExt for TaskVersionService {
         id: Uuid,
         input: TaskVersionUpdateInput,
     ) -> Result<Option<TaskVersion>> {
+        info!("update task_version: id: {}, input: {:?}", id, input);
         self.db
             .update(&input)
             .where_by(and(&[eq("id", &id)]))
