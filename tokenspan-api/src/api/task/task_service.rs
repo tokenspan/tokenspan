@@ -123,7 +123,7 @@ impl TaskServiceExt for TaskService {
     ) -> Result<Pagination<Cursor, Task>> {
         self.db
             .bind::<Task>()
-            .where_by(and(vec![eq("owner_id", &user_id)]))
+            .where_by(and(&[eq("owner_id", &user_id)]))
             .cursor(&args.before, &args.after)
             .limit(args.take.unwrap_or(10))
             .all()
@@ -133,7 +133,7 @@ impl TaskServiceExt for TaskService {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Task>> {
         self.db
             .bind::<Task>()
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
@@ -141,7 +141,7 @@ impl TaskServiceExt for TaskService {
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Task>> {
         self.db
             .bind::<Task>()
-            .where_by(and(vec![in_list("id", &ids)]))
+            .where_by(and(&[in_list("id", &ids)]))
             .all()
             .await
     }
@@ -149,7 +149,7 @@ impl TaskServiceExt for TaskService {
     async fn find_by_slug(&self, slug: String) -> Result<Option<Task>> {
         self.db
             .bind::<Task>()
-            .where_by(and(vec![eq("slug", &slug)]))
+            .where_by(and(&[eq("slug", &slug)]))
             .first()
             .await
     }
@@ -170,7 +170,7 @@ impl TaskServiceExt for TaskService {
     async fn update_by_id(&self, id: Uuid, input: TaskUpdateInput) -> Result<Option<Task>> {
         self.db
             .update(&input)
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
@@ -178,7 +178,7 @@ impl TaskServiceExt for TaskService {
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<Task>> {
         self.db
             .delete()
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }

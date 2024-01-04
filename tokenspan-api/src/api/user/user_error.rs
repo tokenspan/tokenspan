@@ -1,10 +1,9 @@
 use thiserror::Error;
-use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum UserError {
-    #[error("user not found: {0:?}")]
-    UserNotFound(Option<Uuid>),
+    #[error("user not found")]
+    UserNotFound,
 
     #[error("invalid iterations")]
     InvalidIterations,

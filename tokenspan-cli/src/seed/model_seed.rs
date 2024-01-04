@@ -22,7 +22,7 @@ pub struct Model {
     pub name: String,
     pub description: String,
     pub slug: String,
-    pub context: u32,
+    pub context: i32,
     pub input_pricing: PricingInput,
     pub output_pricing: PricingInput,
     pub training_at: NaiveDateTime,

@@ -5,8 +5,8 @@ members = [
     "tokenspan-api",
     "tokenspan-cli",
     "tokenspan-extra",
-    "tokenspan-macros",
-    "tokenspan-sdk"]
+    "tokenspan-macros"
+]
 
 [workspace.lints.clippy]
 new_ret_no_self = "allow"

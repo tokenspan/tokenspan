@@ -51,7 +51,7 @@ impl ModelServiceExt for ModelService {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Model>> {
         self.db
             .bind::<Model>()
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
@@ -59,7 +59,7 @@ impl ModelServiceExt for ModelService {
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Model>> {
         self.db
             .bind::<Model>()
-            .where_by(and(vec![in_list("id", &ids)]))
+            .where_by(and(&[in_list("id", &ids)]))
             .all()
             .await
     }
@@ -67,7 +67,7 @@ impl ModelServiceExt for ModelService {
     async fn find_by_slug(&self, slug: String) -> Result<Option<Model>> {
         self.db
             .bind::<Model>()
-            .where_by(and(vec![eq("slug", &slug)]))
+            .where_by(and(&[eq("slug", &slug)]))
             .first()
             .await
     }
@@ -93,7 +93,7 @@ impl ModelServiceExt for ModelService {
     async fn update_by_id(&self, id: Uuid, input: ModelUpdateInput) -> Result<Option<Model>> {
         self.db
             .update(&input)
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
@@ -101,7 +101,7 @@ impl ModelServiceExt for ModelService {
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<Model>> {
         self.db
             .delete()
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }

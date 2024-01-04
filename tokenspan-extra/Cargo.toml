@@ -4,10 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom", features = ["tokio", "chrono", "dataloader", "tracing"] }
 serde = { version = "1.0", features = ["derive"] }
 anyhow = "1.0.75"
-base64ct = { version = "1.6.0", features = ["alloc"] }
 thiserror = "1.0.50"
 chrono = { version = "0.4.31", features = ["serde"] }
 

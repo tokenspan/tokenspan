@@ -1,12 +1,14 @@
+use async_graphql::dataloader::DataLoader;
 use async_graphql::{ComplexObject, Context, Result, SimpleObject};
 use chrono::NaiveDateTime;
 use dojo_macros::Model;
 use serde::Serialize;
 
+use crate::api::loaders::UserLoader;
 use dojo_orm::pagination::{Cursor, CursorExt};
 use uuid::Uuid;
 
-use crate::api::models::TaskVersion;
+use crate::api::models::{TaskVersion, User};
 use crate::api::services::TaskVersionServiceDyn;
 use crate::error::AppError;
 
@@ -42,6 +44,16 @@ impl Task {
         };
 
         Ok(task_version)
+    }
+
+    pub async fn owner<'a>(&self, ctx: &Context<'a>) -> Result<Option<User>> {
+        let user_loader = ctx
+            .data::<DataLoader<UserLoader>>()
+            .map_err(|_| AppError::ContextExtractionError)?;
+
+        let user = user_loader.load_one(self.owner_id).await?;
+
+        Ok(user)
     }
 }
 

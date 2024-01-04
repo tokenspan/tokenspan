@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use async_graphql::dataloader::Loader;
 use uuid::Uuid;
@@ -19,14 +20,14 @@ impl UserLoader {
 #[async_trait::async_trait]
 impl Loader<Uuid> for UserLoader {
     type Value = User;
-    type Error = ();
+    type Error = Arc<anyhow::Error>;
 
     async fn load(&self, keys: &[Uuid]) -> Result<HashMap<Uuid, Self::Value>, Self::Error> {
         let users = self
             .user_service
             .find_by_ids(keys)
             .await
-            .unwrap()
+            .map_err(|e| Arc::new(e))?
             .into_iter()
             .map(|user| (user.id.clone(), user))
             .collect();

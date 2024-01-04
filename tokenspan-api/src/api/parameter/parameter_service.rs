@@ -47,7 +47,7 @@ impl ParameterServiceExt for ParameterService {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Parameter>> {
         self.db
             .bind::<Parameter>()
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
@@ -55,7 +55,7 @@ impl ParameterServiceExt for ParameterService {
     async fn find_by_task_version_id(&self, id: Uuid) -> Result<Vec<Parameter>> {
         self.db
             .bind::<Parameter>()
-            .where_by(and(vec![eq("task_version_id", &id)]))
+            .where_by(and(&[eq("task_version_id", &id)]))
             .all()
             .await
     }
@@ -63,7 +63,7 @@ impl ParameterServiceExt for ParameterService {
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Parameter>> {
         self.db
             .bind::<Parameter>()
-            .where_by(and(vec![in_list("id", &ids)]))
+            .where_by(and(&[in_list("id", &ids)]))
             .all()
             .await
     }
@@ -95,7 +95,7 @@ impl ParameterServiceExt for ParameterService {
     ) -> Result<Option<Parameter>> {
         self.db
             .update(&input)
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
@@ -103,7 +103,7 @@ impl ParameterServiceExt for ParameterService {
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<Parameter>> {
         self.db
             .delete()
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }

@@ -70,7 +70,7 @@
           "type": "string"
         },
         "status": {
-          "enum": ["DRAFT", "RELEASED", "ARCHIVED"]
+          "enum": ["draft", "published", "archived"]
         },
         "releaseAt": {
           "type": "null"

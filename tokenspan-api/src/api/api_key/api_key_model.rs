@@ -7,7 +7,6 @@ use uuid::Uuid;
 
 use crate::api::loaders::{ProviderLoader, UserLoader};
 use crate::api::models::{Provider, User};
-use crate::api::user::user_error::UserError;
 use crate::error::AppError;
 
 #[derive(SimpleObject, Clone, Model)]
@@ -41,10 +40,7 @@ impl ApiKey {
             .data::<DataLoader<UserLoader>>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let user = user_loader
-            .load_one(self.owner_id.clone())
-            .await
-            .map_err(|_| UserError::UserNotFound(Some(self.owner_id.clone())))?;
+        let user = user_loader.load_one(self.owner_id).await?;
 
         Ok(user)
     }

@@ -12,7 +12,7 @@ pub struct TaskVersionMutation;
 
 #[Object]
 impl TaskVersionMutation {
-    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn create_task_version<'a>(
         &self,
         ctx: &Context<'a>,
@@ -35,7 +35,7 @@ impl TaskVersionMutation {
         Ok(task_version)
     }
 
-    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn update_task_version<'a>(
         &self,
         ctx: &Context<'a>,
@@ -51,7 +51,7 @@ impl TaskVersionMutation {
         Ok(task_version)
     }
 
-    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn delete_task_version<'a>(
         &self,
         ctx: &Context<'a>,

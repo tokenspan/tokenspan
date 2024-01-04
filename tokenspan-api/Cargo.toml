@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.75"
-async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom", features = ["tokio", "chrono", "dataloader", "tracing", "uuid"] }
-async-graphql-axum = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom" }
+anyhow = "1.0"
+async-graphql = { git = "https://github.com/async-graphql/async-graphql", features = ["tokio", "chrono", "dataloader", "tracing", "uuid"] }
+async-graphql-axum = { git = "https://github.com/async-graphql/async-graphql" }
 async-openai = "0.17.1"
 async-stream = "0.3.5"
-async-trait = "0.1.75"
-axum = { git = "https://github.com/linrium/axum", branch = "feat/support-custom-sse-event", features = ["ws"] }
+async-trait = "0.1"
+axum = { version = "0.7", features = ["ws"] }
 axum-extra = { version = "0.9.0", features = ["typed-header"] }
 axum-macros = "0.4.0"
 chrono = { version = "0.4.31", features = ["serde"] }
@@ -21,14 +21,14 @@ futures = "0.3"
 futures-util = "0.3.29"
 jsonwebtoken = "9"
 magic-crypt = "3.1.13"
-openssl = { version = "0.10.59", features = ["vendored"] }
+openssl = { version = "0.10", features = ["vendored"] }
 regex = "1.10.2"
-ring = "0.17.5"
+ring = "0.17"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["raw_value"] }
 strum = "0.25"
 strum_macros = "0.25"
-thiserror = "1.0.50"
+thiserror = "1.0"
 tokenspan-extra = { path = "../tokenspan-extra" }
 tokenspan-macros = { path = "../tokenspan-macros" }
 tokio = { version = "1", features = ["full"] }

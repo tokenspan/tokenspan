@@ -7,7 +7,7 @@ port = 8080
 url = "postgres://postgres:123456@localhost:5432/tokenspan"
 
 [log]
-filter = "tokenspan_api=debug,tower_http::trace::on_response=info,axum::rejection=trace,sqlx::query=info"
+filter = "tokenspan_api=debug,tower_http::trace::on_response=info,axum::rejection=trace,sqlx::query=info,dojo_orm=debug"
 
 [auth]
 iss = "tokenspan"

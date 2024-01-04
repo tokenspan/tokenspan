@@ -63,7 +63,7 @@ impl CursorExt<Cursor> for TaskVersion {
 #[dojo(name = "task_version_status", rename_all = "lowercase")]
 pub enum TaskVersionStatus {
     #[strum(serialize = "draft")]
-    #[serde(rename = "published")]
+    #[serde(rename = "draft")]
     Draft,
     #[strum(serialize = "published")]
     #[serde(rename = "published")]

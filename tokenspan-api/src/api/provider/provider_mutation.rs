@@ -13,7 +13,7 @@ pub struct ProviderMutation;
 
 #[Object]
 impl ProviderMutation {
-    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn create_provider<'a>(
         &self,
         ctx: &Context<'a>,
@@ -28,7 +28,7 @@ impl ProviderMutation {
         Ok(provider)
     }
 
-    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn update_provider<'a>(
         &self,
         ctx: &Context<'a>,
@@ -44,7 +44,7 @@ impl ProviderMutation {
         Ok(provider)
     }
 
-    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn delete_provider<'a>(
         &self,
         ctx: &Context<'a>,

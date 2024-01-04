@@ -13,7 +13,7 @@ pub struct ApiKeyMutation;
 
 #[Object]
 impl ApiKeyMutation {
-    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn create_api_key<'a>(
         &self,
         ctx: &Context<'a>,
@@ -36,7 +36,7 @@ impl ApiKeyMutation {
         Ok(api_key)
     }
 
-    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn update_api_key<'a>(
         &self,
         ctx: &Context<'a>,
@@ -52,7 +52,7 @@ impl ApiKeyMutation {
         Ok(api_key)
     }
 
-    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn delete_api_key<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<ApiKey>> {
         let api_key_service = ctx
             .data::<ApiKeyServiceDyn>()

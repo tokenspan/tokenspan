@@ -109,7 +109,7 @@ impl UserServiceExt for UserService {
     async fn update_by_id(&self, id: Uuid, input: UserUpdateInput) -> Result<Option<User>> {
         self.db
             .update(&input)
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
@@ -117,7 +117,7 @@ impl UserServiceExt for UserService {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>> {
         self.db
             .bind::<User>()
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
@@ -125,7 +125,7 @@ impl UserServiceExt for UserService {
     async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>> {
         self.db
             .bind::<User>()
-            .where_by(and(vec![in_list("id", &ids.to_vec())]))
+            .where_by(and(&[in_list("id", &ids.to_vec())]))
             .all()
             .await
     }
@@ -133,7 +133,7 @@ impl UserServiceExt for UserService {
     async fn find_by_email(&self, email: String) -> Result<Option<User>> {
         self.db
             .bind::<User>()
-            .where_by(and(vec![eq("email", &email)]))
+            .where_by(and(&[eq("email", &email)]))
             .first()
             .await
     }

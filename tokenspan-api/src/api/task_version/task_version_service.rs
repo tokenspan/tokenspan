@@ -17,7 +17,7 @@ use crate::api::task_version::dto::{
 pub trait TaskVersionServiceExt {
     async fn paginate(&self, args: TaskVersionArgs) -> Result<Pagination<Cursor, TaskVersion>>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<TaskVersion>>;
-    async fn find_by_semver(&self, task_id: Uuid, version: String) -> Result<Option<TaskVersion>>;
+    async fn find_by_semver(&self, task_id: Uuid, semver: String) -> Result<Option<TaskVersion>>;
     async fn find_latest(&self, task_id: Uuid) -> Result<Option<TaskVersion>>;
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<TaskVersion>>;
     async fn create(&self, input: TaskVersionCreateInput, owner_id: Uuid) -> Result<TaskVersion>;
@@ -51,7 +51,7 @@ impl TaskVersionServiceExt for TaskVersionService {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<TaskVersion>> {
         self.db
             .bind::<TaskVersion>()
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
@@ -59,7 +59,7 @@ impl TaskVersionServiceExt for TaskVersionService {
     async fn find_by_semver(&self, task_id: Uuid, semver: String) -> Result<Option<TaskVersion>> {
         self.db
             .bind::<TaskVersion>()
-            .where_by(and(vec![eq("task_id", &task_id), eq("semver", &semver)]))
+            .where_by(and(&[eq("task_id", &task_id), eq("semver", &semver)]))
             .first()
             .await
     }
@@ -67,7 +67,7 @@ impl TaskVersionServiceExt for TaskVersionService {
     async fn find_latest(&self, task_id: Uuid) -> Result<Option<TaskVersion>> {
         self.db
             .bind::<TaskVersion>()
-            .where_by(and(vec![eq("task_id", &task_id)]))
+            .where_by(and(&[eq("task_id", &task_id)]))
             .order_by(desc("version"))
             .first()
             .await
@@ -76,7 +76,7 @@ impl TaskVersionServiceExt for TaskVersionService {
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<TaskVersion>> {
         self.db
             .bind::<TaskVersion>()
-            .where_by(and(vec![in_list("id", &ids)]))
+            .where_by(and(&[in_list("id", &ids)]))
             .all()
             .await
     }
@@ -113,7 +113,7 @@ impl TaskVersionServiceExt for TaskVersionService {
     ) -> Result<Option<TaskVersion>> {
         self.db
             .update(&input)
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
@@ -121,7 +121,7 @@ impl TaskVersionServiceExt for TaskVersionService {
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<TaskVersion>> {
         self.db
             .delete()
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }

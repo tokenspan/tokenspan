@@ -31,7 +31,9 @@ impl CursorExt<Cursor> for User {
 #[dojo(name = "user_role", rename_all = "lowercase")]
 pub enum UserRole {
     #[strum(serialize = "admin")]
+    #[serde(rename = "admin")]
     Admin,
     #[strum(serialize = "user")]
+    #[serde(rename = "user")]
     User,
 }

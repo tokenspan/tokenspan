@@ -55,7 +55,7 @@ impl ApiKeyServiceExt for ApiKeyService {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<ApiKey>> {
         self.db
             .bind::<ApiKey>()
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
@@ -63,7 +63,7 @@ impl ApiKeyServiceExt for ApiKeyService {
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<ApiKey>> {
         self.db
             .bind::<ApiKey>()
-            .where_by(and(vec![in_list("id", &ids)]))
+            .where_by(and(&[in_list("id", &ids)]))
             .all()
             .await
     }
@@ -85,7 +85,7 @@ impl ApiKeyServiceExt for ApiKeyService {
     async fn update_by_id(&self, id: Uuid, input: ApiKeyUpdateInput) -> Result<Option<ApiKey>> {
         self.db
             .update(&input)
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
@@ -93,7 +93,7 @@ impl ApiKeyServiceExt for ApiKeyService {
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<ApiKey>> {
         self.db
             .delete()
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }

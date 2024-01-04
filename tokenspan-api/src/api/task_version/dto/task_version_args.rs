@@ -12,9 +12,9 @@ pub struct TaskVersionArgs {
 }
 
 #[derive(InputObject)]
-pub struct TaskVersionByVersion {
+pub struct TaskVersionBySemver {
     pub task_id: Uuid,
-    pub version: String,
+    pub semver: String,
 }
 
 #[derive(InputObject)]
@@ -25,6 +25,6 @@ pub struct TaskVersionByLatest {
 #[derive(OneofObject)]
 pub enum TaskVersionBy {
     Id(Uuid),
-    Version(TaskVersionByVersion),
+    Semver(TaskVersionBySemver),
     Latest(TaskVersionByLatest),
 }

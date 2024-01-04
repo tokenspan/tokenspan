@@ -11,7 +11,7 @@ versions:
     releaseNote: ""
     description: Convert ungrammatical statements into standard English.
     document: ""
-    status: RELEASED
+    status: published
     releaseAt: null
     parameters:
       - name: default

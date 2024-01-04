@@ -61,7 +61,7 @@ impl TaskMutation {
         Ok(task)
     }
 
-    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn delete_task<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<Task>> {
         let task_service = ctx
             .data::<TaskServiceDyn>()

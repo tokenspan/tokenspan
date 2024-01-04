@@ -7,6 +7,7 @@ use axum::extract::Host;
 use axum::response::{IntoResponse, Redirect};
 use axum::{response, Extension};
 use axum_extra::headers::HeaderMap;
+use axum_macros::debug_handler;
 
 use crate::api::loaders::{
     ApiKeyLoader, ExecutionLoader, ModelLoader, ProviderLoader, TaskLoader, TaskVersionLoader,
@@ -62,6 +63,7 @@ pub async fn build_schema(app_state: AppState) -> AppSchema {
     .data(app_state.task_version_service)
     .data(app_state.task_service)
     .data(app_state.execution_service)
+    .data(app_state.parameter_service)
     .data(api_key_loader)
     .data(model_loader)
     .data(provider_loader)
@@ -95,6 +97,7 @@ pub async fn graphql_sandbox(Host(hostname): Host) -> impl IntoResponse {
     )
 }
 
+#[debug_handler]
 pub async fn graphql_handler(
     Extension(schema): Extension<AppSchema>,
     Extension(config): Extension<AppConfig>,

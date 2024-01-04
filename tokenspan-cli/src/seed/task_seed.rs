@@ -19,7 +19,7 @@ use crate::seed::Seed;
 pub struct Parameter {
     pub name: String,
     pub temperature: f32,
-    pub max_tokens: u32,
+    pub max_tokens: i32,
     pub stop_sequences: Vec<String>,
     pub top_p: f32,
     pub frequency_penalty: f32,
@@ -33,7 +33,7 @@ pub struct Parameter {
 pub struct TaskVersion {
     pub owner: UserRef,
     pub semver: String,
-    pub version: u32,
+    pub version: i32,
     pub release_note: Option<String>,
     pub description: Option<String>,
     pub document: Option<String>,

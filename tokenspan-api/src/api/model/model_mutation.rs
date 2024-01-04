@@ -13,7 +13,7 @@ pub struct ModelMutation;
 
 #[Object]
 impl ModelMutation {
-    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn create_model<'a>(
         &self,
         ctx: &Context<'a>,
@@ -28,7 +28,7 @@ impl ModelMutation {
         Ok(model)
     }
 
-    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn update_model<'a>(
         &self,
         ctx: &Context<'a>,
@@ -44,7 +44,7 @@ impl ModelMutation {
         Ok(model)
     }
 
-    #[graphql(guard = "RoleGuard::new(UserRole::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn delete_model<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<Model>> {
         let model_service = ctx
             .data::<ModelServiceDyn>()

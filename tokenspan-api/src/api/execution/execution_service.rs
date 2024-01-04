@@ -41,7 +41,7 @@ impl ExecutionServiceExt for ExecutionService {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Execution>> {
         self.db
             .bind::<Execution>()
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
@@ -49,7 +49,7 @@ impl ExecutionServiceExt for ExecutionService {
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Execution>> {
         self.db
             .bind::<Execution>()
-            .where_by(and(vec![eq("id", &ids)]))
+            .where_by(and(&[eq("id", &ids)]))
             .all()
             .await
     }
@@ -80,7 +80,7 @@ impl ExecutionServiceExt for ExecutionService {
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<Execution>> {
         self.db
             .delete()
-            .where_by(and(vec![eq("id", &id)]))
+            .where_by(and(&[eq("id", &id)]))
             .first()
             .await
     }
