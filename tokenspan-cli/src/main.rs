@@ -1,7 +1,5 @@
-use crate::seed::prelude::*;
 use anyhow::Result;
-
-mod seed;
+use tokenspan_cli::seed::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -17,8 +15,8 @@ async fn main() -> Result<()> {
     let model_seed = ModelSeed::new(config.clone(), state.clone()).await?;
     model_seed.save().await?;
 
-    let task_seed = TaskSeed::new(config.clone(), state.clone()).await?;
-    task_seed.save().await?;
+    let thread_seed = ThreadSeed::new(config.clone(), state.clone()).await?;
+    thread_seed.save().await?;
 
     Ok(())
 }

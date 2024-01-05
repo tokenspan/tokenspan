@@ -15,7 +15,7 @@ use crate::api::models::Parameter;
 pub trait ParameterServiceExt {
     async fn paginate(&self, args: ParameterArgs) -> Result<Pagination<Cursor, Parameter>>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Parameter>>;
-    async fn find_by_task_version_id(&self, id: Uuid) -> Result<Vec<Parameter>>;
+    async fn find_by_thread_version_id(&self, id: Uuid) -> Result<Vec<Parameter>>;
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Parameter>>;
     async fn create(&self, inputs: ParameterCreateInput) -> Result<Parameter>;
     async fn update_by_id(
@@ -52,10 +52,10 @@ impl ParameterServiceExt for ParameterService {
             .await
     }
 
-    async fn find_by_task_version_id(&self, id: Uuid) -> Result<Vec<Parameter>> {
+    async fn find_by_thread_version_id(&self, id: Uuid) -> Result<Vec<Parameter>> {
         self.db
             .bind::<Parameter>()
-            .where_by(and(&[eq("task_version_id", &id)]))
+            .where_by(and(&[eq("thread_version_id", &id)]))
             .all()
             .await
     }
@@ -80,7 +80,7 @@ impl ParameterServiceExt for ParameterService {
             frequency_penalty: input.frequency_penalty,
             presence_penalty: input.presence_penalty,
             extra: input.extra,
-            task_version_id: input.task_version_id,
+            thread_version_id: input.thread_version_id,
             created_at: Utc::now().naive_utc(),
             updated_at: Utc::now().naive_utc(),
         };

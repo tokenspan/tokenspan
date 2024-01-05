@@ -1,31 +1,19 @@
-use crate::api::models::Message;
 use async_graphql::InputObject;
-use dojo_macros::EmbeddedModel;
-use serde::{Deserialize, Serialize};
+use dojo_macros::UpdateModel;
+use serde::Deserialize;
+use uuid::Uuid;
 
-#[derive(InputObject, Clone, Serialize, Deserialize, Debug, EmbeddedModel)]
+#[derive(InputObject, Debug, Clone, Deserialize)]
 pub struct MessageCreateInput {
-    pub raw: Option<String>,
+    pub raw: String,
     pub content: String,
     pub role: String,
+    pub thread_version_id: Uuid,
 }
 
-impl From<MessageCreateInput> for Message {
-    fn from(value: MessageCreateInput) -> Self {
-        Message {
-            raw: value.raw,
-            content: value.content,
-            role: value.role,
-        }
-    }
-}
-
-impl From<Message> for MessageCreateInput {
-    fn from(value: Message) -> Self {
-        MessageCreateInput {
-            raw: value.raw,
-            content: value.content,
-            role: value.role,
-        }
-    }
+#[derive(InputObject, UpdateModel)]
+pub struct MessageUpdateInput {
+    pub raw: Option<String>,
+    pub content: Option<String>,
+    pub role: Option<String>,
 }

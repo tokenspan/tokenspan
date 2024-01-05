@@ -20,7 +20,7 @@ pub struct Parameter {
     pub presence_penalty: f32,
     pub extra: Option<serde_json::Value>,
     pub model_id: Uuid,
-    pub task_version_id: Uuid,
+    pub thread_version_id: Uuid,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }

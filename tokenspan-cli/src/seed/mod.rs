@@ -6,25 +6,21 @@ use serde::de::DeserializeOwned;
 use tokenspan_api::configs::AppConfig;
 use tokenspan_api::state::AppState;
 
-mod model_seed;
-mod provider_seed;
-mod task_seed;
-mod user_seed;
+pub mod model_seed;
+pub mod provider_seed;
+pub mod thread_seed;
+pub mod user_seed;
 
 pub mod prelude {
     pub use crate::seed::model_seed::*;
     pub use crate::seed::provider_seed::*;
-    pub use crate::seed::task_seed::*;
+    pub use crate::seed::thread_seed::*;
     pub use crate::seed::user_seed::*;
     pub use crate::seed::Seed;
 }
 
 #[async_trait]
 pub trait Seed {
-    async fn new(config: AppConfig, state: AppState) -> anyhow::Result<Self>
-    where
-        Self: Sized;
-
     async fn load<T>() -> anyhow::Result<Vec<T>>
     where
         T: DeserializeOwned,

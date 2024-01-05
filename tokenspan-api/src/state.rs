@@ -19,10 +19,11 @@ pub struct AppState {
     pub api_key_service: ApiKeyServiceDyn,
     pub provider_service: ProviderServiceDyn,
     pub model_service: ModelServiceDyn,
-    pub task_version_service: TaskVersionServiceDyn,
-    pub task_service: TaskServiceDyn,
+    pub thread_version_service: ThreadVersionServiceDyn,
+    pub thread_service: ThreadServiceDyn,
     pub execution_service: ExecutionServiceDyn,
     pub parameter_service: ParameterServiceDyn,
+    pub message_service: MessageServiceDyn,
 }
 
 impl AppState {
@@ -53,22 +54,31 @@ impl AppState {
             ProviderService::builder().db(db.clone()).build().into();
         let model_service: ModelServiceDyn = ModelService::builder().db(db.clone()).build().into();
 
-        let execution_service: ExecutionServiceDyn =
-            ExecutionService::builder().db(db.clone()).build().into();
+        let message_service: MessageServiceDyn =
+            MessageService::builder().db(db.clone()).build().into();
 
-        let task_version_service: TaskVersionServiceDyn =
-            TaskVersionService::builder().db(db.clone()).build().into();
+        let execution_service: ExecutionServiceDyn = ExecutionService::builder()
+            .db(db.clone())
+            .message_service(message_service.clone())
+            .build()
+            .into();
+
+        let thread_version_service: ThreadVersionServiceDyn = ThreadVersionService::builder()
+            .db(db.clone())
+            .build()
+            .into();
 
         let parameter_service: ParameterServiceDyn =
             ParameterService::builder().db(db.clone()).build().into();
 
-        let task_service: TaskServiceDyn = TaskService::builder()
+        let thread_service: ThreadServiceDyn = ThreadService::builder()
             .db(db.clone())
             .api_key_service(api_key_service.clone())
             .model_service(model_service.clone())
             .execution_service(execution_service.clone())
-            .task_version_service(task_version_service.clone())
+            .thread_version_service(thread_version_service.clone())
             .parameter_service(parameter_service.clone())
+            .message_service(message_service.clone())
             .build()
             .into();
 
@@ -78,10 +88,11 @@ impl AppState {
             api_key_service,
             provider_service,
             model_service,
-            task_version_service,
-            task_service,
+            thread_version_service,
+            thread_service,
             execution_service,
             parameter_service,
+            message_service,
         })
     }
 }

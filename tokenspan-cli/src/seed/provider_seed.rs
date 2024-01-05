@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use tokio_stream::StreamExt;
 
+use crate::seed::prelude::Thread;
 use tokenspan_api::api::dto::ProviderCreateInput;
 use tokenspan_api::configs::AppConfig;
 use tokenspan_api::state::AppState;
@@ -25,9 +26,8 @@ pub struct ProviderSeed {
     pub state: AppState,
 }
 
-#[async_trait]
-impl Seed for ProviderSeed {
-    async fn new(config: AppConfig, state: AppState) -> anyhow::Result<Self> {
+impl ProviderSeed {
+    pub async fn new(config: AppConfig, state: AppState) -> anyhow::Result<Self> {
         let data = Self::load().await?;
         Ok(Self {
             data,
@@ -36,6 +36,21 @@ impl Seed for ProviderSeed {
         })
     }
 
+    pub async fn new_with_data(
+        config: AppConfig,
+        state: AppState,
+        data: Vec<Provider>,
+    ) -> anyhow::Result<Self> {
+        Ok(Self {
+            data,
+            config,
+            state,
+        })
+    }
+}
+
+#[async_trait]
+impl Seed for ProviderSeed {
     async fn save(&self) -> anyhow::Result<()> {
         let provider_service = self.state.provider_service.clone();
         let mut stream = tokio_stream::iter(self.data.clone());

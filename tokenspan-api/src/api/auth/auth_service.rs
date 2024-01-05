@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
-use async_graphql::Result;
+use anyhow::Result;
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use tracing::info;
@@ -21,6 +21,13 @@ pub trait AuthServiceExt {
         email: String,
         username: String,
         password: String,
+    ) -> Result<AuthPayload>;
+    async fn sign_up_with_role(
+        &self,
+        email: String,
+        username: String,
+        password: String,
+        role: UserRole,
     ) -> Result<AuthPayload>;
     async fn sign_in(&self, email: String, password: String) -> Result<AuthPayload>;
 
@@ -117,8 +124,21 @@ impl AuthServiceExt for AuthService {
         username: String,
         password: String,
     ) -> Result<AuthPayload> {
+        self.sign_up_with_role(email, username, password, UserRole::User)
+            .await
+    }
+
+    async fn sign_up_with_role(
+        &self,
+        email: String,
+        username: String,
+        password: String,
+        role: UserRole,
+    ) -> Result<AuthPayload> {
         let user_service = self.user_service.clone();
-        let created_user = user_service.create(email, username, password).await?;
+        let created_user = user_service
+            .create_with_role(email, username, password, role)
+            .await?;
 
         let token = self.create_token(created_user.id.clone(), &created_user.role)?;
 

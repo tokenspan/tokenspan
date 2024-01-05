@@ -7,7 +7,7 @@ use tokenspan_api::api::dto::{ModelCreateInput, PricingInput};
 use tokenspan_api::configs::AppConfig;
 use tokenspan_api::state::AppState;
 
-use crate::seed::prelude::ProviderRef;
+use crate::seed::prelude::{Provider, ProviderRef};
 use crate::seed::Seed;
 
 #[derive(Debug, Deserialize, Clone)]
@@ -34,9 +34,8 @@ pub struct ModelSeed {
     pub state: AppState,
 }
 
-#[async_trait]
-impl Seed for ModelSeed {
-    async fn new(config: AppConfig, state: AppState) -> anyhow::Result<Self> {
+impl ModelSeed {
+    pub async fn new(config: AppConfig, state: AppState) -> anyhow::Result<Self> {
         let data = Self::load().await?;
         Ok(Self {
             data,
@@ -45,6 +44,21 @@ impl Seed for ModelSeed {
         })
     }
 
+    pub async fn new_with_data(
+        config: AppConfig,
+        state: AppState,
+        data: Vec<Model>,
+    ) -> anyhow::Result<Self> {
+        Ok(Self {
+            data,
+            config,
+            state,
+        })
+    }
+}
+
+#[async_trait]
+impl Seed for ModelSeed {
     async fn save(&self) -> anyhow::Result<()> {
         let model_service = self.state.model_service.clone();
         let provider_service = self.state.provider_service.clone();

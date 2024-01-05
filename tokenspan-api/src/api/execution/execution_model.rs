@@ -29,7 +29,7 @@ pub struct Elapsed {
 #[dojo(name = "executions")]
 pub struct Execution {
     pub id: Uuid,
-    pub task_version_id: Uuid,
+    pub thread_version_id: Uuid,
     pub executed_by_id: Uuid,
     pub parameter_id: Uuid,
     #[dojo(embedded)]

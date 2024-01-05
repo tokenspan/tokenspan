@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use crate::api::execution::dto::{ExecutionArgs, ExecutionCreateInput};
 use crate::api::execution::execution_model::Execution;
+use crate::api::services::MessageServiceDyn;
 
 #[async_trait::async_trait]
 pub trait ExecutionServiceExt {
@@ -25,6 +26,7 @@ pub type ExecutionServiceDyn = Arc<dyn ExecutionServiceExt + Send + Sync>;
 #[derive(TypedBuilder)]
 pub struct ExecutionService {
     db: Database,
+    message_service: MessageServiceDyn,
 }
 
 #[async_trait::async_trait]
@@ -55,13 +57,17 @@ impl ExecutionServiceExt for ExecutionService {
     }
 
     async fn create(&self, input: ExecutionCreateInput, executor_id: Uuid) -> Result<Execution> {
-        let messages = input.messages.into_iter().map(|m| m.into()).collect();
         let elapsed = input.elapsed.into();
         let usage = input.usage.map(|u| u.into());
 
+        let messages = self
+            .message_service
+            .find_by_thread_version_id(input.thread_version_id)
+            .await?;
+
         let input = Execution {
             id: Uuid::new_v4(),
-            task_version_id: input.task_version_id,
+            thread_version_id: input.thread_version_id,
             executed_by_id: executor_id,
             parameter_id: input.parameter_id,
             messages,

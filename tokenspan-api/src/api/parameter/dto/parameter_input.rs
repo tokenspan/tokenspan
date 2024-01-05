@@ -24,7 +24,7 @@ pub struct ParameterCreateInput {
     #[builder(default)]
     pub extra: Option<serde_json::Value>,
     pub model_id: Uuid,
-    pub task_version_id: Uuid,
+    pub thread_version_id: Uuid,
 }
 
 impl From<ParameterCreateInput> for Parameter {
@@ -40,7 +40,7 @@ impl From<ParameterCreateInput> for Parameter {
             presence_penalty: value.presence_penalty,
             extra: value.extra,
             model_id: value.model_id,
-            task_version_id: value.task_version_id,
+            thread_version_id: value.thread_version_id,
             created_at: Default::default(),
             updated_at: Default::default(),
         }
@@ -59,7 +59,7 @@ impl From<Parameter> for ParameterCreateInput {
             presence_penalty: value.presence_penalty,
             extra: value.extra,
             model_id: value.model_id,
-            task_version_id: value.task_version_id,
+            thread_version_id: value.thread_version_id,
         }
     }
 }

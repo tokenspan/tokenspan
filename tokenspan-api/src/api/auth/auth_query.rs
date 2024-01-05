@@ -21,6 +21,8 @@ impl AuthQuery {
             .data::<AuthServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError.extend())?;
 
-        auth_service.session(parsed_token).await
+        let session = auth_service.session(parsed_token).await?;
+
+        Ok(session)
     }
 }
