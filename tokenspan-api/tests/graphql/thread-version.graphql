@@ -1,0 +1,26 @@
+mutation PublishThreadVersionMutation($publishThreadVersionId: UUID!, $input: ThreadVersionPublishInput!) {
+  publishThreadVersion(id: $publishThreadVersionId, input: $input) {
+    id
+  }
+}
+
+query GetThreadVersionsQuery {
+  threadVersions {
+    nodes {
+      ...threadVersionFields
+    }
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    totalNodes
+  }
+}
+
+query GetThreadVersionQuery($by: ThreadVersionBy!) {
+  threadVersion(by: $by) {
+    ...threadVersionFields
+  }
+}

@@ -7,7 +7,7 @@ edition = "2021"
 anyhow = "1.0"
 async-graphql = { git = "https://github.com/async-graphql/async-graphql", features = ["tokio", "chrono", "dataloader", "tracing", "uuid"] }
 async-graphql-axum = { git = "https://github.com/async-graphql/async-graphql" }
-async-openai = "0.17.1"
+async-openai = "0.18"
 async-stream = "0.3.5"
 async-trait = "0.1"
 axum = { version = "0.7", features = ["ws"] }
@@ -42,12 +42,12 @@ refinery = { version = "0.8.11", features = ["tokio-postgres"] }
 graphql_client = { version = "0.13.0", features = ["graphql_query_derive"]}
 
 [dependencies.dojo-orm]
-path = "../../dojo-orm/dojo-orm"
-#git = "https://github.com/tokenspan/dojo-orm.git"
+#path = "../../dojo-orm/dojo-orm"
+git = "https://github.com/tokenspan/dojo-orm.git"
 
 [dependencies.dojo-macros]
-path = "../../dojo-orm/dojo-macros"
-#git = "https://github.com/tokenspan/dojo-orm.git"
+#path = "../../dojo-orm/dojo-macros"
+git = "https://github.com/tokenspan/dojo-orm.git"
 
 [dependencies.tokio-postgres]
 version = "0.7.2"

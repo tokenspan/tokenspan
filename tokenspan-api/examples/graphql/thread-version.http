@@ -47,6 +47,9 @@ query ThreadVersions {
       thread {
         id
         name
+        ownerId
+        createdAt
+        updatedAt
       }
       parameters {
         id
@@ -91,6 +94,13 @@ query ThreadVersion($by: ThreadVersionBy!) {
     ownerId
     createdAt
     updatedAt
+    thread {
+      id
+      name
+      ownerId
+      createdAt
+      updatedAt
+    }
     parameters {
       id
       name

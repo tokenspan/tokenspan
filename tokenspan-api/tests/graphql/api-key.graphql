@@ -1,0 +1,86 @@
+mutation DeleteApiKeyMutation($deleteApiKeyId: UUID!) {
+  deleteApiKey(id: $deleteApiKeyId) {
+    id
+    name
+  }
+}
+
+mutation UpdateApiKeyMutation($updateApiKeyId: UUID!, $input: ApiKeyUpdateInput!) {
+  updateApiKey(id: $updateApiKeyId, input: $input) {
+    id
+    name
+  }
+}
+
+query GetApiKeyQuery($id: ID!) {
+  apiKey(id: $id) {
+    id
+    name
+    ownerId
+    providerId
+    createdAt
+    updatedAt
+    provider {
+      id
+      name
+      slug
+    }
+    owner {
+      id
+      username
+    }
+  }
+}
+
+query GetApiKeysQuery {
+  apiKeys {
+    nodes {
+      id
+      name
+      ownerId
+      providerId
+      createdAt
+      updatedAt
+      provider {
+        id
+        name
+        slug
+        createdAt
+        updatedAt
+      }
+      owner {
+        id
+        email
+        username
+        role
+      }
+    }
+    pageInfo {
+      startCursor
+      endCursor
+      hasNextPage
+      hasPreviousPage
+    }
+    totalNodes
+  }
+}
+
+mutation CreateApiKeyMutation($input: ApiKeyCreateInput!) {
+  createApiKey(input: $input) {
+    id
+    name
+    ownerId
+    providerId
+    createdAt
+    updatedAt
+    provider {
+      id
+      name
+      slug
+    }
+    owner {
+      id
+      username
+    }
+  }
+}
