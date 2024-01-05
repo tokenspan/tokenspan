@@ -1,7 +1,6 @@
 use config::{Config, Environment, File};
 use dotenv::dotenv;
 use serde::Deserialize;
-use std::env;
 
 #[derive(Debug, Deserialize, PartialEq, Clone, Copy)]
 pub enum AppEnv {
@@ -61,7 +60,6 @@ pub struct AppConfig {
 impl AppConfig {
     pub fn new() -> Result<Self, config::ConfigError> {
         dotenv().ok();
-        println!("{:?}", env::current_dir());
 
         let database_url = std::env::var("DATABASE_URL").ok();
 

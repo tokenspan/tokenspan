@@ -24,6 +24,7 @@ pub struct AppState {
     pub execution_service: ExecutionServiceDyn,
     pub parameter_service: ParameterServiceDyn,
     pub message_service: MessageServiceDyn,
+    pub function_service: FunctionServiceDyn,
 }
 
 impl AppState {
@@ -63,13 +64,15 @@ impl AppState {
             .build()
             .into();
 
-        let thread_version_service: ThreadVersionServiceDyn = ThreadVersionService::builder()
-            .db(db.clone())
-            .build()
-            .into();
-
         let parameter_service: ParameterServiceDyn =
             ParameterService::builder().db(db.clone()).build().into();
+
+        let thread_version_service: ThreadVersionServiceDyn = ThreadVersionService::builder()
+            .db(db.clone())
+            .parameter_service(parameter_service.clone())
+            .message_service(message_service.clone())
+            .build()
+            .into();
 
         let thread_service: ThreadServiceDyn = ThreadService::builder()
             .db(db.clone())
@@ -82,6 +85,9 @@ impl AppState {
             .build()
             .into();
 
+        let function_service: FunctionServiceDyn =
+            FunctionService::builder().db(db.clone()).build().into();
+
         Ok(Self {
             user_service,
             auth_service,
@@ -93,6 +99,7 @@ impl AppState {
             execution_service,
             parameter_service,
             message_service,
+            function_service,
         })
     }
 }

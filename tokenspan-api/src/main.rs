@@ -2,7 +2,7 @@ use anyhow::Result;
 use tokio::net::TcpListener;
 use tracing::info;
 
-use tokenspan_api::app::{make_app, make_app_with_state};
+use tokenspan_api::app::make_app_with_state;
 use tokenspan_api::{configs, state};
 
 #[tokio::main]

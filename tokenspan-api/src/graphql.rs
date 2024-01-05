@@ -63,6 +63,8 @@ pub async fn build_schema(app_state: AppState) -> AppSchema {
     .data(app_state.thread_service)
     .data(app_state.execution_service)
     .data(app_state.parameter_service)
+    .data(app_state.message_service)
+    .data(app_state.function_service)
     .data(api_key_loader)
     .data(model_loader)
     .data(provider_loader)

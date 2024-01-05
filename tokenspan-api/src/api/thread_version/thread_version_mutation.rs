@@ -1,9 +1,10 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 use uuid::Uuid;
 
+use crate::api::dto::ThreadVersionPublishInput;
 use crate::api::models::{ParsedToken, ThreadVersion, UserRole};
 use crate::api::services::ThreadVersionServiceDyn;
-use crate::api::thread_version::dto::{ThreadVersionCreateInput, ThreadVersionUpdateInput};
+use crate::api::thread_version::dto::ThreadVersionUpdateInput;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
 
@@ -13,10 +14,11 @@ pub struct ThreadVersionMutation;
 #[Object]
 impl ThreadVersionMutation {
     #[graphql(guard = "RoleGuard::new(UserRole::User)")]
-    pub async fn create_thread_version<'a>(
+    pub async fn publish_thread_version<'a>(
         &self,
         ctx: &Context<'a>,
-        input: ThreadVersionCreateInput,
+        id: Uuid,
+        input: ThreadVersionPublishInput,
     ) -> Result<ThreadVersion> {
         let thread_version_service = ctx
             .data::<ThreadVersionServiceDyn>()
@@ -29,7 +31,7 @@ impl ThreadVersionMutation {
             .ok_or(AppError::Unauthorized("no token".to_string()).extend())?;
 
         let thread_version = thread_version_service
-            .create(input, parsed_token.user_id.clone())
+            .publish(id, input, parsed_token.user_id)
             .await?;
 
         Ok(thread_version)

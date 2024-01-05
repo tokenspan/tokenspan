@@ -15,9 +15,14 @@ use crate::api::models::Parameter;
 pub trait ParameterServiceExt {
     async fn paginate(&self, args: ParameterArgs) -> Result<Pagination<Cursor, Parameter>>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Parameter>>;
-    async fn find_by_thread_version_id(&self, id: Uuid) -> Result<Vec<Parameter>>;
+    async fn find_by_thread_version_id(&self, thread_version_id: Uuid) -> Result<Vec<Parameter>>;
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Parameter>>;
     async fn create(&self, inputs: ParameterCreateInput) -> Result<Parameter>;
+    async fn duplicate_by_thread_version_id(
+        &self,
+        current_thread_version_id: Uuid,
+        new_thread_version_id: Uuid,
+    ) -> Result<Vec<Parameter>>;
     async fn update_by_id(
         &self,
         id: Uuid,
@@ -52,10 +57,10 @@ impl ParameterServiceExt for ParameterService {
             .await
     }
 
-    async fn find_by_thread_version_id(&self, id: Uuid) -> Result<Vec<Parameter>> {
+    async fn find_by_thread_version_id(&self, thread_version_id: Uuid) -> Result<Vec<Parameter>> {
         self.db
             .bind::<Parameter>()
-            .where_by(and(&[eq("thread_version_id", &id)]))
+            .where_by(and(&[eq("thread_version_id", &thread_version_id)]))
             .all()
             .await
     }
@@ -86,6 +91,25 @@ impl ParameterServiceExt for ParameterService {
         };
 
         self.db.insert(&input).await
+    }
+
+    async fn duplicate_by_thread_version_id(
+        &self,
+        current_thread_version_id: Uuid,
+        new_thread_version_id: Uuid,
+    ) -> Result<Vec<Parameter>> {
+        // TODO: implement duplicate method in dojo later
+        let mut parameters = self
+            .find_by_thread_version_id(current_thread_version_id)
+            .await?;
+        for parameter in &mut parameters {
+            parameter.id = Uuid::new_v4();
+            parameter.thread_version_id = new_thread_version_id;
+            parameter.created_at = Utc::now().naive_utc();
+            parameter.updated_at = Utc::now().naive_utc();
+        }
+
+        self.db.insert_many(&parameters).await
     }
 
     async fn update_by_id(

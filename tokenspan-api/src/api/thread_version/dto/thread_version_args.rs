@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use dojo_orm::pagination::Cursor;
 
-#[derive(InputObject)]
+#[derive(InputObject, Default)]
 pub struct ThreadVersionArgs {
     pub thread_id: Uuid,
     pub take: Option<i64>,

@@ -1,9 +1,0 @@
-mutation CreateProviderMutation($input: ProviderCreateInput!) {
-  createProvider(input: $input) {
-    id
-    name
-    slug
-    createdAt
-    updatedAt
-  }
-}

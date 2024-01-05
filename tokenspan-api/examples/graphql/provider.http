@@ -44,6 +44,24 @@ query GetProviders {
   }
 }
 
+### Get provider by id
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query Provider($providerId: UUID!) {
+  provider(id: $providerId) {
+    id
+    name
+    slug
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "providerId": "56df57c5-6bec-43d6-8aeb-4f508246fdb0"
+}
+
 ### Update provider by id
 GRAPHQL {{host}}/graphql
 Authorization: Bearer {{token}}

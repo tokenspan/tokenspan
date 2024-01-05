@@ -1,0 +1,126 @@
+### Publish thread version
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation PublishThreadVersion($publishThreadVersionId: UUID!, $input: ThreadVersionPublishInput!) {
+  publishThreadVersion(id: $publishThreadVersionId, input: $input) {
+    id
+  }
+}
+
+{
+  "publishThreadVersionId": "22bc8e4b-2649-400a-9dc2-d9d8b7b788a4",
+  "input": {
+    "releaseNote": "test",
+    "semver": "0.0.1"
+  }
+}
+
+### Get thread versions
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query ThreadVersions {
+  threadVersions {
+    nodes {
+      id
+      semver
+      version
+      releaseNote
+      description
+      document
+      status
+      threadId
+      ownerId
+      createdAt
+      updatedAt
+      messages {
+        id
+        threadVersionId
+        ownerId
+        raw
+        content
+        role
+        createdAt
+        updatedAt
+      }
+      thread {
+        id
+        name
+      }
+      parameters {
+        id
+        name
+        temperature
+        maxTokens
+        stopSequences
+        topP
+        frequencyPenalty
+        presencePenalty
+        extra
+        modelId
+        threadVersionId
+        createdAt
+        updatedAt
+      }
+    }
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    totalNodes
+  }
+}
+
+### Get thread version
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query ThreadVersion($by: ThreadVersionBy!) {
+  threadVersion(by: $by) {
+    id
+    semver
+    version
+    releaseNote
+    description
+    document
+    status
+    threadId
+    ownerId
+    createdAt
+    updatedAt
+    parameters {
+      id
+      name
+      temperature
+      maxTokens
+      stopSequences
+      topP
+      frequencyPenalty
+      presencePenalty
+      extra
+      modelId
+      threadVersionId
+      createdAt
+      updatedAt
+    }
+    messages {
+      id
+      threadVersionId
+      ownerId
+      raw
+      content
+      role
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+{
+  "by": {
+    "id": "c4238f56-25c2-4d23-bca1-1695116b3f53"
+  }
+}

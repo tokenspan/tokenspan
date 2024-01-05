@@ -30,7 +30,7 @@ async fn test_sign_in() -> Result<()> {
     #[derive(GraphQLQuery)]
     #[graphql(
         schema_path = "../schema.graphql",
-        query_path = "tests/graphql/sign-up.graphql",
+        query_path = "tests/graphql/auth/sign-up.graphql",
         response_derives = "Debug"
     )]
     struct SignUpMutation;

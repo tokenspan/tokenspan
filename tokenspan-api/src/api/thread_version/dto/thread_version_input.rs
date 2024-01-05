@@ -1,3 +1,4 @@
+use crate::api::models::ThreadVersionStatus;
 use async_graphql::InputObject;
 use dojo_macros::UpdateModel;
 use typed_builder::TypedBuilder;
@@ -18,8 +19,18 @@ pub struct ThreadVersionCreateInput {
     pub document: Option<String>,
 }
 
-#[derive(InputObject, UpdateModel, Debug)]
+#[derive(InputObject, TypedBuilder)]
+pub struct ThreadVersionPublishInput {
+    pub semver: String,
+    pub release_note: String,
+}
+
+#[derive(InputObject, UpdateModel, Debug, Default)]
 pub struct ThreadVersionUpdateInput {
     pub description: Option<String>,
     pub document: Option<String>,
+    #[graphql(skip, default)]
+    pub release_note: Option<String>,
+    #[graphql(skip, default)]
+    pub status: Option<ThreadVersionStatus>,
 }

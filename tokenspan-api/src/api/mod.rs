@@ -7,6 +7,7 @@ mod api_key;
 mod auth;
 mod cache;
 mod execution;
+mod function;
 mod health;
 mod message;
 mod model;
@@ -20,6 +21,7 @@ pub mod services {
     pub use super::api_key::api_key_service::*;
     pub use super::auth::auth_service::*;
     pub use super::execution::execution_service::*;
+    pub use super::function::function_service::*;
     pub use super::message::message_service::*;
     pub use super::model::model_service::*;
     pub use super::parameter::parameter_service::*;
@@ -33,6 +35,7 @@ pub mod models {
     pub use super::api_key::api_key_model::*;
     pub use super::auth::auth_model::*;
     pub use super::execution::execution_model::*;
+    pub use super::function::function_model::*;
     pub use super::message::message_model::*;
     pub use super::model::model_model::*;
     pub use super::parameter::parameter_model::*;
@@ -46,6 +49,7 @@ pub mod dto {
     pub use super::api_key::dto::*;
     pub use super::auth::dto::*;
     pub use super::execution::dto::*;
+    pub use super::function::dto::*;
     pub use super::message::dto::*;
     pub use super::model::dto::*;
     pub use super::parameter::dto::*;
@@ -82,6 +86,7 @@ pub struct QueryRoot(
     pub execution::ExecutionQuery,
     pub parameter::ParameterQuery,
     pub message::MessageQuery,
+    pub function::FunctionQuery,
 );
 
 #[derive(MergedObject, Default)]
@@ -95,6 +100,7 @@ pub struct MutationRoot(
     pub thread_version::ThreadVersionMutation,
     pub parameter::ParameterMutation,
     pub message::MessageMutation,
+    pub function::FunctionMutation,
 );
 
 #[derive(MergedSubscription, Default)]

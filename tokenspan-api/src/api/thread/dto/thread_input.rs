@@ -10,13 +10,11 @@ use validator::Validate;
 pub struct ThreadCreateInput {
     pub name: String,
     pub slug: String,
-    pub private: bool,
 }
 
 #[derive(InputObject, UpdateModel)]
 pub struct ThreadUpdateInput {
     pub name: Option<String>,
-    pub private: Option<bool>,
 }
 
 #[derive(Deserialize, Validate, Clone)]

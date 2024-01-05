@@ -14,7 +14,7 @@ pub struct ThreadMutation;
 #[Object]
 impl ThreadMutation {
     #[graphql(guard = "RoleGuard::new(UserRole::User)")]
-    pub async fn new_thread<'a>(
+    pub async fn create_thread<'a>(
         &self,
         ctx: &Context<'a>,
         input: ThreadCreateInput,

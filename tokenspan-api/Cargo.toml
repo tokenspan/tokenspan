@@ -39,14 +39,15 @@ uuid = { version = "1.6.1", features = ["v4"] }
 validator = { version = "0.16", features = ["derive"] }
 typed-builder = "0.18.0"
 refinery = { version = "0.8.11", features = ["tokio-postgres"] }
+graphql_client = { version = "0.13.0", features = ["graphql_query_derive"]}
 
 [dependencies.dojo-orm]
-#path = "../../dojo-orm/dojo-orm"
-git = "https://github.com/tokenspan/dojo-orm.git"
+path = "../../dojo-orm/dojo-orm"
+#git = "https://github.com/tokenspan/dojo-orm.git"
 
 [dependencies.dojo-macros]
-#path = "../../dojo-orm/dojo-macros"
-git = "https://github.com/tokenspan/dojo-orm.git"
+path = "../../dojo-orm/dojo-macros"
+#git = "https://github.com/tokenspan/dojo-orm.git"
 
 [dependencies.tokio-postgres]
 version = "0.7.2"
@@ -57,7 +58,6 @@ features = [
 ]
 
 [dev-dependencies]
-graphql_client = { version = "0.13.0", features = ["graphql_query_derive"]}
 axum-test = "14.2.2"
 testcontainers-modules = { version = "0.3.0", features = ["postgres"] }
 assert_matches = "1.5.0"

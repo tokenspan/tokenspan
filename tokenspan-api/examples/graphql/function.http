@@ -1,0 +1,138 @@
+### Create function
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation CreateFunction($input: FunctionCreateInput!) {
+  createFunction(input: $input) {
+    id
+    ownerId
+    name
+    description
+    parameters
+    response
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "input": {
+    "description": "Determine weather in my location",
+    "name": "get_weather",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "The city and state e.g. San Francisco, CA"
+        },
+        "unit": {
+          "type": "string",
+          "enum": [
+            "c",
+            "f"
+          ]
+        }
+      },
+      "required": [
+        "location"
+      ]
+    },
+    "response": null
+  }
+}
+
+### Get functions
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query GetFunctionsQuery {
+  functions {
+    totalNodes
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    nodes {
+      id
+      ownerId
+      name
+      description
+      parameters
+      response
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+### Get function by id
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query Function($functionId: UUID!) {
+  function(id: $functionId) {
+    id
+    ownerId
+    name
+    description
+    parameters
+    response
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "functionId": "bf97310c-457a-44d1-b988-67793c6d3b1d"
+}
+
+### Update function
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation UpdateFunction($updateFunctionId: UUID!, $input: FunctionUpdateInput!) {
+  updateFunction(id: $updateFunctionId, input: $input) {
+    id
+    ownerId
+    name
+    description
+    parameters
+    response
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "updateFunctionId": "bf97310c-457a-44d1-b988-67793c6d3b1d",
+  "input": {
+    "name": "get_weather_1",
+    "description": "test",
+    "parameters": {},
+    "response": {}
+  }
+}
+
+### Delete function
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation DeleteFunction($deleteFunctionId: UUID!) {
+  deleteFunction(id: $deleteFunctionId) {
+    id
+    ownerId
+    name
+    description
+    parameters
+    response
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "deleteFunctionId": "bf97310c-457a-44d1-b988-67793c6d3b1d"
+}

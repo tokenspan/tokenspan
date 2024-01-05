@@ -1,0 +1,73 @@
+mutation CreateFunctionMutation($input: FunctionCreateInput!) {
+  createFunction(input: $input) {
+    id
+    ownerId
+    name
+    description
+    parameters
+    response
+    createdAt
+    updatedAt
+  }
+}
+
+mutation DeleteFunction($deleteFunctionId: UUID!) {
+  deleteFunction(id: $deleteFunctionId) {
+    id
+    ownerId
+    name
+    description
+    parameters
+    response
+    createdAt
+    updatedAt
+  }
+}
+
+query FunctionQuery($functionId: UUID!) {
+  function(id: $functionId) {
+    id
+    ownerId
+    name
+    description
+    parameters
+    response
+    createdAt
+    updatedAt
+  }
+}
+
+query GetFunctionsQuery {
+  functions {
+    totalNodes
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    nodes {
+      id
+      ownerId
+      name
+      description
+      parameters
+      response
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+mutation UpdateFunctionMutation($updateFunctionId: UUID!, $input: FunctionUpdateInput!) {
+  updateFunction(id: $updateFunctionId, input: $input) {
+    id
+    ownerId
+    name
+    description
+    parameters
+    response
+    createdAt
+    updatedAt
+  }
+}

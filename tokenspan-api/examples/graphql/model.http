@@ -51,8 +51,8 @@ mutation CreateModel($input: ModelCreateInput!) {
 GRAPHQL {{host}}/graphql
 Authorization: Bearer {{token}}
 
-query Models($args: ModelArgs!) {
-  models(args: $args) {
+query Models {
+  models {
     nodes {
       id
       name
@@ -84,8 +84,114 @@ query Models($args: ModelArgs!) {
   }
 }
 
-{
-  "args": {
-    "take": 10
+### Get model by id
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query Model($modelId: UUID!) {
+  model(id: $modelId) {
+    id
+    name
+    description
+    slug
+    context
+    inputPricing {
+      price
+      tokens
+      currency
+    }
+    outputPricing {
+      price
+      tokens
+      currency
+    }
+    trainingAt
+    providerId
+    createdAt
+    updatedAt
   }
+}
+
+{
+  "modelId": "e8b9719a-4f05-499b-8776-c5a634b0b96b"
+}
+
+### Update model
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation UpdateModel($updateModelId: UUID!, $input: ModelUpdateInput!) {
+  updateModel(id: $updateModelId, input: $input) {
+    id
+    name
+    description
+    slug
+    context
+    inputPricing {
+      price
+      tokens
+      currency
+    }
+    outputPricing {
+      price
+      tokens
+      currency
+    }
+    trainingAt
+    providerId
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "updateModelId": "e8b9719a-4f05-499b-8776-c5a634b0b96b",
+  "input": {
+    "name": "test",
+    "description": "Similar capabilities as text-davinci-003 but compatible with legacy Completions endpoint and not Chat Completions.",
+    "slug": "gpt-3.5-turbo-instruct",
+    "context": 4096,
+    "inputPricing": {
+      "price": 0.0016,
+      "tokens": 1000,
+      "currency": "USD"
+    },
+    "outputPricing": {
+      "price": 0.0021,
+      "tokens": 1000,
+      "currency": "USD"
+    }
+  }
+}
+
+### Delete model
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation DeleteModel($deleteModelId: UUID!) {
+  deleteModel(id: $deleteModelId) {
+    id
+    name
+    description
+    slug
+    context
+    inputPricing {
+      price
+      tokens
+      currency
+    }
+    outputPricing {
+      price
+      tokens
+      currency
+    }
+    trainingAt
+    providerId
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "deleteModelId": "e8b9719a-4f05-499b-8776-c5a634b0b96b"
 }

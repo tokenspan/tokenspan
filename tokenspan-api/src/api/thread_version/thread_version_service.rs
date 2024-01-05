@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::api::dto::ThreadVersionPublishInput;
 use anyhow::Result;
 use chrono::Utc;
 use dojo_orm::ops::{and, desc, eq, in_list};
@@ -10,6 +11,7 @@ use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
 use crate::api::models::{ThreadVersion, ThreadVersionStatus};
+use crate::api::services::{MessageServiceDyn, ParameterServiceDyn};
 use crate::api::thread_version::dto::{
     ThreadVersionArgs, ThreadVersionCreateInput, ThreadVersionUpdateInput,
 };
@@ -30,13 +32,18 @@ pub trait ThreadVersionServiceExt {
         input: ThreadVersionCreateInput,
         owner_id: Uuid,
     ) -> Result<ThreadVersion>;
+    async fn publish(
+        &self,
+        id: Uuid,
+        input: ThreadVersionPublishInput,
+        owner_id: Uuid,
+    ) -> Result<ThreadVersion>;
     async fn update_by_id(
         &self,
         id: Uuid,
         input: ThreadVersionUpdateInput,
     ) -> Result<Option<ThreadVersion>>;
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<ThreadVersion>>;
-    async fn release(&self, id: Uuid) -> Result<ThreadVersion>;
 }
 
 pub type ThreadVersionServiceDyn = Arc<dyn ThreadVersionServiceExt + Send + Sync>;
@@ -44,6 +51,8 @@ pub type ThreadVersionServiceDyn = Arc<dyn ThreadVersionServiceExt + Send + Sync
 #[derive(TypedBuilder)]
 pub struct ThreadVersionService {
     db: Database,
+    parameter_service: ParameterServiceDyn,
+    message_service: MessageServiceDyn,
 }
 
 #[async_trait::async_trait]
@@ -116,6 +125,57 @@ impl ThreadVersionServiceExt for ThreadVersionService {
         self.db.insert(&input).await
     }
 
+    async fn publish(
+        &self,
+        id: Uuid,
+        input: ThreadVersionPublishInput,
+        owner_id: Uuid,
+    ) -> Result<ThreadVersion> {
+        let thread_version = self
+            .find_by_id(id)
+            .await?
+            .ok_or(anyhow::anyhow!("thread version not found"))?;
+
+        if thread_version.status == ThreadVersionStatus::Published {
+            return Err(anyhow::anyhow!("thread version already published"));
+        }
+
+        let update_input = ThreadVersionUpdateInput {
+            release_note: Some(input.release_note),
+            status: Some(ThreadVersionStatus::Published),
+            ..Default::default()
+        };
+        let current_thread_version = self
+            .update_by_id(id, update_input)
+            .await?
+            .ok_or(anyhow::anyhow!("thread version not found"))?;
+
+        let new_version = current_thread_version.version + 1;
+        let input = ThreadVersion {
+            id: Uuid::new_v4(),
+            owner_id,
+            description: current_thread_version.description,
+            document: current_thread_version.document,
+            release_note: current_thread_version.release_note,
+            semver: input.semver,
+            thread_id: current_thread_version.thread_id,
+            version: new_version,
+            status: ThreadVersionStatus::Draft,
+            created_at: Utc::now().naive_utc(),
+            updated_at: Utc::now().naive_utc(),
+        };
+        let new_thread_version = self.db.insert(&input).await?;
+
+        self.parameter_service
+            .duplicate_by_thread_version_id(current_thread_version.id, new_thread_version.id)
+            .await?;
+        self.message_service
+            .duplicate_by_thread_version_id(current_thread_version.id, new_thread_version.id)
+            .await?;
+
+        Ok(new_thread_version)
+    }
+
     async fn update_by_id(
         &self,
         id: Uuid,
@@ -130,16 +190,20 @@ impl ThreadVersionServiceExt for ThreadVersionService {
     }
 
     async fn delete_by_id(&self, id: Uuid) -> Result<Option<ThreadVersion>> {
+        let thread_version = self
+            .find_by_id(id)
+            .await?
+            .ok_or(anyhow::anyhow!("thread version not found"))?;
+
+        if thread_version.status == ThreadVersionStatus::Draft {
+            return Err(anyhow::anyhow!("thread version is draft"));
+        }
+
         self.db
             .delete()
             .where_by(and(&[eq("id", &id)]))
             .first()
             .await
-    }
-
-    async fn release(&self, _id: Uuid) -> Result<ThreadVersion> {
-        // TODO: copy parameters and save it to thread_version
-        todo!()
     }
 }
 
