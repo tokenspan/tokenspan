@@ -58,8 +58,6 @@ pub struct ThreadSeed {
 }
 
 impl ThreadSeed {
-    async fn save_messages() {}
-
     async fn save_parameters(
         &self,
         parameters: Vec<Parameter>,
@@ -141,6 +139,7 @@ impl ThreadSeed {
         })
     }
 
+    #[allow(unused_allocation)]
     async fn new_with_data(
         config: AppConfig,
         state: AppState,

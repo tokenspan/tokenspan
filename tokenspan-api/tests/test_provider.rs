@@ -12,12 +12,260 @@ use tokenspan_api::state::AppState;
 
 use crate::graphql::{
     create_provider_mutation, delete_provider_mutation, get_provider_query, get_providers_query,
-    update_provider_mutation, CreateProviderMutation, DeleteProviderMutation, GetProviderQuery,
-    GetProvidersQuery, UpdateProviderMutation,
+    update_provider_mutation, CreateProviderMutation, Cursor, DeleteProviderMutation,
+    GetProviderQuery, GetProvidersQuery, UpdateProviderMutation,
 };
 
 mod common;
 mod graphql;
+
+macro_rules! create_provider {
+    ($state: ident, name = $name: literal, slug = $slug: literal) => {
+        $state
+            .provider_service
+            .create(ProviderCreateInput {
+                name: $name.to_string(),
+                slug: $slug.to_string(),
+            })
+            .await?;
+    };
+}
+
+macro_rules! query_providers {
+    ($server: ident, resp = $resp: ident, variables = $variables: ident, token = $token: expr) => {
+        let req_body = GetProvidersQuery::build_query($variables);
+        let resp = $server
+            .post("graphql")
+            .add_header(
+                HeaderName::from_static("authorization"),
+                HeaderValue::from_str(format!("Bearer {}", $token).as_str())?,
+            )
+            .json(&req_body)
+            .await;
+        $resp = resp.json::<Response<get_providers_query::ResponseData>>();
+    };
+}
+
+#[tokio::test]
+async fn test_paginate_next_providers() -> Result<()> {
+    // Setup
+    let state: AppState;
+    let server: TestServer;
+    setup!(state, server);
+
+    // Create new user
+    let auth_fixture = state
+        .auth_service
+        .sign_up_with_role(
+            "linh@gmail.com".to_string(),
+            "linh".to_string(),
+            "123".to_string(),
+            UserRole::Admin,
+        )
+        .await?;
+
+    // Create provider
+    create_provider!(state, name = "OpenAI", slug = "openai");
+    create_provider!(state, name = "Cohere", slug = "cohere");
+    create_provider!(state, name = "Anthropic", slug = "anthropic");
+
+    // Get first provider
+    let variables = get_providers_query::Variables {
+        args: get_providers_query::ProviderArgs {
+            after: None,
+            before: None,
+            take: Some(1),
+        },
+    };
+    let resp: Response<get_providers_query::ResponseData>;
+    query_providers!(
+        server,
+        resp = resp,
+        variables = variables,
+        token = auth_fixture.token
+    );
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(get_providers_query::ResponseData {
+            providers: pat!(get_providers_query::GetProvidersQueryProviders {
+                nodes: contains_each![pat!(get_providers_query::GetProvidersQueryProvidersNodes {
+                    id: anything(),
+                    name: eq("OpenAI".to_string()),
+                    slug: eq("openai".to_string()),
+                    created_at: anything(),
+                    updated_at: anything(),
+                }),],
+                total_nodes: eq(3),
+                page_info: pat!(get_providers_query::GetProvidersQueryProvidersPageInfo {
+                    has_next_page: eq(true),
+                    has_previous_page: eq(false),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    // Get second provider
+    let cursor = resp.data.unwrap().providers.page_info.end_cursor.unwrap();
+    let variables = get_providers_query::Variables {
+        args: get_providers_query::ProviderArgs {
+            after: Some(cursor),
+            before: None,
+            take: Some(1),
+        },
+    };
+    let resp: Response<get_providers_query::ResponseData>;
+    query_providers!(
+        server,
+        resp = resp,
+        variables = variables,
+        token = auth_fixture.token
+    );
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(get_providers_query::ResponseData {
+            providers: pat!(get_providers_query::GetProvidersQueryProviders {
+                nodes: contains_each![pat!(get_providers_query::GetProvidersQueryProvidersNodes {
+                    id: anything(),
+                    name: eq("Cohere".to_string()),
+                    slug: eq("cohere".to_string()),
+                    created_at: anything(),
+                    updated_at: anything(),
+                }),],
+                total_nodes: eq(3),
+                page_info: pat!(get_providers_query::GetProvidersQueryProvidersPageInfo {
+                    has_next_page: eq(true),
+                    has_previous_page: eq(true),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    // Get third provider
+    let cursor = resp.data.unwrap().providers.page_info.end_cursor.unwrap();
+    let variables = get_providers_query::Variables {
+        args: get_providers_query::ProviderArgs {
+            after: Some(cursor),
+            before: None,
+            take: Some(1),
+        },
+    };
+    let resp: Response<get_providers_query::ResponseData>;
+    query_providers!(
+        server,
+        resp = resp,
+        variables = variables,
+        token = auth_fixture.token
+    );
+    println!("{:?}", resp.data);
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(get_providers_query::ResponseData {
+            providers: pat!(get_providers_query::GetProvidersQueryProviders {
+                nodes: contains_each![pat!(get_providers_query::GetProvidersQueryProvidersNodes {
+                    id: anything(),
+                    name: eq("Anthropic".to_string()),
+                    slug: eq("anthropic".to_string()),
+                    created_at: anything(),
+                    updated_at: anything(),
+                }),],
+                total_nodes: eq(3),
+                page_info: pat!(get_providers_query::GetProvidersQueryProvidersPageInfo {
+                    has_next_page: eq(false),
+                    has_previous_page: eq(true),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    // Get fourth provider
+    let cursor = resp.data.unwrap().providers.page_info.end_cursor.unwrap();
+    let variables = get_providers_query::Variables {
+        args: get_providers_query::ProviderArgs {
+            after: Some(cursor.clone()),
+            before: None,
+            take: Some(1),
+        },
+    };
+    let resp: Response<get_providers_query::ResponseData>;
+    query_providers!(
+        server,
+        resp = resp,
+        variables = variables,
+        token = auth_fixture.token
+    );
+    println!("{:?}", resp.data);
+    println!("{:?}", cursor);
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(get_providers_query::ResponseData {
+            providers: pat!(get_providers_query::GetProvidersQueryProviders {
+                nodes: empty(),
+                total_nodes: eq(3),
+                page_info: pat!(get_providers_query::GetProvidersQueryProvidersPageInfo {
+                    has_next_page: eq(false),
+                    has_previous_page: eq(true),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    // Get third provider
+    let variables = get_providers_query::Variables {
+        args: get_providers_query::ProviderArgs {
+            after: None,
+            before: Some(cursor),
+            take: Some(1),
+        },
+    };
+    let resp: Response<get_providers_query::ResponseData>;
+    query_providers!(
+        server,
+        resp = resp,
+        variables = variables,
+        token = auth_fixture.token
+    );
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(get_providers_query::ResponseData {
+            providers: pat!(get_providers_query::GetProvidersQueryProviders {
+                nodes: contains_each![pat!(get_providers_query::GetProvidersQueryProvidersNodes {
+                    id: anything(),
+                    name: eq("Anthropic".to_string()),
+                    slug: eq("anthropic".to_string()),
+                    created_at: anything(),
+                    updated_at: anything(),
+                }),],
+                total_nodes: eq(3),
+                page_info: pat!(get_providers_query::GetProvidersQueryProvidersPageInfo {
+                    has_next_page: eq(false),
+                    has_previous_page: eq(true),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    Ok(())
+}
 
 #[tokio::test]
 async fn test_get_providers() -> Result<()> {
@@ -27,7 +275,7 @@ async fn test_get_providers() -> Result<()> {
     setup!(state, server);
 
     // Create new user
-    let auth_payload = state
+    let auth_fixture = state
         .auth_service
         .sign_up_with_role(
             "linh@gmail.com".to_string(),
@@ -54,14 +302,20 @@ async fn test_get_providers() -> Result<()> {
         })
         .await?;
 
-    // Create provider
-    let variables = get_providers_query::Variables {};
+    // Get providers
+    let variables = get_providers_query::Variables {
+        args: get_providers_query::ProviderArgs {
+            after: None,
+            before: None,
+            take: Some(10),
+        },
+    };
     let req_body = GetProvidersQuery::build_query(variables);
     let resp = server
         .post("graphql")
         .add_header(
             HeaderName::from_static("authorization"),
-            HeaderValue::from_str(format!("Bearer {}", auth_payload.token).as_str())?,
+            HeaderValue::from_str(format!("Bearer {}", auth_fixture.token).as_str())?,
         )
         .json(&req_body)
         .await;
@@ -109,7 +363,7 @@ async fn test_get_provider_by_id() -> Result<()> {
     setup!(state, server);
 
     // Create new user
-    let auth_payload = state
+    let auth_fixture = state
         .auth_service
         .sign_up_with_role(
             "linh@gmail.com".to_string(),
@@ -128,7 +382,7 @@ async fn test_get_provider_by_id() -> Result<()> {
         })
         .await?;
 
-    // Cet provider
+    // Get provider
     let variables = get_provider_query::Variables {
         provider_id: provider_fixture.id,
     };
@@ -137,7 +391,7 @@ async fn test_get_provider_by_id() -> Result<()> {
         .post("graphql")
         .add_header(
             HeaderName::from_static("authorization"),
-            HeaderValue::from_str(format!("Bearer {}", auth_payload.token).as_str())?,
+            HeaderValue::from_str(format!("Bearer {}", auth_fixture.token).as_str())?,
         )
         .json(&req_body)
         .await;
@@ -168,7 +422,7 @@ async fn test_create_provider() -> Result<()> {
     setup!(state, server);
 
     // create new user
-    let auth_payload = state
+    let auth_fixture = state
         .auth_service
         .sign_up_with_role(
             "linh@gmail.com".to_string(),
@@ -190,7 +444,7 @@ async fn test_create_provider() -> Result<()> {
         .post("graphql")
         .add_header(
             HeaderName::from_static("authorization"),
-            HeaderValue::from_str(format!("Bearer {}", auth_payload.token).as_str())?,
+            HeaderValue::from_str(format!("Bearer {}", auth_fixture.token).as_str())?,
         )
         .json(&req_body)
         .await;
@@ -222,7 +476,7 @@ async fn test_update_provider() -> Result<()> {
     setup!(state, server);
 
     // Create new user
-    let auth_payload = state
+    let auth_fixture = state
         .auth_service
         .sign_up_with_role(
             "linh@gmail.com".to_string(),
@@ -254,7 +508,7 @@ async fn test_update_provider() -> Result<()> {
         .post("graphql")
         .add_header(
             HeaderName::from_static("authorization"),
-            HeaderValue::from_str(format!("Bearer {}", auth_payload.token).as_str())?,
+            HeaderValue::from_str(format!("Bearer {}", auth_fixture.token).as_str())?,
         )
         .json(&req_body)
         .await;
@@ -287,7 +541,7 @@ async fn test_delete_provider() -> Result<()> {
     setup!(state, server);
 
     // Create new user
-    let auth_payload = state
+    let auth_fixture = state
         .auth_service
         .sign_up_with_role(
             "linh@gmail.com".to_string(),
@@ -315,7 +569,7 @@ async fn test_delete_provider() -> Result<()> {
         .post("graphql")
         .add_header(
             HeaderName::from_static("authorization"),
-            HeaderValue::from_str(format!("Bearer {}", auth_payload.token).as_str())?,
+            HeaderValue::from_str(format!("Bearer {}", auth_fixture.token).as_str())?,
         )
         .json(&req_body)
         .await;

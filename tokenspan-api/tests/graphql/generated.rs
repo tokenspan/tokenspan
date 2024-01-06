@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_imports)]
+
 mod get_thread_version;
 pub use get_thread_version::*;
 mod publish_thread_version;
@@ -60,3 +63,4 @@ pub use get_thread::*;
 pub type UUID = uuid::Uuid;
 pub type NaiveDateTime = chrono::NaiveDateTime;
 pub type JSON = serde_json::Value;
+pub type Cursor = String;

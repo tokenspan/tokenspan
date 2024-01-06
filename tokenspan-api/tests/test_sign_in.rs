@@ -1,13 +1,8 @@
-use std::env;
-
 use anyhow::Result;
 use axum_test::TestServer;
 use googletest::prelude::*;
 use graphql_client::{GraphQLQuery, Response};
-use testcontainers_modules::{postgres::Postgres, testcontainers::clients::Cli};
 
-use tokenspan_api::app::make_app_with_state;
-use tokenspan_api::configs;
 use tokenspan_api::state::AppState;
 
 use crate::graphql::sign_in_mutation::UserRole;

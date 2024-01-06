@@ -4,7 +4,7 @@ pub mod get_providers_query {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "GetProvidersQuery";
-    pub const QUERY : & str = "query GetProvidersQuery {\n  providers {\n    nodes {\n      id\n      name\n      slug\n      createdAt\n      updatedAt\n    }\n    pageInfo {\n      endCursor\n      startCursor\n      hasNextPage\n      hasPreviousPage\n    }\n  }\n}" ;
+    pub const QUERY : & str = "query GetProvidersQuery($args: ProviderArgs!) {\n  providers(args: $args) {\n    nodes {\n      id\n      name\n      slug\n      createdAt\n      updatedAt\n    }\n    totalNodes\n    pageInfo {\n      endCursor\n      startCursor\n      hasNextPage\n      hasPreviousPage\n    }\n  }\n}" ;
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -15,10 +15,20 @@ pub mod get_providers_query {
     type Int = i64;
     #[allow(dead_code)]
     type ID = String;
+    type Cursor = crate::graphql::Cursor;
     type NaiveDateTime = crate::graphql::NaiveDateTime;
     type UUID = crate::graphql::UUID;
     #[derive(Serialize)]
-    pub struct Variables;
+    pub struct ProviderArgs {
+        pub after: Option<Cursor>,
+        pub before: Option<Cursor>,
+        pub take: Option<Int>,
+    }
+    #[derive(Serialize)]
+    pub struct Variables {
+        pub args: ProviderArgs,
+    }
+    impl Variables {}
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
         pub providers: GetProvidersQueryProviders,
@@ -26,6 +36,8 @@ pub mod get_providers_query {
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct GetProvidersQueryProviders {
         pub nodes: Vec<GetProvidersQueryProvidersNodes>,
+        #[serde(rename = "totalNodes")]
+        pub total_nodes: Int,
         #[serde(rename = "pageInfo")]
         pub page_info: GetProvidersQueryProvidersPageInfo,
     }

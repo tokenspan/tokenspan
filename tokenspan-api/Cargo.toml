@@ -41,12 +41,12 @@ typed-builder = "0.18.0"
 refinery = { version = "0.8.11", features = ["tokio-postgres"] }
 
 [dependencies.dojo-orm]
-#path = "../../dojo-orm/dojo-orm"
-git = "https://github.com/tokenspan/dojo-orm.git"
+path = "../../dojo-orm/dojo-orm"
+#git = "https://github.com/tokenspan/dojo-orm.git"
 
 [dependencies.dojo-macros]
-#path = "../../dojo-orm/dojo-macros"
-git = "https://github.com/tokenspan/dojo-orm.git"
+path = "../../dojo-orm/dojo-macros"
+#git = "https://github.com/tokenspan/dojo-orm.git"
 
 [dependencies.tokio-postgres]
 version = "0.7.2"

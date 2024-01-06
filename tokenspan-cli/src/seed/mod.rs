@@ -3,9 +3,6 @@ use std::fs;
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 
-use tokenspan_api::configs::AppConfig;
-use tokenspan_api::state::AppState;
-
 pub mod model_seed;
 pub mod provider_seed;
 pub mod thread_seed;

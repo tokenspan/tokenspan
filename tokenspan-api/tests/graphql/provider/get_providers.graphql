@@ -1,5 +1,5 @@
-query GetProvidersQuery {
-  providers {
+query GetProvidersQuery($args: ProviderArgs!) {
+  providers(args: $args) {
     nodes {
       id
       name
@@ -7,6 +7,7 @@ query GetProvidersQuery {
       createdAt
       updatedAt
     }
+    totalNodes
     pageInfo {
       endCursor
       startCursor

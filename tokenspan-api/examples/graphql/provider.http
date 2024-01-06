@@ -14,8 +14,8 @@ mutation CreateProvider($input: ProviderCreateInput!) {
 
 {
   "input": {
-    "name": "AWS",
-    "slug": "aws"
+    "name": "test",
+    "slug": "test"
   }
 }
 

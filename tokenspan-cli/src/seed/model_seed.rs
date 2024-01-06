@@ -7,7 +7,7 @@ use tokenspan_api::api::dto::{ModelCreateInput, PricingInput};
 use tokenspan_api::configs::AppConfig;
 use tokenspan_api::state::AppState;
 
-use crate::seed::prelude::{Provider, ProviderRef};
+use crate::seed::prelude::ProviderRef;
 use crate::seed::Seed;
 
 #[derive(Debug, Deserialize, Clone)]

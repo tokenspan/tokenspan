@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use tokio_stream::StreamExt;
 
-use crate::seed::prelude::Thread;
 use tokenspan_api::api::dto::ProviderCreateInput;
 use tokenspan_api::configs::AppConfig;
 use tokenspan_api::state::AppState;

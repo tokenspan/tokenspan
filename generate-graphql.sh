@@ -14,6 +14,12 @@ if [ -e "$output_file" ]; then
     echo "Deleted existing $output_file"
 fi
 
+cat <<EOL >> "$output_file"
+#![allow(dead_code)]
+#![allow(unused_imports)]
+
+EOL
+
 # Loop over the found files
 for file in $graphql_files; do
     echo "Processing file: $file"
@@ -31,4 +37,5 @@ cat <<EOL >> "$output_file"
 pub type UUID = uuid::Uuid;
 pub type NaiveDateTime = chrono::NaiveDateTime;
 pub type JSON = serde_json::Value;
+pub type Cursor = String;
 EOL
