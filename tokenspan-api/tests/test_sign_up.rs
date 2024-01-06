@@ -1,39 +1,22 @@
 use anyhow::Result;
 use axum_test::TestServer;
-use graphql_client::{GraphQLQuery, Response};
-use testcontainers_modules::{postgres::Postgres, testcontainers::clients::Cli};
-
 use googletest::prelude::*;
-use tokenspan_api::app::make_app;
-use tokenspan_api::configs;
+use graphql_client::{GraphQLQuery, Response};
 
-type UUID = uuid::Uuid;
+use tokenspan_api::state::AppState;
+
+use crate::graphql::sign_up_mutation::UserRole;
+use crate::graphql::{sign_up_mutation, SignUpMutation};
+
+mod common;
+mod graphql;
 
 #[tokio::test]
 async fn test_sign_up() -> Result<()> {
     // Setup
-    let docker = Cli::default();
-    let node = docker.run(Postgres::default());
-
-    let conn_url = &format!(
-        "postgres://postgres:postgres@localhost:{}/postgres",
-        node.get_host_port_ipv4(5432)
-    );
-
-    let mut config = configs::AppConfig::new().expect("Failed to load config");
-    config.database.url = conn_url.to_string();
-
-    let app = make_app(config).await?;
-    let server = TestServer::new(app)?;
-
-    // GraphQL
-    #[derive(GraphQLQuery)]
-    #[graphql(
-        schema_path = "../schema.graphql",
-        query_path = "tests/graphql/auth/sign-up.graphql",
-        response_derives = "Debug"
-    )]
-    struct SignUpMutation;
+    let state: AppState;
+    let server: TestServer;
+    setup!(state, server);
 
     // Sign up
     let variables = sign_up_mutation::Variables {
@@ -57,7 +40,8 @@ async fn test_sign_up() -> Result<()> {
                 user: pat!(sign_up_mutation::SignUpMutationSignUpUser {
                     id: anything(),
                     username: eq("linh"),
-                    email: eq("linh@gmail.com")
+                    email: eq("linh@gmail.com"),
+                    role: eq(UserRole::USER),
                 })
             })
         }))

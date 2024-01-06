@@ -1,0 +1,17 @@
+query GetProvidersQuery {
+  providers {
+    nodes {
+      id
+      name
+      slug
+      createdAt
+      updatedAt
+    }
+    pageInfo {
+      endCursor
+      startCursor
+      hasNextPage
+      hasPreviousPage
+    }
+  }
+}

@@ -1,3 +1,5 @@
+use std::env;
+
 use anyhow::Result;
 use axum_test::http::{HeaderName, HeaderValue};
 use axum_test::TestServer;
@@ -8,31 +10,22 @@ use graphql_client::{GraphQLQuery, Response};
 use testcontainers_modules::postgres::Postgres;
 use testcontainers_modules::testcontainers::clients::Cli;
 
-use tokenspan_api::api::dto::ProviderCreateInput;
 use tokenspan_api::api::models::UserRole;
 use tokenspan_api::app::make_app_with_state;
 use tokenspan_api::configs;
+use tokenspan_api::state::AppState;
 
-type UUID = uuid::Uuid;
-type NaiveDateTime = chrono::NaiveDateTime;
+use crate::graphql::{create_provider_mutation, CreateProviderMutation};
+
+mod common;
+mod graphql;
 
 #[tokio::test]
 async fn test_create_function() -> Result<()> {
     // Setup
-    let docker = Cli::default();
-    let node = docker.run(Postgres::default());
-
-    let conn_url = &format!(
-        "postgres://postgres:postgres@localhost:{}/postgres",
-        node.get_host_port_ipv4(5432)
-    );
-
-    let mut config = configs::AppConfig::new().expect("Failed to load config");
-    config.database.url = conn_url.to_string();
-
-    let state = tokenspan_api::state::AppState::new(&config).await?;
-    let app = make_app_with_state(config, state.clone()).await?;
-    let server = TestServer::new(app)?;
+    let state: AppState;
+    let server: TestServer;
+    setup!(state, server);
 
     // create new user
     let auth_payload = state
@@ -44,15 +37,6 @@ async fn test_create_function() -> Result<()> {
             UserRole::Admin,
         )
         .await?;
-
-    // GraphQL
-    #[derive(GraphQLQuery)]
-    #[graphql(
-        schema_path = "../schema.graphql",
-        query_path = "tests/graphql/provider/create-provider.graphql",
-        response_derives = "Debug"
-    )]
-    struct CreateProviderMutation;
 
     // Create provider
     let variables = create_provider_mutation::Variables {
@@ -71,6 +55,7 @@ async fn test_create_function() -> Result<()> {
         .json(&req_body)
         .await;
     let resp = resp.json::<Response<create_provider_mutation::ResponseData>>();
+
     assert_that!(
         resp.data,
         some(pat!(create_provider_mutation::ResponseData {

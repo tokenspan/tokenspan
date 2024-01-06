@@ -40,10 +40,14 @@ pub fn register_tracing(env: AppEnv, config: &configs::LogConfig) {
         }),
     );
 
-    if env == AppEnv::Production {
-        trace.with(tracing_subscriber::fmt::layer().json()).init();
-    } else {
-        trace.with(tracing_subscriber::fmt::layer().pretty()).init();
+    match env {
+        AppEnv::Production => {
+            trace.with(tracing_subscriber::fmt::layer().json()).init();
+        }
+        AppEnv::Development => {
+            trace.with(tracing_subscriber::fmt::layer().pretty()).init();
+        }
+        _ => (),
     }
 }
 

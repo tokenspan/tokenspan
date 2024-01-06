@@ -4,7 +4,7 @@ use dojo_orm::pagination::{AdditionalFields, Cursor};
 
 use crate::api::dto::{ThreadVersionArgs, ThreadVersionBy, ThreadVersionBySemver};
 use crate::api::models::ThreadVersion;
-use crate::api::services::{ProviderServiceDyn, ThreadVersionServiceDyn};
+use crate::api::services::ThreadVersionServiceDyn;
 use crate::error::AppError;
 
 #[derive(Default)]

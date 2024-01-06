@@ -1,0 +1,21 @@
+query GetFunctionsQuery {
+  functions {
+    totalNodes
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    nodes {
+      id
+      ownerId
+      name
+      description
+      parameters
+      response
+      createdAt
+      updatedAt
+    }
+  }
+}

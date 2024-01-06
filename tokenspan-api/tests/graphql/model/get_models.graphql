@@ -1,0 +1,32 @@
+query GetModelsQuery {
+  models {
+    nodes {
+      id
+      name
+      description
+      slug
+      context
+      inputPricing {
+        price
+        tokens
+        currency
+      }
+      outputPricing {
+        price
+        tokens
+        currency
+      }
+      trainingAt
+      providerId
+      createdAt
+      updatedAt
+    }
+    totalNodes
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+  }
+}

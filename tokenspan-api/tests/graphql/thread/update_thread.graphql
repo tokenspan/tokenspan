@@ -1,0 +1,6 @@
+mutation UpdateThreadMutation($updateThreadId: UUID!, $input: ThreadUpdateInput!) {
+  updateThread(id: $updateThreadId, input: $input) {
+    id
+    name
+  }
+}

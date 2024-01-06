@@ -1,17 +1,17 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
+use tokio_stream::StreamExt;
+use uuid::Uuid;
+
 use tokenspan_api::api::dto::{
     MessageCreateInput, ParameterCreateInput, ThreadCreateInput, ThreadVersionCreateInput,
 };
 use tokenspan_api::api::models::ThreadVersionStatus;
-use tokio_stream::StreamExt;
-use uuid::Uuid;
-
 use tokenspan_api::configs::AppConfig;
 use tokenspan_api::state::AppState;
 
-use crate::seed::prelude::{ModelRef, User, UserRef};
+use crate::seed::prelude::{ModelRef, UserRef};
 use crate::seed::Seed;
 
 #[derive(Debug, Deserialize, Clone)]
@@ -48,7 +48,6 @@ pub struct Thread {
     pub owner: UserRef,
     pub name: String,
     pub slug: String,
-    pub private: bool,
     pub versions: Vec<ThreadVersion>,
 }
 
@@ -180,7 +179,6 @@ impl Seed for ThreadSeed {
                     ThreadCreateInput {
                         name: thread.name,
                         slug: thread.slug,
-                        private: thread.private,
                     },
                     owner.id,
                 )

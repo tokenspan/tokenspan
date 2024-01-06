@@ -1,0 +1,19 @@
+mutation CreateApiKeyMutation($input: ApiKeyCreateInput!) {
+  createApiKey(input: $input) {
+    id
+    name
+    ownerId
+    providerId
+    createdAt
+    updatedAt
+    provider {
+      id
+      name
+      slug
+    }
+    owner {
+      id
+      username
+    }
+  }
+}

@@ -1,0 +1,19 @@
+query GetApiKeyQuery($id: UUID!) {
+  apiKey(id: $id) {
+    id
+    name
+    ownerId
+    providerId
+    createdAt
+    updatedAt
+    provider {
+      id
+      name
+      slug
+    }
+    owner {
+      id
+      username
+    }
+  }
+}

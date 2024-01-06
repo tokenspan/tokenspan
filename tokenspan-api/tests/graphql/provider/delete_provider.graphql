@@ -1,0 +1,9 @@
+mutation DeleteProviderMutation($id: UUID!) {
+  deleteProvider(id: $id) {
+    id
+    name
+    slug
+    createdAt
+    updatedAt
+  }
+}

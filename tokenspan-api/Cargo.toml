@@ -39,7 +39,6 @@ uuid = { version = "1.6.1", features = ["v4"] }
 validator = { version = "0.16", features = ["derive"] }
 typed-builder = "0.18.0"
 refinery = { version = "0.8.11", features = ["tokio-postgres"] }
-graphql_client = { version = "0.13.0", features = ["graphql_query_derive"]}
 
 [dependencies.dojo-orm]
 #path = "../../dojo-orm/dojo-orm"
@@ -58,8 +57,9 @@ features = [
 ]
 
 [dev-dependencies]
+rstest = "0.18.2"
+graphql_client = { version = "0.13.0", features = ["graphql_query_derive"]}
 axum-test = "14.2.2"
 testcontainers-modules = { version = "0.3.0", features = ["postgres"] }
-assert_matches = "1.5.0"
 googletest = "0.10.0"
 tokenspan-cli = { path = "../tokenspan-cli" }

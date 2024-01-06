@@ -1,0 +1,12 @@
+mutation CreateFunctionMutation($input: FunctionCreateInput!) {
+  createFunction(input: $input) {
+    id
+    ownerId
+    name
+    description
+    parameters
+    response
+    createdAt
+    updatedAt
+  }
+}

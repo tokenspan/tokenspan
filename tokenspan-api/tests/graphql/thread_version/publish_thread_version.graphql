@@ -1,0 +1,5 @@
+mutation PublishThreadVersionMutation($publishThreadVersionId: UUID!, $input: ThreadVersionPublishInput!) {
+  publishThreadVersion(id: $publishThreadVersionId, input: $input) {
+    id
+  }
+}

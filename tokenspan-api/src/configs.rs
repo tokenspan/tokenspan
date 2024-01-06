@@ -8,6 +8,8 @@ pub enum AppEnv {
     Development,
     #[serde(rename = "production")]
     Production,
+    #[serde(rename = "test")]
+    Test,
 }
 
 #[derive(Debug, Deserialize, Clone)]

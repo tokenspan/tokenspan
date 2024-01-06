@@ -1,0 +1,9 @@
+mutation UpdateProviderMutation($id: UUID!, $input: ProviderUpdateInput!) {
+  updateProvider(id: $id, input: $input) {
+    id
+    name
+    slug
+    createdAt
+    updatedAt
+  }
+}

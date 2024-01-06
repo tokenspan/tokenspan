@@ -1,0 +1,12 @@
+query FunctionQuery($functionId: UUID!) {
+  function(id: $functionId) {
+    id
+    ownerId
+    name
+    description
+    parameters
+    response
+    createdAt
+    updatedAt
+  }
+}

@@ -1,0 +1,12 @@
+mutation DeleteFunction($deleteFunctionId: UUID!) {
+  deleteFunction(id: $deleteFunctionId) {
+    id
+    ownerId
+    name
+    description
+    parameters
+    response
+    createdAt
+    updatedAt
+  }
+}

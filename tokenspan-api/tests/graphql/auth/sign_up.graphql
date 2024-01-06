@@ -1,15 +1,3 @@
-mutation SignInMutation($input: SignInInput!) {
-  signIn(input: $input) {
-    token
-    refreshToken
-    user {
-      id
-      email
-      role
-    }
-  }
-}
-
 mutation SignUpMutation($input: SignUpInput!) {
   signUp(input: $input) {
     refreshToken
