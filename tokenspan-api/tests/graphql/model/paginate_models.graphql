@@ -1,5 +1,5 @@
-query PaginateModelsQuery($first: Int, $after: Cursor, $last: Int, $before: Cursor) {
-  models(first: $first, after: $after, last: $last, before: $before) {
+query PaginateModelsQuery($args: ModelArgs!) {
+  models(args: $args) {
     nodes {
       id
       name

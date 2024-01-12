@@ -371,12 +371,10 @@ async fn test_update_api_key() -> Result<()> {
     assert_that!(
         resp.data,
         some(pat!(update_api_key_mutation::ResponseData {
-            update_api_key: some(pat!(
-                update_api_key_mutation::UpdateApiKeyMutationUpdateApiKey {
-                    id: anything(),
-                    name: eq("test1".to_string()),
-                }
-            ))
+            update_api_key: pat!(update_api_key_mutation::UpdateApiKeyMutationUpdateApiKey {
+                id: anything(),
+                name: eq("test1".to_string()),
+            })
         }))
     );
 
@@ -442,12 +440,10 @@ async fn test_delete_api_key() -> Result<()> {
     assert_that!(
         resp.data,
         some(pat!(delete_api_key_mutation::ResponseData {
-            delete_api_key: some(pat!(
-                delete_api_key_mutation::DeleteApiKeyMutationDeleteApiKey {
-                    id: eq(api_key_fixture.id),
-                    name: eq("test".to_string()),
-                }
-            ))
+            delete_api_key: pat!(delete_api_key_mutation::DeleteApiKeyMutationDeleteApiKey {
+                id: eq(api_key_fixture.id),
+                name: eq("test".to_string()),
+            })
         }))
     );
 

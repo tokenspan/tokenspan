@@ -61,7 +61,7 @@ macro_rules! query_models {
 }
 
 #[tokio::test]
-async fn test_paginate_with_filter_models() -> Result<()> {
+async fn test_paginate_backward_models() -> Result<()> {
     // Setup
     let state: AppState;
     let server: TestServer;
@@ -94,10 +94,13 @@ async fn test_paginate_with_filter_models() -> Result<()> {
 
     // Get models
     let variables = paginate_models_query::Variables {
-        last: Some(1),
-        before: None,
-        first: None,
-        after: None,
+        args: paginate_models_query::ModelArgs {
+            last: Some(1),
+            before: None,
+            first: None,
+            after: None,
+            where_: None,
+        },
     };
     let resp: Response<paginate_models_query::ResponseData>;
     query_models!(
@@ -129,47 +132,16 @@ async fn test_paginate_with_filter_models() -> Result<()> {
         }))
     );
 
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_paginate_models() -> Result<()> {
-    // Setup
-    let state: AppState;
-    let server: TestServer;
-    setup!(state, server);
-
-    // Create new user
-    let auth_fixture = state
-        .auth_service
-        .sign_up_with_role(
-            "linh@gmail.com".to_string(),
-            "linh".to_string(),
-            "123".to_string(),
-            UserRole::Admin,
-        )
-        .await?;
-
-    // Create provider
-    let provider_fixture = state
-        .provider_service
-        .create(ProviderCreateInput {
-            name: "OpenAI".to_string(),
-            slug: "openai".to_string(),
-        })
-        .await?;
-
-    // Create models
-    create_model!(state, name = "gpt-3.5", provider_id = provider_fixture.id);
-    create_model!(state, name = "gpt-4", provider_id = provider_fixture.id);
-    create_model!(state, name = "gpt-5", provider_id = provider_fixture.id);
-
     // Get models
+    let cursor = resp.data.unwrap().models.page_info.end_cursor;
     let variables = paginate_models_query::Variables {
-        last: Some(1),
-        before: None,
-        first: None,
-        after: None,
+        args: paginate_models_query::ModelArgs {
+            last: Some(1),
+            before: cursor,
+            first: None,
+            after: None,
+            where_: None,
+        },
     };
     let resp: Response<paginate_models_query::ResponseData>;
     query_models!(
@@ -187,12 +159,89 @@ async fn test_paginate_models() -> Result<()> {
                 nodes: contains_each![pat!(
                     paginate_models_query::PaginateModelsQueryModelsNodes {
                         id: anything(),
-                        name: eq("gpt-5".to_string()),
+                        name: eq("gpt-4".to_string()),
                     }
                 ),],
                 total_nodes: eq(3),
                 page_info: pat!(paginate_models_query::PaginateModelsQueryModelsPageInfo {
-                    has_next_page: eq(true),
+                    has_next_page: eq(false),
+                    has_previous_page: eq(true),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    // Get models
+    let cursor = resp.data.unwrap().models.page_info.end_cursor;
+    let variables = paginate_models_query::Variables {
+        args: paginate_models_query::ModelArgs {
+            last: Some(1),
+            before: cursor,
+            first: None,
+            after: None,
+            where_: None,
+        },
+    };
+    let resp: Response<paginate_models_query::ResponseData>;
+    query_models!(
+        server,
+        resp = resp,
+        variables = variables,
+        token = auth_fixture.token
+    );
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(paginate_models_query::ResponseData {
+            models: pat!(paginate_models_query::PaginateModelsQueryModels {
+                nodes: contains_each![pat!(
+                    paginate_models_query::PaginateModelsQueryModelsNodes {
+                        id: anything(),
+                        name: eq("gpt-3.5".to_string()),
+                    }
+                ),],
+                total_nodes: eq(3),
+                page_info: pat!(paginate_models_query::PaginateModelsQueryModelsPageInfo {
+                    has_next_page: eq(false),
+                    has_previous_page: eq(false),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    // Get models
+    let cursor = resp.data.unwrap().models.page_info.end_cursor;
+    let variables = paginate_models_query::Variables {
+        args: paginate_models_query::ModelArgs {
+            last: Some(1),
+            before: cursor,
+            first: None,
+            after: None,
+            where_: None,
+        },
+    };
+    let resp: Response<paginate_models_query::ResponseData>;
+    query_models!(
+        server,
+        resp = resp,
+        variables = variables,
+        token = auth_fixture.token
+    );
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(paginate_models_query::ResponseData {
+            models: pat!(paginate_models_query::PaginateModelsQueryModels {
+                nodes: empty(),
+                total_nodes: eq(3),
+                page_info: pat!(paginate_models_query::PaginateModelsQueryModelsPageInfo {
+                    has_next_page: eq(false),
                     has_previous_page: eq(false),
                     start_cursor: anything(),
                     end_cursor: anything(),

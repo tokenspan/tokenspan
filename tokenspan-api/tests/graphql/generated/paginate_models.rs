@@ -4,7 +4,7 @@ pub mod paginate_models_query {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "PaginateModelsQuery";
-    pub const QUERY : & str = "query PaginateModelsQuery($first: Int, $after: Cursor, $last: Int, $before: Cursor) {\n  models(first: $first, after: $after, last: $last, before: $before) {\n    nodes {\n      id\n      name\n    }\n    totalNodes\n    pageInfo {\n      hasPreviousPage\n      hasNextPage\n      startCursor\n      endCursor\n    }\n  }\n}" ;
+    pub const QUERY : & str = "query PaginateModelsQuery($args: ModelArgs!) {\n  models(args: $args) {\n    nodes {\n      id\n      name\n    }\n    totalNodes\n    pageInfo {\n      hasPreviousPage\n      hasNextPage\n      startCursor\n      endCursor\n    }\n  }\n}" ;
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -18,11 +18,26 @@ pub mod paginate_models_query {
     type Cursor = crate::graphql::Cursor;
     type UUID = crate::graphql::UUID;
     #[derive(Serialize)]
-    pub struct Variables {
-        pub first: Option<Int>,
+    pub struct ModelArgs {
         pub after: Option<Cursor>,
-        pub last: Option<Int>,
         pub before: Option<Cursor>,
+        pub first: Option<Int>,
+        pub last: Option<Int>,
+        #[serde(rename = "where")]
+        pub where_: Option<ModelWhereInput>,
+    }
+    #[derive(Serialize)]
+    pub struct ModelWhereInput {
+        #[serde(rename = "providerId")]
+        pub provider_id: Option<ModelWhereProviderIdInput>,
+    }
+    #[derive(Serialize)]
+    pub struct ModelWhereProviderIdInput {
+        pub equals: Option<UUID>,
+    }
+    #[derive(Serialize)]
+    pub struct Variables {
+        pub args: ModelArgs,
     }
     impl Variables {}
     #[derive(Deserialize, Debug, PartialEq)]
