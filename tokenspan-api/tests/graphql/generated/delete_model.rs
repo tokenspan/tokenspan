@@ -26,7 +26,7 @@ pub mod delete_model_mutation {
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
         #[serde(rename = "deleteModel")]
-        pub delete_model: Option<DeleteModelMutationDeleteModel>,
+        pub delete_model: DeleteModelMutationDeleteModel,
     }
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct DeleteModelMutationDeleteModel {

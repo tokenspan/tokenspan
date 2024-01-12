@@ -26,7 +26,7 @@ impl Loader<Uuid> for ProviderLoader {
     async fn load(&self, keys: &[Uuid]) -> Result<HashMap<Uuid, Self::Value>, Self::Error> {
         let providers = self
             .provider_service
-            .find_by_ids(keys.to_vec())
+            .find_by_ids(keys)
             .await
             .map_err(|e| Arc::new(ProviderError::Unknown(e)))?
             .into_iter()

@@ -25,7 +25,7 @@ pub mod delete_thread_mutation {
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
         #[serde(rename = "deleteThread")]
-        pub delete_thread: Option<DeleteThreadMutationDeleteThread>,
+        pub delete_thread: DeleteThreadMutationDeleteThread,
     }
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct DeleteThreadMutationDeleteThread {

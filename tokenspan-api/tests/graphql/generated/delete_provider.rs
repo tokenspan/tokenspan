@@ -25,7 +25,7 @@ pub mod delete_provider_mutation {
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
         #[serde(rename = "deleteProvider")]
-        pub delete_provider: Option<DeleteProviderMutationDeleteProvider>,
+        pub delete_provider: DeleteProviderMutationDeleteProvider,
     }
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct DeleteProviderMutationDeleteProvider {

@@ -3,12 +3,11 @@ use chrono::NaiveDateTime;
 use dojo_macros::Model;
 use serde::{Deserialize, Serialize};
 
-use dojo_orm::pagination::{Cursor, CursorExt};
 use uuid::Uuid;
 
-#[derive(SimpleObject, Clone, Serialize, Deserialize, Model)]
+#[derive(SimpleObject, Clone, Serialize, Deserialize, Debug, Model)]
 #[serde(rename(serialize = "camelCase"))]
-#[dojo(name = "parameters")]
+#[dojo(name = "parameters", sort_keys = ["created_at", "id"])]
 pub struct Parameter {
     pub id: Uuid,
     pub name: String,
@@ -23,10 +22,4 @@ pub struct Parameter {
     pub thread_version_id: Uuid,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
-}
-
-impl CursorExt<Cursor> for Parameter {
-    fn cursor(&self) -> Cursor {
-        Cursor::new("created_at".to_string(), self.created_at.timestamp_micros())
-    }
 }

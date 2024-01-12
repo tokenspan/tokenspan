@@ -40,27 +40,23 @@ impl FunctionMutation {
         ctx: &Context<'a>,
         id: Uuid,
         input: FunctionUpdateInput,
-    ) -> Result<Option<Function>> {
+    ) -> Result<Function> {
         let function_service = ctx
             .data::<FunctionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let function = function_service.update_by_id(id, input).await?;
+        let function = function_service.update_by_id(&id, input).await?;
 
         Ok(function)
     }
 
     #[graphql(guard = "RoleGuard::new(UserRole::User)")]
-    pub async fn delete_function<'a>(
-        &self,
-        ctx: &Context<'a>,
-        id: Uuid,
-    ) -> Result<Option<Function>> {
+    pub async fn delete_function<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Function> {
         let function_service = ctx
             .data::<FunctionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let function = function_service.delete_by_id(id).await?;
+        let function = function_service.delete_by_id(&id).await?;
 
         Ok(function)
     }

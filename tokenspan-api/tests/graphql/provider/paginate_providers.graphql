@@ -1,0 +1,14 @@
+query PaginateProvidersQuery($args: ProviderArgs!) {
+  providers(args: $args) {
+    nodes {
+      name
+    }
+    totalNodes
+    pageInfo {
+      endCursor
+      startCursor
+      hasNextPage
+      hasPreviousPage
+    }
+  }
+}

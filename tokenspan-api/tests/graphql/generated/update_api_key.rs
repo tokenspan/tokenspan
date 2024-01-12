@@ -30,7 +30,7 @@ pub mod update_api_key_mutation {
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
         #[serde(rename = "updateApiKey")]
-        pub update_api_key: Option<UpdateApiKeyMutationUpdateApiKey>,
+        pub update_api_key: UpdateApiKeyMutationUpdateApiKey,
     }
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct UpdateApiKeyMutationUpdateApiKey {

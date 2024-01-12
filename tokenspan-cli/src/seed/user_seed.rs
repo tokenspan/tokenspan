@@ -57,7 +57,7 @@ impl Seed for UserSeed {
         let user_service = self.state.user_service.clone();
         let mut stream = tokio_stream::iter(self.data.clone());
         while let Some(user) = stream.next().await {
-            let result = user_service.find_by_email(user.email.clone()).await?;
+            let result = user_service.find_by_email(&user.email).await?;
             if let Some(user) = result {
                 warn!("User: {} already existed", user.email);
                 continue;

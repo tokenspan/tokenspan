@@ -10,8 +10,9 @@ use async_openai::types::{
 use async_openai::Client;
 use axum::extract::FromRef;
 use chrono::Utc;
-use dojo_orm::ops::{and, eq, in_list};
-use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::pagination::Pagination;
+use dojo_orm::prelude::equals;
+use dojo_orm::prelude::*;
 use dojo_orm::Database;
 use regex::Regex;
 use serde_json::json;
@@ -34,19 +35,15 @@ use crate::state::AppState;
 
 #[async_trait::async_trait]
 pub trait ThreadServiceExt {
-    async fn paginate(&self, args: ThreadArgs) -> Result<Pagination<Cursor, Thread>>;
-    async fn find_by_owner(
-        &self,
-        user_id: Uuid,
-        args: ThreadArgs,
-    ) -> Result<Pagination<Cursor, Thread>>;
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<Thread>>;
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Thread>>;
-    async fn find_by_slug(&self, slug: String) -> Result<Option<Thread>>;
+    async fn paginate(&self, args: ThreadArgs) -> Result<Pagination<Thread>>;
+    async fn find_by_owner(&self, user_id: &Uuid, args: ThreadArgs) -> Result<Pagination<Thread>>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Thread>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Thread>>;
+    async fn find_by_slug(&self, slug: &String) -> Result<Option<Thread>>;
     async fn create(&self, input: ThreadCreateInput, owner_id: Uuid) -> Result<Thread>;
     async fn new(&self, input: ThreadCreateInput, owner_id: Uuid) -> Result<Thread>;
-    async fn update_by_id(&self, id: Uuid, input: ThreadUpdateInput) -> Result<Option<Thread>>;
-    async fn delete_by_id(&self, id: Uuid) -> Result<Option<Thread>>;
+    async fn update_by_id(&self, id: &Uuid, input: ThreadUpdateInput) -> Result<Thread>;
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Thread>;
     async fn execute(&self, input: ThreadExecuteInput, execute_by_id: Uuid) -> Result<Execution>;
 }
 
@@ -111,49 +108,41 @@ impl ThreadService {
 
 #[async_trait::async_trait]
 impl ThreadServiceExt for ThreadService {
-    async fn paginate(&self, args: ThreadArgs) -> Result<Pagination<Cursor, Thread>> {
+    async fn paginate(&self, args: ThreadArgs) -> Result<Pagination<Thread>> {
         self.db
             .bind::<Thread>()
-            .cursor(&args.before, &args.after)
-            .limit(args.take.unwrap_or(10))
-            .all()
+            .cursor(args.first, args.after, args.last, args.before)
             .await
     }
 
-    async fn find_by_owner(
-        &self,
-        user_id: Uuid,
-        args: ThreadArgs,
-    ) -> Result<Pagination<Cursor, Thread>> {
+    async fn find_by_owner(&self, user_id: &Uuid, args: ThreadArgs) -> Result<Pagination<Thread>> {
         self.db
             .bind::<Thread>()
-            .where_by(and(&[eq("owner_id", &user_id)]))
-            .cursor(&args.before, &args.after)
-            .limit(args.take.unwrap_or(10))
-            .all()
+            .where_by(equals("owner_id", user_id))
+            .cursor(args.first, args.after, args.last, args.before)
             .await
     }
 
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<Thread>> {
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Thread>> {
         self.db
             .bind::<Thread>()
-            .where_by(and(&[eq("id", &id)]))
+            .where_by(equals("id", id))
             .first()
             .await
     }
 
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Thread>> {
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Thread>> {
         self.db
             .bind::<Thread>()
-            .where_by(and(&[in_list("id", &ids)]))
+            .where_by(in_list("id", &ids))
             .all()
             .await
     }
 
-    async fn find_by_slug(&self, slug: String) -> Result<Option<Thread>> {
+    async fn find_by_slug(&self, slug: &String) -> Result<Option<Thread>> {
         self.db
             .bind::<Thread>()
-            .where_by(and(&[eq("slug", &slug)]))
+            .where_by(equals("slug", slug))
             .first()
             .await
     }
@@ -202,33 +191,29 @@ impl ThreadServiceExt for ThreadService {
         Ok(created_thread)
     }
 
-    async fn update_by_id(&self, id: Uuid, input: ThreadUpdateInput) -> Result<Option<Thread>> {
+    async fn update_by_id(&self, id: &Uuid, input: ThreadUpdateInput) -> Result<Thread> {
         self.db
             .update(&input)
-            .where_by(and(&[eq("id", &id)]))
-            .first()
+            .where_by(equals("id", id))
+            .exec()
             .await
     }
 
-    async fn delete_by_id(&self, id: Uuid) -> Result<Option<Thread>> {
-        self.db
-            .delete()
-            .where_by(and(&[eq("id", &id)]))
-            .first()
-            .await
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Thread> {
+        self.db.delete().where_by(equals("id", id)).exec().await
     }
 
     async fn execute(&self, input: ThreadExecuteInput, execute_by_id: Uuid) -> Result<Execution> {
         let start = Instant::now();
         let api_key = self
             .api_key_service
-            .find_by_id(input.api_key_id)
+            .find_by_id(&input.api_key_id)
             .await?
             .ok_or(ApiKeyError::Unknown(anyhow::anyhow!("API key not found")))?;
 
         let thread_version = self
             .thread_version_service
-            .find_by_id(input.thread_version_id.clone())
+            .find_by_id(&input.thread_version_id)
             .await?
             .ok_or(ThreadError::Unknown(anyhow::anyhow!(
                 "Thread version not found"
@@ -236,7 +221,7 @@ impl ThreadServiceExt for ThreadService {
 
         let messages = self
             .message_service
-            .find_by_thread_version_id(input.thread_version_id.clone())
+            .find_by_thread_version_id(&input.thread_version_id)
             .await?;
 
         let re = Regex::new(r#"<var\sname="([a-zA-Z]+)"/>"#).unwrap();
@@ -262,13 +247,13 @@ impl ThreadServiceExt for ThreadService {
 
         let parameter = self
             .parameter_service
-            .find_by_id(input.parameter_id)
+            .find_by_id(&input.parameter_id)
             .await?
             .ok_or(ThreadError::Unknown(anyhow::anyhow!("Parameter not found")))?;
 
         let model = self
             .model_service
-            .find_by_id(parameter.model_id)
+            .find_by_id(&parameter.model_id)
             .await?
             .ok_or(ThreadError::Unknown(anyhow::anyhow!("Model not found")))?;
         let pre_elapsed = start.elapsed();

@@ -41,9 +41,7 @@ pub struct ModelUpdateInput {
     pub description: Option<String>,
     pub slug: Option<String>,
     pub context: Option<i32>,
-    #[dojo(embedded)]
     pub input_pricing: Option<PricingInput>,
-    #[dojo(embedded)]
     pub output_pricing: Option<PricingInput>,
     pub training_at: Option<NaiveDateTime>,
 }

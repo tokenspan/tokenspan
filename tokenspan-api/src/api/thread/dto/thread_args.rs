@@ -17,7 +17,8 @@ pub struct ThreadFilter {
 
 #[derive(InputObject, Default)]
 pub struct ThreadArgs {
-    pub take: Option<i64>,
+    pub first: Option<i64>,
+    pub last: Option<i64>,
     pub before: Option<Cursor>,
     pub after: Option<Cursor>,
     pub filter: Option<ThreadFilter>,

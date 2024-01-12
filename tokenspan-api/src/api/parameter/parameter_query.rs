@@ -32,7 +32,7 @@ impl ParameterQuery {
             .data::<ParameterServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let parameter = parameter_service.find_by_id(id).await?;
+        let parameter = parameter_service.find_by_id(&id).await?;
 
         Ok(parameter)
     }

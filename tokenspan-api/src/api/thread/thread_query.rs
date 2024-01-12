@@ -44,7 +44,7 @@ impl ThreadQuery {
             .ok_or(AppError::Unauthorized("no token".to_string()).extend())?;
 
         let paginated_thread = thread_service
-            .find_by_owner(parsed_token.user_id.clone(), args)
+            .find_by_owner(&parsed_token.user_id, args)
             .await?;
 
         Ok(paginated_thread.into())
@@ -55,7 +55,7 @@ impl ThreadQuery {
             .data::<ThreadServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let thread = thread_service.find_by_id(id).await?;
+        let thread = thread_service.find_by_id(&id).await?;
 
         Ok(thread)
     }
@@ -65,7 +65,7 @@ impl ThreadQuery {
             .data::<ThreadServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let thread = thread_service.find_by_id(id).await?;
+        let thread = thread_service.find_by_id(&id).await?;
 
         Ok(thread)
     }

@@ -1,7 +1,6 @@
 use async_graphql::SimpleObject;
 use chrono::NaiveDateTime;
 use dojo_macros::{EmbeddedModel, Model};
-use dojo_orm::pagination::{Cursor, CursorExt};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -12,8 +11,8 @@ pub struct Pricing {
     pub currency: String,
 }
 
-#[derive(SimpleObject, Clone, Model)]
-#[dojo(name = "models")]
+#[derive(SimpleObject, Clone, Model, Debug)]
+#[dojo(name = "models", sort_keys = ["created_at", "id"])]
 pub struct Model {
     pub id: Uuid,
     pub name: String,
@@ -28,10 +27,4 @@ pub struct Model {
     pub provider_id: Uuid,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
-}
-
-impl CursorExt<Cursor> for Model {
-    fn cursor(&self) -> Cursor {
-        Cursor::new("created_at".to_string(), self.created_at.timestamp_micros())
-    }
 }

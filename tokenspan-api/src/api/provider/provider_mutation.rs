@@ -34,27 +34,23 @@ impl ProviderMutation {
         ctx: &Context<'a>,
         id: Uuid,
         input: ProviderUpdateInput,
-    ) -> Result<Option<Provider>> {
+    ) -> Result<Provider> {
         let provider_service = ctx
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let provider = provider_service.update_by_id(id, input).await?;
+        let provider = provider_service.update_by_id(&id, input).await?;
 
         Ok(provider)
     }
 
     #[graphql(guard = "RoleGuard::new(UserRole::User)")]
-    pub async fn delete_provider<'a>(
-        &self,
-        ctx: &Context<'a>,
-        id: Uuid,
-    ) -> Result<Option<Provider>> {
+    pub async fn delete_provider<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Provider> {
         let provider_service = ctx
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let provider = provider_service.delete_by_id(id).await?;
+        let provider = provider_service.delete_by_id(&id).await?;
 
         Ok(provider)
     }

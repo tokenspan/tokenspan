@@ -5,16 +5,15 @@ use dojo_macros::Model;
 use serde::Serialize;
 
 use crate::api::loaders::UserLoader;
-use dojo_orm::pagination::{Cursor, CursorExt};
 use uuid::Uuid;
 
 use crate::api::models::{ThreadVersion, User};
 use crate::api::services::ThreadVersionServiceDyn;
 use crate::error::AppError;
 
-#[derive(SimpleObject, Clone, Serialize, Model)]
+#[derive(SimpleObject, Clone, Serialize, Debug, Model)]
 #[graphql(complex)]
-#[dojo(name = "threads")]
+#[dojo(name = "threads", sort_keys = ["created_at", "id"])]
 pub struct Thread {
     pub id: Uuid,
     pub name: String,
@@ -37,10 +36,10 @@ impl Thread {
 
         let thread_version = if let Some(semver) = semver {
             thread_version_service
-                .find_by_semver(self.id.clone(), semver)
+                .find_by_semver(&self.id, &semver)
                 .await?
         } else {
-            thread_version_service.find_latest(self.id.clone()).await?
+            thread_version_service.find_latest(&self.id).await?
         };
 
         Ok(thread_version)
@@ -54,11 +53,5 @@ impl Thread {
         let user = user_loader.load_one(self.owner_id).await?;
 
         Ok(user)
-    }
-}
-
-impl CursorExt<Cursor> for Thread {
-    fn cursor(&self) -> Cursor {
-        Cursor::new("created_at".to_string(), self.created_at.timestamp_micros())
     }
 }

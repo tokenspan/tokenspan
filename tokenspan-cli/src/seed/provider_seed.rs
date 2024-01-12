@@ -54,7 +54,7 @@ impl Seed for ProviderSeed {
         let provider_service = self.state.provider_service.clone();
         let mut stream = tokio_stream::iter(self.data.clone());
         while let Some(provider) = stream.next().await {
-            let result = provider_service.find_by_slug(provider.slug.clone()).await?;
+            let result = provider_service.find_by_slug(&provider.slug).await?;
             if let Some(provider) = result {
                 println!("Provider: {} already existed", provider.name);
                 continue;

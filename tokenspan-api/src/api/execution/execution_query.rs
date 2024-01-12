@@ -32,7 +32,7 @@ impl ExecutionQuery {
             .data::<ExecutionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let execution = execution_service.find_by_id(id).await?;
+        let execution = execution_service.find_by_id(&id).await?;
 
         Ok(execution)
     }

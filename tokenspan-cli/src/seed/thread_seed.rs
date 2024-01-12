@@ -70,7 +70,7 @@ impl ThreadSeed {
 
         while let Some(parameter) = stream.next().await {
             let model = model_service
-                .find_by_slug(parameter.model.slug.clone())
+                .find_by_slug(&parameter.model.slug)
                 .await?
                 .ok_or(anyhow::anyhow!("Model not found"))?;
 
@@ -106,7 +106,7 @@ impl ThreadSeed {
 
         while let Some(thread_version) = stream.next().await {
             let owner = user_service
-                .find_by_email(thread_version.owner.email.clone())
+                .find_by_email(&thread_version.owner.email)
                 .await?
                 .ok_or(anyhow::anyhow!("User not found"))?;
 
@@ -161,14 +161,14 @@ impl Seed for ThreadSeed {
 
         let mut stream = tokio_stream::iter(self.data.clone());
         while let Some(thread) = stream.next().await {
-            let result = thread_service.find_by_slug(thread.slug.clone()).await?;
+            let result = thread_service.find_by_slug(&thread.slug).await?;
             if let Some(thread) = result {
                 println!("Thread: {} already existed", thread.name);
                 continue;
             }
 
             let owner = user_service
-                .find_by_email(thread.owner.email.clone())
+                .find_by_email(&thread.owner.email)
                 .await?
                 .ok_or(anyhow::anyhow!("User not found"))?;
 

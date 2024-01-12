@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use chrono::Utc;
-use dojo_orm::ops::{and, eq, in_list};
-use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::pagination::Pagination;
+use dojo_orm::prelude::*;
 use dojo_orm::Database;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
@@ -13,13 +13,13 @@ use crate::api::provider::dto::{ProviderArgs, ProviderCreateInput, ProviderUpdat
 
 #[async_trait::async_trait]
 pub trait ProviderServiceExt {
-    async fn paginate(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>>;
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<Provider>>;
-    async fn find_by_slug(&self, slug: String) -> Result<Option<Provider>>;
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Provider>>;
+    async fn paginate(&self, args: ProviderArgs) -> Result<Pagination<Provider>>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Provider>>;
+    async fn find_by_slug(&self, slug: &String) -> Result<Option<Provider>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Provider>>;
     async fn create(&self, input: ProviderCreateInput) -> Result<Provider>;
-    async fn update_by_id(&self, id: Uuid, input: ProviderUpdateInput) -> Result<Option<Provider>>;
-    async fn delete_by_id(&self, id: Uuid) -> Result<Option<Provider>>;
+    async fn update_by_id(&self, id: &Uuid, input: ProviderUpdateInput) -> Result<Provider>;
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Provider>;
 }
 
 pub type ProviderServiceDyn = Arc<dyn ProviderServiceExt + Send + Sync>;
@@ -31,35 +31,33 @@ pub struct ProviderService {
 
 #[async_trait::async_trait]
 impl ProviderServiceExt for ProviderService {
-    async fn paginate(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>> {
+    async fn paginate(&self, args: ProviderArgs) -> Result<Pagination<Provider>> {
         self.db
             .bind::<Provider>()
-            .cursor(&args.before, &args.after)
-            .limit(args.take.unwrap_or(10))
-            .all()
+            .cursor(args.first, args.after, args.last, args.before)
             .await
     }
 
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<Provider>> {
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Provider>> {
         self.db
             .bind::<Provider>()
-            .where_by(and(&[eq("id", &id)]))
+            .where_by(equals("id", id))
             .first()
             .await
     }
 
-    async fn find_by_slug(&self, slug: String) -> Result<Option<Provider>> {
+    async fn find_by_slug(&self, slug: &String) -> Result<Option<Provider>> {
         self.db
             .bind::<Provider>()
-            .where_by(and(&[eq("slug", &slug)]))
+            .where_by(equals("slug", &slug))
             .first()
             .await
     }
 
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Provider>> {
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Provider>> {
         self.db
             .bind::<Provider>()
-            .where_by(and(&[in_list("id", &ids)]))
+            .where_by(in_list("id", &ids))
             .all()
             .await
     }
@@ -76,20 +74,16 @@ impl ProviderServiceExt for ProviderService {
         self.db.insert(&input).await
     }
 
-    async fn update_by_id(&self, id: Uuid, input: ProviderUpdateInput) -> Result<Option<Provider>> {
+    async fn update_by_id(&self, id: &Uuid, input: ProviderUpdateInput) -> Result<Provider> {
         self.db
             .update(&input)
-            .where_by(and(&[eq("id", &id)]))
-            .first()
+            .where_by(equals("id", id))
+            .exec()
             .await
     }
 
-    async fn delete_by_id(&self, id: Uuid) -> Result<Option<Provider>> {
-        self.db
-            .delete()
-            .where_by(and(&[eq("id", &id)]))
-            .first()
-            .await
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Provider> {
+        self.db.delete().where_by(equals("id", id)).exec().await
     }
 }
 

@@ -1,0 +1,15 @@
+query PaginateModelsQuery($first: Int, $after: Cursor, $last: Int, $before: Cursor) {
+  models(first: $first, after: $after, last: $last, before: $before) {
+    nodes {
+      id
+      name
+    }
+    totalNodes
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+  }
+}

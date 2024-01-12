@@ -4,8 +4,8 @@ use std::sync::Arc;
 use anyhow::Result;
 use chrono::Utc;
 use data_encoding::HEXUPPER;
-use dojo_orm::ops::{and, eq, in_list};
-use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::pagination::Pagination;
+use dojo_orm::prelude::*;
 use dojo_orm::Database;
 use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2, rand};
@@ -18,7 +18,7 @@ use crate::api::user::user_error::UserError;
 
 #[async_trait::async_trait]
 pub trait UserServiceExt {
-    async fn paginate(&self, args: UserArgs) -> Result<Pagination<Cursor, User>>;
+    async fn paginate(&self, args: UserArgs) -> Result<Pagination<User>>;
     async fn create(&self, email: String, username: String, password: String) -> Result<User>;
     async fn create_with_role(
         &self,
@@ -27,10 +27,10 @@ pub trait UserServiceExt {
         password: String,
         role: UserRole,
     ) -> Result<User>;
-    async fn update_by_id(&self, id: Uuid, input: UserUpdateInput) -> Result<Option<User>>;
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<User>>;
+    async fn update_by_id(&self, id: &Uuid, input: UserUpdateInput) -> Result<User>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<User>>;
     async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>>;
-    async fn find_by_email(&self, email: String) -> Result<Option<User>>;
+    async fn find_by_email(&self, email: &String) -> Result<Option<User>>;
     fn verify_password(&self, password: &str, salt: &str, hash_password: &str) -> Result<()>;
 }
 
@@ -67,12 +67,10 @@ impl UserService {
 
 #[async_trait::async_trait]
 impl UserServiceExt for UserService {
-    async fn paginate(&self, args: UserArgs) -> Result<Pagination<Cursor, User>> {
+    async fn paginate(&self, args: UserArgs) -> Result<Pagination<User>> {
         self.db
             .bind::<User>()
-            .cursor(&args.before, &args.after)
-            .limit(args.take.unwrap_or(10))
-            .all()
+            .cursor(args.first, args.after, args.first, args.before)
             .await
     }
 
@@ -106,18 +104,18 @@ impl UserServiceExt for UserService {
         self.db.insert(&input).await
     }
 
-    async fn update_by_id(&self, id: Uuid, input: UserUpdateInput) -> Result<Option<User>> {
+    async fn update_by_id(&self, id: &Uuid, input: UserUpdateInput) -> Result<User> {
         self.db
             .update(&input)
-            .where_by(and(&[eq("id", &id)]))
-            .first()
+            .where_by(equals("id", id))
+            .exec()
             .await
     }
 
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<User>> {
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<User>> {
         self.db
             .bind::<User>()
-            .where_by(and(&[eq("id", &id)]))
+            .where_by(equals("id", id))
             .first()
             .await
     }
@@ -125,15 +123,15 @@ impl UserServiceExt for UserService {
     async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>> {
         self.db
             .bind::<User>()
-            .where_by(and(&[in_list("id", &ids.to_vec())]))
+            .where_by(in_list("id", &ids))
             .all()
             .await
     }
 
-    async fn find_by_email(&self, email: String) -> Result<Option<User>> {
+    async fn find_by_email(&self, email: &String) -> Result<Option<User>> {
         self.db
             .bind::<User>()
-            .where_by(and(&[eq("email", &email)]))
+            .where_by(equals("email", email))
             .first()
             .await
     }

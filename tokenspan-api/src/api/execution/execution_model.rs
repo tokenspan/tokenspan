@@ -1,7 +1,6 @@
 use async_graphql::{Enum, SimpleObject};
 use chrono::NaiveDateTime;
 use dojo_macros::{EmbeddedModel, Model, Type};
-use dojo_orm::pagination::{Cursor, CursorExt};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use uuid::Uuid;
@@ -24,9 +23,9 @@ pub struct Elapsed {
     pub post_elapsed: f64,
 }
 
-#[derive(SimpleObject, Clone, Serialize, Model)]
+#[derive(SimpleObject, Clone, Serialize, Debug, Model)]
 #[serde(rename_all = "camelCase")]
-#[dojo(name = "executions")]
+#[dojo(name = "executions", sort_keys = ["created_at", "id"])]
 pub struct Execution {
     pub id: Uuid,
     pub thread_version_id: Uuid,
@@ -43,12 +42,6 @@ pub struct Execution {
     pub status: ExecutionStatus,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
-}
-
-impl CursorExt<Cursor> for Execution {
-    fn cursor(&self) -> Cursor {
-        Cursor::new("created_at".to_string(), self.created_at.timestamp_micros())
-    }
 }
 
 #[derive(Type, Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Display, Serialize)]

@@ -32,7 +32,7 @@ impl FunctionQuery {
             .data::<FunctionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let function = function_service.find_by_id(id).await?;
+        let function = function_service.find_by_id(&id).await?;
 
         Ok(function)
     }

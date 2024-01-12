@@ -12,8 +12,9 @@ use tokenspan_api::state::AppState;
 
 use crate::graphql::{
     create_provider_mutation, delete_provider_mutation, get_provider_query, get_providers_query,
-    update_provider_mutation, CreateProviderMutation, Cursor, DeleteProviderMutation,
-    GetProviderQuery, GetProvidersQuery, UpdateProviderMutation,
+    paginate_providers_query, update_provider_mutation, CreateProviderMutation,
+    DeleteProviderMutation, GetProviderQuery, GetProvidersQuery, PaginateProvidersQuery,
+    UpdateProviderMutation,
 };
 
 mod common;
@@ -33,7 +34,7 @@ macro_rules! create_provider {
 
 macro_rules! query_providers {
     ($server: ident, resp = $resp: ident, variables = $variables: ident, token = $token: expr) => {
-        let req_body = GetProvidersQuery::build_query($variables);
+        let req_body = PaginateProvidersQuery::build_query($variables);
         let resp = $server
             .post("graphql")
             .add_header(
@@ -42,12 +43,12 @@ macro_rules! query_providers {
             )
             .json(&req_body)
             .await;
-        $resp = resp.json::<Response<get_providers_query::ResponseData>>();
+        $resp = resp.json::<Response<paginate_providers_query::ResponseData>>();
     };
 }
 
 #[tokio::test]
-async fn test_paginate_next_providers() -> Result<()> {
+async fn test_paginate_forward_providers() -> Result<()> {
     // Setup
     let state: AppState;
     let server: TestServer;
@@ -70,14 +71,15 @@ async fn test_paginate_next_providers() -> Result<()> {
     create_provider!(state, name = "Anthropic", slug = "anthropic");
 
     // Get first provider
-    let variables = get_providers_query::Variables {
-        args: get_providers_query::ProviderArgs {
+    let variables = paginate_providers_query::Variables {
+        args: paginate_providers_query::ProviderArgs {
+            first: Some(1),
             after: None,
+            last: None,
             before: None,
-            take: Some(1),
         },
     };
-    let resp: Response<get_providers_query::ResponseData>;
+    let resp: Response<paginate_providers_query::ResponseData>;
     query_providers!(
         server,
         resp = resp,
@@ -88,36 +90,37 @@ async fn test_paginate_next_providers() -> Result<()> {
     // Assert
     assert_that!(
         resp.data,
-        some(pat!(get_providers_query::ResponseData {
-            providers: pat!(get_providers_query::GetProvidersQueryProviders {
-                nodes: contains_each![pat!(get_providers_query::GetProvidersQueryProvidersNodes {
-                    id: anything(),
-                    name: eq("OpenAI".to_string()),
-                    slug: eq("openai".to_string()),
-                    created_at: anything(),
-                    updated_at: anything(),
-                }),],
+        some(pat!(paginate_providers_query::ResponseData {
+            providers: pat!(paginate_providers_query::PaginateProvidersQueryProviders {
+                nodes: contains_each![pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersNodes {
+                        name: eq("OpenAI".to_string()),
+                    }
+                ),],
                 total_nodes: eq(3),
-                page_info: pat!(get_providers_query::GetProvidersQueryProvidersPageInfo {
-                    has_next_page: eq(true),
-                    has_previous_page: eq(false),
-                    start_cursor: anything(),
-                    end_cursor: anything(),
-                }),
+                page_info: pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersPageInfo {
+                        has_next_page: eq(true),
+                        has_previous_page: eq(false),
+                        start_cursor: anything(),
+                        end_cursor: anything(),
+                    }
+                ),
             })
         }))
     );
 
     // Get second provider
     let cursor = resp.data.unwrap().providers.page_info.end_cursor.unwrap();
-    let variables = get_providers_query::Variables {
-        args: get_providers_query::ProviderArgs {
+    let variables = paginate_providers_query::Variables {
+        args: paginate_providers_query::ProviderArgs {
+            first: Some(1),
             after: Some(cursor),
+            last: None,
             before: None,
-            take: Some(1),
         },
     };
-    let resp: Response<get_providers_query::ResponseData>;
+    let resp: Response<paginate_providers_query::ResponseData>;
     query_providers!(
         server,
         resp = resp,
@@ -128,112 +131,222 @@ async fn test_paginate_next_providers() -> Result<()> {
     // Assert
     assert_that!(
         resp.data,
-        some(pat!(get_providers_query::ResponseData {
-            providers: pat!(get_providers_query::GetProvidersQueryProviders {
-                nodes: contains_each![pat!(get_providers_query::GetProvidersQueryProvidersNodes {
-                    id: anything(),
-                    name: eq("Cohere".to_string()),
-                    slug: eq("cohere".to_string()),
-                    created_at: anything(),
-                    updated_at: anything(),
-                }),],
+        some(pat!(paginate_providers_query::ResponseData {
+            providers: pat!(paginate_providers_query::PaginateProvidersQueryProviders {
+                nodes: contains_each![pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersNodes {
+                        name: eq("Cohere".to_string()),
+                    }
+                ),],
                 total_nodes: eq(3),
-                page_info: pat!(get_providers_query::GetProvidersQueryProvidersPageInfo {
-                    has_next_page: eq(true),
-                    has_previous_page: eq(true),
-                    start_cursor: anything(),
-                    end_cursor: anything(),
-                }),
+                page_info: pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersPageInfo {
+                        has_next_page: eq(true),
+                        has_previous_page: eq(false),
+                        start_cursor: anything(),
+                        end_cursor: anything(),
+                    }
+                ),
             })
         }))
     );
 
     // Get third provider
     let cursor = resp.data.unwrap().providers.page_info.end_cursor.unwrap();
-    let variables = get_providers_query::Variables {
-        args: get_providers_query::ProviderArgs {
+    let variables = paginate_providers_query::Variables {
+        args: paginate_providers_query::ProviderArgs {
+            first: Some(1),
             after: Some(cursor),
+            last: None,
             before: None,
-            take: Some(1),
         },
     };
-    let resp: Response<get_providers_query::ResponseData>;
+    let resp: Response<paginate_providers_query::ResponseData>;
     query_providers!(
         server,
         resp = resp,
         variables = variables,
         token = auth_fixture.token
     );
-    println!("{:?}", resp.data);
 
     // Assert
     assert_that!(
         resp.data,
-        some(pat!(get_providers_query::ResponseData {
-            providers: pat!(get_providers_query::GetProvidersQueryProviders {
-                nodes: contains_each![pat!(get_providers_query::GetProvidersQueryProvidersNodes {
-                    id: anything(),
-                    name: eq("Anthropic".to_string()),
-                    slug: eq("anthropic".to_string()),
-                    created_at: anything(),
-                    updated_at: anything(),
-                }),],
+        some(pat!(paginate_providers_query::ResponseData {
+            providers: pat!(paginate_providers_query::PaginateProvidersQueryProviders {
+                nodes: contains_each![pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersNodes {
+                        name: eq("Anthropic".to_string()),
+                    }
+                ),],
                 total_nodes: eq(3),
-                page_info: pat!(get_providers_query::GetProvidersQueryProvidersPageInfo {
-                    has_next_page: eq(false),
-                    has_previous_page: eq(true),
-                    start_cursor: anything(),
-                    end_cursor: anything(),
-                }),
+                page_info: pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersPageInfo {
+                        has_next_page: eq(false),
+                        has_previous_page: eq(false),
+                        start_cursor: anything(),
+                        end_cursor: anything(),
+                    }
+                ),
             })
         }))
     );
 
     // Get fourth provider
     let cursor = resp.data.unwrap().providers.page_info.end_cursor.unwrap();
-    let variables = get_providers_query::Variables {
-        args: get_providers_query::ProviderArgs {
-            after: Some(cursor.clone()),
+    let variables = paginate_providers_query::Variables {
+        args: paginate_providers_query::ProviderArgs {
+            first: Some(1),
+            after: Some(cursor),
+            last: None,
             before: None,
-            take: Some(1),
         },
     };
-    let resp: Response<get_providers_query::ResponseData>;
+    let resp: Response<paginate_providers_query::ResponseData>;
     query_providers!(
         server,
         resp = resp,
         variables = variables,
         token = auth_fixture.token
     );
-    println!("{:?}", resp.data);
-    println!("{:?}", cursor);
 
     // Assert
     assert_that!(
         resp.data,
-        some(pat!(get_providers_query::ResponseData {
-            providers: pat!(get_providers_query::GetProvidersQueryProviders {
+        some(pat!(paginate_providers_query::ResponseData {
+            providers: pat!(paginate_providers_query::PaginateProvidersQueryProviders {
                 nodes: empty(),
                 total_nodes: eq(3),
-                page_info: pat!(get_providers_query::GetProvidersQueryProvidersPageInfo {
-                    has_next_page: eq(false),
-                    has_previous_page: eq(true),
-                    start_cursor: anything(),
-                    end_cursor: anything(),
-                }),
+                page_info: pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersPageInfo {
+                        has_next_page: eq(false),
+                        has_previous_page: eq(false),
+                        start_cursor: anything(),
+                        end_cursor: anything(),
+                    }
+                ),
+            })
+        }))
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_paginate_backward_providers() -> Result<()> {
+    // Setup
+    let state: AppState;
+    let server: TestServer;
+    setup!(state, server);
+
+    // Create new user
+    let auth_fixture = state
+        .auth_service
+        .sign_up_with_role(
+            "linh@gmail.com".to_string(),
+            "linh".to_string(),
+            "123".to_string(),
+            UserRole::Admin,
+        )
+        .await?;
+
+    // Create provider
+    create_provider!(state, name = "OpenAI", slug = "openai");
+    create_provider!(state, name = "Cohere", slug = "cohere");
+    create_provider!(state, name = "Anthropic", slug = "anthropic");
+
+    // Get first provider
+    let variables = paginate_providers_query::Variables {
+        args: paginate_providers_query::ProviderArgs {
+            last: Some(1),
+            before: None,
+            first: None,
+            after: None,
+        },
+    };
+    let resp: Response<paginate_providers_query::ResponseData>;
+    query_providers!(
+        server,
+        resp = resp,
+        variables = variables,
+        token = auth_fixture.token
+    );
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(paginate_providers_query::ResponseData {
+            providers: pat!(paginate_providers_query::PaginateProvidersQueryProviders {
+                nodes: contains_each![pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersNodes {
+                        name: eq("Anthropic".to_string()),
+                    }
+                ),],
+                total_nodes: eq(3),
+                page_info: pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersPageInfo {
+                        has_next_page: eq(false),
+                        has_previous_page: eq(true),
+                        start_cursor: anything(),
+                        end_cursor: anything(),
+                    }
+                ),
+            })
+        }))
+    );
+
+    // Get second provider
+    let cursor = resp.data.unwrap().providers.page_info.end_cursor.unwrap();
+    let variables = paginate_providers_query::Variables {
+        args: paginate_providers_query::ProviderArgs {
+            last: Some(1),
+            before: Some(cursor),
+            first: None,
+            after: None,
+        },
+    };
+    let resp: Response<paginate_providers_query::ResponseData>;
+    query_providers!(
+        server,
+        resp = resp,
+        variables = variables,
+        token = auth_fixture.token
+    );
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(paginate_providers_query::ResponseData {
+            providers: pat!(paginate_providers_query::PaginateProvidersQueryProviders {
+                nodes: contains_each![pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersNodes {
+                        name: eq("Cohere".to_string()),
+                    }
+                ),],
+                total_nodes: eq(3),
+                page_info: pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersPageInfo {
+                        has_next_page: eq(false),
+                        has_previous_page: eq(true),
+                        start_cursor: anything(),
+                        end_cursor: anything(),
+                    }
+                ),
             })
         }))
     );
 
     // Get third provider
-    let variables = get_providers_query::Variables {
-        args: get_providers_query::ProviderArgs {
-            after: None,
+    let cursor = resp.data.unwrap().providers.page_info.end_cursor.unwrap();
+    let variables = paginate_providers_query::Variables {
+        args: paginate_providers_query::ProviderArgs {
+            last: Some(1),
             before: Some(cursor),
-            take: Some(1),
+            first: None,
+            after: None,
         },
     };
-    let resp: Response<get_providers_query::ResponseData>;
+    let resp: Response<paginate_providers_query::ResponseData>;
     query_providers!(
         server,
         resp = resp,
@@ -244,22 +357,59 @@ async fn test_paginate_next_providers() -> Result<()> {
     // Assert
     assert_that!(
         resp.data,
-        some(pat!(get_providers_query::ResponseData {
-            providers: pat!(get_providers_query::GetProvidersQueryProviders {
-                nodes: contains_each![pat!(get_providers_query::GetProvidersQueryProvidersNodes {
-                    id: anything(),
-                    name: eq("Anthropic".to_string()),
-                    slug: eq("anthropic".to_string()),
-                    created_at: anything(),
-                    updated_at: anything(),
-                }),],
+        some(pat!(paginate_providers_query::ResponseData {
+            providers: pat!(paginate_providers_query::PaginateProvidersQueryProviders {
+                nodes: contains_each![pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersNodes {
+                        name: eq("OpenAI".to_string()),
+                    }
+                ),],
                 total_nodes: eq(3),
-                page_info: pat!(get_providers_query::GetProvidersQueryProvidersPageInfo {
-                    has_next_page: eq(false),
-                    has_previous_page: eq(true),
-                    start_cursor: anything(),
-                    end_cursor: anything(),
-                }),
+                page_info: pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersPageInfo {
+                        has_next_page: eq(false),
+                        has_previous_page: eq(false),
+                        start_cursor: anything(),
+                        end_cursor: anything(),
+                    }
+                ),
+            })
+        }))
+    );
+
+    // Get fourth provider
+    let cursor = resp.data.unwrap().providers.page_info.end_cursor.unwrap();
+    let variables = paginate_providers_query::Variables {
+        args: paginate_providers_query::ProviderArgs {
+            last: Some(1),
+            before: Some(cursor),
+            first: None,
+            after: None,
+        },
+    };
+    let resp: Response<paginate_providers_query::ResponseData>;
+    query_providers!(
+        server,
+        resp = resp,
+        variables = variables,
+        token = auth_fixture.token
+    );
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(paginate_providers_query::ResponseData {
+            providers: pat!(paginate_providers_query::PaginateProvidersQueryProviders {
+                nodes: empty(),
+                total_nodes: eq(3),
+                page_info: pat!(
+                    paginate_providers_query::PaginateProvidersQueryProvidersPageInfo {
+                        has_next_page: eq(false),
+                        has_previous_page: eq(false),
+                        start_cursor: anything(),
+                        end_cursor: anything(),
+                    }
+                ),
             })
         }))
     );
@@ -286,28 +436,16 @@ async fn test_get_providers() -> Result<()> {
         .await?;
 
     // Create provider
-    state
-        .provider_service
-        .create(ProviderCreateInput {
-            name: "OpenAI".to_string(),
-            slug: "openai".to_string(),
-        })
-        .await?;
-
-    state
-        .provider_service
-        .create(ProviderCreateInput {
-            name: "Cohere".to_string(),
-            slug: "cohere".to_string(),
-        })
-        .await?;
+    create_provider!(state, name = "OpenAI", slug = "openai");
+    create_provider!(state, name = "Cohere", slug = "cohere");
 
     // Get providers
     let variables = get_providers_query::Variables {
         args: get_providers_query::ProviderArgs {
+            first: None,
             after: None,
+            last: Some(10),
             before: None,
-            take: Some(10),
         },
     };
     let req_body = GetProvidersQuery::build_query(variables);
@@ -518,7 +656,7 @@ async fn test_update_provider() -> Result<()> {
     assert_that!(
         resp.data,
         some(pat!(update_provider_mutation::ResponseData {
-            update_provider: some(pat!(
+            update_provider: pat!(
                 update_provider_mutation::UpdateProviderMutationUpdateProvider {
                     id: eq(provider_fixture.id),
                     name: eq("Cohere".to_string()),
@@ -526,7 +664,7 @@ async fn test_update_provider() -> Result<()> {
                     created_at: anything(),
                     updated_at: anything(),
                 }
-            ))
+            )
         }))
     );
 
@@ -579,7 +717,7 @@ async fn test_delete_provider() -> Result<()> {
     assert_that!(
         resp.data,
         some(pat!(delete_provider_mutation::ResponseData {
-            delete_provider: some(pat!(
+            delete_provider: pat!(
                 delete_provider_mutation::DeleteProviderMutationDeleteProvider {
                     id: eq(provider_fixture.id),
                     name: eq("OpenAI".to_string()),
@@ -587,7 +725,7 @@ async fn test_delete_provider() -> Result<()> {
                     created_at: anything(),
                     updated_at: anything(),
                 }
-            ))
+            )
         }))
     );
 

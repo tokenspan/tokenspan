@@ -28,9 +28,9 @@ mutation CreateModel($input: ModelCreateInput!) {
 
 {
   "input": {
-    "name": "gpt-3.5-turbo-1106",
-    "description": "The latest GPT-3.5 Turbo model with improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more. Returns a maximum of 4,096 output tokens.",
-    "slug": "gpt-3.5-turbo-1106",
+    "name": "gpt-6",
+    "description": "gpt-6",
+    "slug": "gpt-6",
     "context": 16385,
     "inputPricing": {
       "price": 0.001,
@@ -43,7 +43,7 @@ mutation CreateModel($input: ModelCreateInput!) {
       "currency": "USD"
     },
     "trainingAt": "2023-12-17T04:11:16.803571",
-    "providerId": "07ff7c31-fedd-46fe-a3ce-157be3a8c3d7"
+    "providerId": "17ab21e6-a5fa-443a-86cc-dd60fa6a0664"
   }
 }
 

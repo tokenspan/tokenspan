@@ -1,10 +1,10 @@
 #![allow(clippy::all, warnings)]
-pub struct GetProvidersQuery;
-pub mod get_providers_query {
+pub struct PaginateProvidersQuery;
+pub mod paginate_providers_query {
     #![allow(dead_code)]
     use std::result::Result;
-    pub const OPERATION_NAME: &str = "GetProvidersQuery";
-    pub const QUERY : & str = "query GetProvidersQuery($args: ProviderArgs!) {\n  providers(args: $args) {\n    nodes {\n      id\n      name\n      slug\n      createdAt\n      updatedAt\n    }\n    totalNodes\n    pageInfo {\n      endCursor\n      startCursor\n      hasNextPage\n      hasPreviousPage\n    }\n  }\n}" ;
+    pub const OPERATION_NAME: &str = "PaginateProvidersQuery";
+    pub const QUERY : & str = "query PaginateProvidersQuery($args: ProviderArgs!) {\n  providers(args: $args) {\n    nodes {\n      name\n    }\n    totalNodes\n    pageInfo {\n      endCursor\n      startCursor\n      hasNextPage\n      hasPreviousPage\n    }\n  }\n}" ;
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -16,8 +16,6 @@ pub mod get_providers_query {
     #[allow(dead_code)]
     type ID = String;
     type Cursor = crate::graphql::Cursor;
-    type NaiveDateTime = crate::graphql::NaiveDateTime;
-    type UUID = crate::graphql::UUID;
     #[derive(Serialize)]
     pub struct ProviderArgs {
         pub after: Option<Cursor>,
@@ -32,28 +30,22 @@ pub mod get_providers_query {
     impl Variables {}
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
-        pub providers: GetProvidersQueryProviders,
+        pub providers: PaginateProvidersQueryProviders,
     }
     #[derive(Deserialize, Debug, PartialEq)]
-    pub struct GetProvidersQueryProviders {
-        pub nodes: Vec<GetProvidersQueryProvidersNodes>,
+    pub struct PaginateProvidersQueryProviders {
+        pub nodes: Vec<PaginateProvidersQueryProvidersNodes>,
         #[serde(rename = "totalNodes")]
         pub total_nodes: Int,
         #[serde(rename = "pageInfo")]
-        pub page_info: GetProvidersQueryProvidersPageInfo,
+        pub page_info: PaginateProvidersQueryProvidersPageInfo,
     }
     #[derive(Deserialize, Debug, PartialEq)]
-    pub struct GetProvidersQueryProvidersNodes {
-        pub id: UUID,
+    pub struct PaginateProvidersQueryProvidersNodes {
         pub name: String,
-        pub slug: String,
-        #[serde(rename = "createdAt")]
-        pub created_at: NaiveDateTime,
-        #[serde(rename = "updatedAt")]
-        pub updated_at: NaiveDateTime,
     }
     #[derive(Deserialize, Debug, PartialEq)]
-    pub struct GetProvidersQueryProvidersPageInfo {
+    pub struct PaginateProvidersQueryProvidersPageInfo {
         #[serde(rename = "endCursor")]
         pub end_cursor: Option<String>,
         #[serde(rename = "startCursor")]
@@ -64,14 +56,14 @@ pub mod get_providers_query {
         pub has_previous_page: Boolean,
     }
 }
-impl graphql_client::GraphQLQuery for GetProvidersQuery {
-    type Variables = get_providers_query::Variables;
-    type ResponseData = get_providers_query::ResponseData;
+impl graphql_client::GraphQLQuery for PaginateProvidersQuery {
+    type Variables = paginate_providers_query::Variables;
+    type ResponseData = paginate_providers_query::ResponseData;
     fn build_query(variables: Self::Variables) -> ::graphql_client::QueryBody<Self::Variables> {
         graphql_client::QueryBody {
             variables,
-            query: get_providers_query::QUERY,
-            operation_name: get_providers_query::OPERATION_NAME,
+            query: paginate_providers_query::QUERY,
+            operation_name: paginate_providers_query::OPERATION_NAME,
         }
     }
 }

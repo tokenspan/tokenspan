@@ -35,19 +35,19 @@ impl ThreadVersionQuery {
             .map_err(|_| AppError::ContextExtractionError)?;
 
         let thread_version = match by {
-            ThreadVersionBy::Id(id) => thread_version_service.find_by_id(id).await,
+            ThreadVersionBy::Id(id) => thread_version_service.find_by_id(&id).await,
             ThreadVersionBy::Semver(ThreadVersionBySemver { thread_id, semver })
                 if semver == "latest".to_string() =>
             {
-                thread_version_service.find_latest(thread_id).await
+                thread_version_service.find_latest(&thread_id).await
             }
             ThreadVersionBy::Semver(version) => {
                 thread_version_service
-                    .find_by_semver(version.thread_id, version.semver)
+                    .find_by_semver(&version.thread_id, &version.semver)
                     .await
             }
             ThreadVersionBy::Latest(latest) => {
-                thread_version_service.find_latest(latest.thread_id).await
+                thread_version_service.find_latest(&latest.thread_id).await
             }
         }?;
 

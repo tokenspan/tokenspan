@@ -35,7 +35,7 @@ impl MessageQuery {
             .data::<MessageServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let message = message_service.find_by_id(id).await?;
+        let message = message_service.find_by_id(&id).await?;
 
         Ok(message)
     }

@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
-use crate::api::dto::ThreadVersionPublishInput;
 use anyhow::Result;
 use chrono::Utc;
-use dojo_orm::ops::{and, desc, eq, in_list};
-use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::pagination::Pagination;
+use dojo_orm::prelude::*;
 use dojo_orm::Database;
 use tracing::info;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
+use crate::api::dto::ThreadVersionPublishInput;
 use crate::api::models::{ThreadVersion, ThreadVersionStatus};
 use crate::api::services::{MessageServiceDyn, ParameterServiceDyn};
 use crate::api::thread_version::dto::{
@@ -18,15 +18,15 @@ use crate::api::thread_version::dto::{
 
 #[async_trait::async_trait]
 pub trait ThreadVersionServiceExt {
-    async fn paginate(&self, args: ThreadVersionArgs) -> Result<Pagination<Cursor, ThreadVersion>>;
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<ThreadVersion>>;
+    async fn paginate(&self, args: ThreadVersionArgs) -> Result<Pagination<ThreadVersion>>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<ThreadVersion>>;
     async fn find_by_semver(
         &self,
-        thread_id: Uuid,
-        semver: String,
+        thread_id: &Uuid,
+        semver: &String,
     ) -> Result<Option<ThreadVersion>>;
-    async fn find_latest(&self, thread_id: Uuid) -> Result<Option<ThreadVersion>>;
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<ThreadVersion>>;
+    async fn find_latest(&self, thread_id: &Uuid) -> Result<Option<ThreadVersion>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<ThreadVersion>>;
     async fn create(
         &self,
         input: ThreadVersionCreateInput,
@@ -34,16 +34,16 @@ pub trait ThreadVersionServiceExt {
     ) -> Result<ThreadVersion>;
     async fn publish(
         &self,
-        id: Uuid,
+        id: &Uuid,
         input: ThreadVersionPublishInput,
         owner_id: Uuid,
     ) -> Result<ThreadVersion>;
     async fn update_by_id(
         &self,
-        id: Uuid,
+        id: &Uuid,
         input: ThreadVersionUpdateInput,
-    ) -> Result<Option<ThreadVersion>>;
-    async fn delete_by_id(&self, id: Uuid) -> Result<Option<ThreadVersion>>;
+    ) -> Result<ThreadVersion>;
+    async fn delete_by_id(&self, id: &Uuid) -> Result<ThreadVersion>;
 }
 
 pub type ThreadVersionServiceDyn = Arc<dyn ThreadVersionServiceExt + Send + Sync>;
@@ -57,48 +57,49 @@ pub struct ThreadVersionService {
 
 #[async_trait::async_trait]
 impl ThreadVersionServiceExt for ThreadVersionService {
-    async fn paginate(&self, args: ThreadVersionArgs) -> Result<Pagination<Cursor, ThreadVersion>> {
+    async fn paginate(&self, args: ThreadVersionArgs) -> Result<Pagination<ThreadVersion>> {
         self.db
             .bind::<ThreadVersion>()
-            .cursor(&args.before, &args.after)
-            .limit(args.take.unwrap_or(10))
-            .all()
+            .cursor(args.first, args.after, args.last, args.before)
             .await
     }
 
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<ThreadVersion>> {
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<ThreadVersion>> {
         self.db
             .bind::<ThreadVersion>()
-            .where_by(and(&[eq("id", &id)]))
+            .where_by(equals("id", id))
             .first()
             .await
     }
 
     async fn find_by_semver(
         &self,
-        thread_id: Uuid,
-        semver: String,
+        thread_id: &Uuid,
+        semver: &String,
     ) -> Result<Option<ThreadVersion>> {
         self.db
             .bind::<ThreadVersion>()
-            .where_by(and(&[eq("thread_id", &thread_id), eq("semver", &semver)]))
+            .where_by(and(&[
+                equals("thread_id", thread_id),
+                equals("semver", semver),
+            ]))
             .first()
             .await
     }
 
-    async fn find_latest(&self, thread_id: Uuid) -> Result<Option<ThreadVersion>> {
+    async fn find_latest(&self, thread_id: &Uuid) -> Result<Option<ThreadVersion>> {
         self.db
             .bind::<ThreadVersion>()
-            .where_by(and(&[eq("thread_id", &thread_id)]))
+            .where_by(and(&[equals("thread_id", thread_id)]))
             .order_by(desc("version"))
             .first()
             .await
     }
 
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<ThreadVersion>> {
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<ThreadVersion>> {
         self.db
             .bind::<ThreadVersion>()
-            .where_by(and(&[in_list("id", &ids)]))
+            .where_by(in_list("id", &ids))
             .all()
             .await
     }
@@ -127,7 +128,7 @@ impl ThreadVersionServiceExt for ThreadVersionService {
 
     async fn publish(
         &self,
-        id: Uuid,
+        id: &Uuid,
         input: ThreadVersionPublishInput,
         owner_id: Uuid,
     ) -> Result<ThreadVersion> {
@@ -145,10 +146,7 @@ impl ThreadVersionServiceExt for ThreadVersionService {
             status: Some(ThreadVersionStatus::Published),
             ..Default::default()
         };
-        let current_thread_version = self
-            .update_by_id(id, update_input)
-            .await?
-            .ok_or(anyhow::anyhow!("thread version not found"))?;
+        let current_thread_version = self.update_by_id(id, update_input).await?;
 
         let new_version = current_thread_version.version + 1;
         let input = ThreadVersion {
@@ -167,10 +165,10 @@ impl ThreadVersionServiceExt for ThreadVersionService {
         let new_thread_version = self.db.insert(&input).await?;
 
         self.parameter_service
-            .duplicate_by_thread_version_id(current_thread_version.id, new_thread_version.id)
+            .duplicate_by_thread_version_id(&current_thread_version.id, new_thread_version.id)
             .await?;
         self.message_service
-            .duplicate_by_thread_version_id(current_thread_version.id, new_thread_version.id)
+            .duplicate_by_thread_version_id(&current_thread_version.id, new_thread_version.id)
             .await?;
 
         Ok(new_thread_version)
@@ -178,18 +176,18 @@ impl ThreadVersionServiceExt for ThreadVersionService {
 
     async fn update_by_id(
         &self,
-        id: Uuid,
+        id: &Uuid,
         input: ThreadVersionUpdateInput,
-    ) -> Result<Option<ThreadVersion>> {
+    ) -> Result<ThreadVersion> {
         info!("update thread_version: id: {}, input: {:?}", id, input);
         self.db
             .update(&input)
-            .where_by(and(&[eq("id", &id)]))
-            .first()
+            .where_by(equals("id", id))
+            .exec()
             .await
     }
 
-    async fn delete_by_id(&self, id: Uuid) -> Result<Option<ThreadVersion>> {
+    async fn delete_by_id(&self, id: &Uuid) -> Result<ThreadVersion> {
         let thread_version = self
             .find_by_id(id)
             .await?
@@ -199,11 +197,7 @@ impl ThreadVersionServiceExt for ThreadVersionService {
             return Err(anyhow::anyhow!("thread version is draft"));
         }
 
-        self.db
-            .delete()
-            .where_by(and(&[eq("id", &id)]))
-            .first()
-            .await
+        self.db.delete().where_by(equals("id", id)).exec().await
     }
 }
 

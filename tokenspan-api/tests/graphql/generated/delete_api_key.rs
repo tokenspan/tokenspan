@@ -25,7 +25,7 @@ pub mod delete_api_key_mutation {
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
         #[serde(rename = "deleteApiKey")]
-        pub delete_api_key: Option<DeleteApiKeyMutationDeleteApiKey>,
+        pub delete_api_key: DeleteApiKeyMutationDeleteApiKey,
     }
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct DeleteApiKeyMutationDeleteApiKey {

@@ -34,23 +34,23 @@ impl ModelMutation {
         ctx: &Context<'a>,
         id: Uuid,
         input: ModelUpdateInput,
-    ) -> Result<Option<Model>> {
+    ) -> Result<Model> {
         let model_service = ctx
             .data::<ModelServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let model = model_service.update_by_id(id, input).await?;
+        let model = model_service.update_by_id(&id, input).await?;
 
         Ok(model)
     }
 
     #[graphql(guard = "RoleGuard::new(UserRole::User)")]
-    pub async fn delete_model<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<Model>> {
+    pub async fn delete_model<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Model> {
         let model_service = ctx
             .data::<ModelServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let model = model_service.delete_by_id(id).await?;
+        let model = model_service.delete_by_id(&id).await?;
 
         Ok(model)
     }

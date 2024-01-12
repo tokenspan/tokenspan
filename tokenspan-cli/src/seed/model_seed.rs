@@ -65,14 +65,14 @@ impl Seed for ModelSeed {
 
         let mut stream = tokio_stream::iter(self.data.clone());
         while let Some(model) = stream.next().await {
-            let result = model_service.find_by_slug(model.name.clone()).await?;
+            let result = model_service.find_by_slug(&model.name).await?;
             if let Some(model) = result {
                 println!("Model: {} already existed", model.name);
                 continue;
             }
 
             let provider = provider_service
-                .find_by_slug(model.provider.slug.clone())
+                .find_by_slug(&model.provider.slug)
                 .await?
                 .ok_or(anyhow::anyhow!("Provider not found"))?;
 

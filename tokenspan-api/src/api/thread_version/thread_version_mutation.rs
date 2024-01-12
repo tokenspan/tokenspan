@@ -31,7 +31,7 @@ impl ThreadVersionMutation {
             .ok_or(AppError::Unauthorized("no token".to_string()).extend())?;
 
         let thread_version = thread_version_service
-            .publish(id, input, parsed_token.user_id)
+            .publish(&id, input, parsed_token.user_id)
             .await?;
 
         Ok(thread_version)
@@ -43,12 +43,12 @@ impl ThreadVersionMutation {
         ctx: &Context<'a>,
         id: Uuid,
         input: ThreadVersionUpdateInput,
-    ) -> Result<Option<ThreadVersion>> {
+    ) -> Result<ThreadVersion> {
         let thread_version_service = ctx
             .data::<ThreadVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let thread_version = thread_version_service.update_by_id(id, input).await?;
+        let thread_version = thread_version_service.update_by_id(&id, input).await?;
 
         Ok(thread_version)
     }
@@ -58,12 +58,12 @@ impl ThreadVersionMutation {
         &self,
         ctx: &Context<'a>,
         id: Uuid,
-    ) -> Result<Option<ThreadVersion>> {
+    ) -> Result<ThreadVersion> {
         let thread_version_service = ctx
             .data::<ThreadVersionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let thread_version = thread_version_service.delete_by_id(id).await?;
+        let thread_version = thread_version_service.delete_by_id(&id).await?;
 
         Ok(thread_version)
     }

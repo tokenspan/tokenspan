@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use chrono::Utc;
-use dojo_orm::ops::{and, eq};
-use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::pagination::Pagination;
+use dojo_orm::predicates::*;
 use dojo_orm::Database;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
@@ -14,11 +14,11 @@ use crate::api::services::MessageServiceDyn;
 
 #[async_trait::async_trait]
 pub trait ExecutionServiceExt {
-    async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>>;
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<Execution>>;
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Execution>>;
+    async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Execution>>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Execution>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Execution>>;
     async fn create(&self, input: ExecutionCreateInput, executor_id: Uuid) -> Result<Execution>;
-    async fn delete_by_id(&self, id: Uuid) -> Result<Option<Execution>>;
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Execution>;
 }
 
 pub type ExecutionServiceDyn = Arc<dyn ExecutionServiceExt + Send + Sync>;
@@ -31,27 +31,25 @@ pub struct ExecutionService {
 
 #[async_trait::async_trait]
 impl ExecutionServiceExt for ExecutionService {
-    async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>> {
+    async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Execution>> {
         self.db
             .bind::<Execution>()
-            .cursor(&args.before, &args.after)
-            .limit(args.take.unwrap_or(10))
-            .all()
+            .cursor(args.first, args.after, args.last, args.before)
             .await
     }
 
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<Execution>> {
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Execution>> {
         self.db
             .bind::<Execution>()
-            .where_by(and(&[eq("id", &id)]))
+            .where_by(equals("id", id))
             .first()
             .await
     }
 
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Execution>> {
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Execution>> {
         self.db
             .bind::<Execution>()
-            .where_by(and(&[eq("id", &ids)]))
+            .where_by(equals("id", &ids))
             .all()
             .await
     }
@@ -62,7 +60,7 @@ impl ExecutionServiceExt for ExecutionService {
 
         let messages = self
             .message_service
-            .find_by_thread_version_id(input.thread_version_id)
+            .find_by_thread_version_id(&input.thread_version_id)
             .await?;
 
         let input = Execution {
@@ -83,12 +81,8 @@ impl ExecutionServiceExt for ExecutionService {
         self.db.insert(&input).await
     }
 
-    async fn delete_by_id(&self, id: Uuid) -> Result<Option<Execution>> {
-        self.db
-            .delete()
-            .where_by(and(&[eq("id", &id)]))
-            .first()
-            .await
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Execution> {
+        self.db.delete().where_by(equals("id", id)).exec().await
     }
 }
 

@@ -27,7 +27,7 @@ pub mod delete_function {
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
         #[serde(rename = "deleteFunction")]
-        pub delete_function: Option<DeleteFunctionDeleteFunction>,
+        pub delete_function: DeleteFunctionDeleteFunction,
     }
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct DeleteFunctionDeleteFunction {

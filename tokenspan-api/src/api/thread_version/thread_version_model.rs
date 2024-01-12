@@ -2,7 +2,6 @@ use async_graphql::{ComplexObject, Enum, SimpleObject};
 use async_graphql::{Context, Result};
 use chrono::NaiveDateTime;
 use dojo_macros::{Model, Type};
-use dojo_orm::pagination::{Cursor, CursorExt};
 use serde::Deserialize;
 use strum_macros::EnumString;
 use uuid::Uuid;
@@ -11,9 +10,9 @@ use crate::api::models::{Message, Parameter, Thread};
 use crate::api::services::{MessageServiceDyn, ParameterServiceDyn, ThreadServiceDyn};
 use crate::error::AppError;
 
-#[derive(SimpleObject, Clone, Model)]
+#[derive(SimpleObject, Clone, Debug, Model)]
 #[graphql(complex)]
-#[dojo(name = "thread_versions")]
+#[dojo(name = "thread_versions", sort_keys = ["created_at", "id"])]
 pub struct ThreadVersion {
     pub id: Uuid,
     pub semver: String,
@@ -35,7 +34,7 @@ impl ThreadVersion {
             .data::<ThreadServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let thread = thread_service.find_by_id(self.thread_id).await?;
+        let thread = thread_service.find_by_id(&self.thread_id).await?;
 
         Ok(thread)
     }
@@ -45,7 +44,9 @@ impl ThreadVersion {
             .data::<ParameterServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let parameters = parameter_service.find_by_thread_version_id(self.id).await?;
+        let parameters = parameter_service
+            .find_by_thread_version_id(&self.id)
+            .await?;
 
         Ok(parameters)
     }
@@ -55,15 +56,9 @@ impl ThreadVersion {
             .data::<MessageServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let messages = message_service.find_by_thread_version_id(self.id).await?;
+        let messages = message_service.find_by_thread_version_id(&self.id).await?;
 
         Ok(messages)
-    }
-}
-
-impl CursorExt<Cursor> for ThreadVersion {
-    fn cursor(&self) -> Cursor {
-        Cursor::new("created_at".to_string(), self.created_at.timestamp_micros())
     }
 }
 

@@ -22,7 +22,7 @@ impl ModelCache {
     pub async fn new(model_service: ModelServiceDyn) -> Result<Self> {
         let models = model_service
             .paginate(ModelArgs {
-                take: Some(100),
+                last: Some(100),
                 ..Default::default()
             })
             .await?;

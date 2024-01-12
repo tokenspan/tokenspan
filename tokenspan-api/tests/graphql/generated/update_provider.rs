@@ -31,7 +31,7 @@ pub mod update_provider_mutation {
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
         #[serde(rename = "updateProvider")]
-        pub update_provider: Option<UpdateProviderMutationUpdateProvider>,
+        pub update_provider: UpdateProviderMutationUpdateProvider,
     }
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct UpdateProviderMutationUpdateProvider {

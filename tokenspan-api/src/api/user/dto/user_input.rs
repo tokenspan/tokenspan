@@ -8,7 +8,7 @@ pub struct UserCreateInput {
     pub password: String,
 }
 
-#[derive(InputObject, UpdateModel)]
+#[derive(InputObject, Debug, UpdateModel)]
 pub struct UserUpdateInput {
     pub email: Option<String>,
     pub username: Option<String>,

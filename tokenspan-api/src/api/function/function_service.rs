@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use chrono::Utc;
-use dojo_orm::ops::{and, eq, in_list};
-use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::pagination::Pagination;
+use dojo_orm::predicates::*;
 use dojo_orm::Database;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
@@ -13,13 +13,13 @@ use crate::api::models::Function;
 
 #[async_trait::async_trait]
 pub trait FunctionServiceExt {
-    async fn paginate(&self, args: FunctionArgs) -> Result<Pagination<Cursor, Function>>;
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<Function>>;
-    async fn find_by_slug(&self, slug: String) -> Result<Option<Function>>;
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Function>>;
+    async fn paginate(&self, args: FunctionArgs) -> Result<Pagination<Function>>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Function>>;
+    async fn find_by_slug(&self, slug: &String) -> Result<Option<Function>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Function>>;
     async fn create(&self, input: FunctionCreateInput, owner_id: Uuid) -> Result<Function>;
-    async fn update_by_id(&self, id: Uuid, input: FunctionUpdateInput) -> Result<Option<Function>>;
-    async fn delete_by_id(&self, id: Uuid) -> Result<Option<Function>>;
+    async fn update_by_id(&self, id: &Uuid, input: FunctionUpdateInput) -> Result<Function>;
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Function>;
 }
 
 pub type FunctionServiceDyn = Arc<dyn FunctionServiceExt + Send + Sync>;
@@ -31,35 +31,33 @@ pub struct FunctionService {
 
 #[async_trait::async_trait]
 impl FunctionServiceExt for FunctionService {
-    async fn paginate(&self, args: FunctionArgs) -> Result<Pagination<Cursor, Function>> {
+    async fn paginate(&self, args: FunctionArgs) -> Result<Pagination<Function>> {
         self.db
             .bind::<Function>()
-            .cursor(&args.before, &args.after)
-            .limit(args.take.unwrap_or(10))
-            .all()
+            .cursor(args.first, args.after, args.last, args.before)
             .await
     }
 
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<Function>> {
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Function>> {
         self.db
             .bind::<Function>()
-            .where_by(and(&[eq("id", &id)]))
+            .where_by(equals("id", id))
             .first()
             .await
     }
 
-    async fn find_by_slug(&self, slug: String) -> Result<Option<Function>> {
+    async fn find_by_slug(&self, slug: &String) -> Result<Option<Function>> {
         self.db
             .bind::<Function>()
-            .where_by(and(&[eq("slug", &slug)]))
+            .where_by(equals("slug", slug))
             .first()
             .await
     }
 
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Function>> {
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Function>> {
         self.db
             .bind::<Function>()
-            .where_by(and(&[in_list("id", &ids)]))
+            .where_by(in_list("id", &ids))
             .all()
             .await
     }
@@ -79,20 +77,16 @@ impl FunctionServiceExt for FunctionService {
         self.db.insert(&input).await
     }
 
-    async fn update_by_id(&self, id: Uuid, input: FunctionUpdateInput) -> Result<Option<Function>> {
+    async fn update_by_id(&self, id: &Uuid, input: FunctionUpdateInput) -> Result<Function> {
         self.db
             .update(&input)
-            .where_by(and(&[eq("id", &id)]))
-            .first()
+            .where_by(equals("id", id))
+            .exec()
             .await
     }
 
-    async fn delete_by_id(&self, id: Uuid) -> Result<Option<Function>> {
-        self.db
-            .delete()
-            .where_by(and(&[eq("id", &id)]))
-            .first()
-            .await
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Function> {
+        self.db.delete().where_by(equals("id", id)).exec().await
     }
 }
 

@@ -46,7 +46,7 @@ pub mod update_model_mutation {
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
         #[serde(rename = "updateModel")]
-        pub update_model: Option<UpdateModelMutationUpdateModel>,
+        pub update_model: UpdateModelMutationUpdateModel,
     }
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct UpdateModelMutationUpdateModel {

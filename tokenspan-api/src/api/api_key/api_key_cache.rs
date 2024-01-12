@@ -21,7 +21,7 @@ impl ApiKeyCache {
     pub async fn new(api_key_service: ApiKeyServiceDyn) -> Result<Self> {
         let keys = api_key_service
             .paginate(ApiKeyArgs {
-                take: Some(100),
+                last: Some(100),
                 ..Default::default()
             })
             .await?;

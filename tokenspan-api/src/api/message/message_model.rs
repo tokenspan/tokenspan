@@ -1,12 +1,11 @@
 use async_graphql::SimpleObject;
 use chrono::NaiveDateTime;
 use dojo_macros::{EmbeddedModel, Model};
-use dojo_orm::pagination::{Cursor, CursorExt};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(SimpleObject, Clone, Debug, Serialize, Deserialize, Model, EmbeddedModel)]
-#[dojo(name = "messages")]
+#[dojo(name = "messages", sort_keys = ["created_at", "id"])]
 pub struct Message {
     pub id: Uuid,
     pub thread_version_id: Uuid,
@@ -16,10 +15,4 @@ pub struct Message {
     pub role: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
-}
-
-impl CursorExt<Cursor> for Message {
-    fn cursor(&self) -> Cursor {
-        Cursor::new("created_at".to_string(), self.created_at.timestamp_micros())
-    }
 }

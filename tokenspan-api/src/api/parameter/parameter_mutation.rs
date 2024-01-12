@@ -34,27 +34,23 @@ impl ParameterMutation {
         ctx: &Context<'a>,
         id: Uuid,
         input: ParameterUpdateInput,
-    ) -> Result<Option<Parameter>> {
+    ) -> Result<Parameter> {
         let parameter_service = ctx
             .data::<ParameterServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let parameter = parameter_service.update_by_id(id, input).await?;
+        let parameter = parameter_service.update_by_id(&id, input).await?;
 
         Ok(parameter)
     }
 
     #[graphql(guard = "RoleGuard::new(UserRole::User)")]
-    pub async fn delete_parameter<'a>(
-        &self,
-        ctx: &Context<'a>,
-        id: Uuid,
-    ) -> Result<Option<Parameter>> {
+    pub async fn delete_parameter<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Parameter> {
         let parameter_service = ctx
             .data::<ParameterServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let parameter = parameter_service.delete_by_id(id).await?;
+        let parameter = parameter_service.delete_by_id(&id).await?;
 
         Ok(parameter)
     }

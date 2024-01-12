@@ -42,23 +42,23 @@ impl ThreadMutation {
         ctx: &Context<'a>,
         id: Uuid,
         input: ThreadUpdateInput,
-    ) -> Result<Option<Thread>> {
+    ) -> Result<Thread> {
         let thread_service = ctx
             .data::<ThreadServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let thread = thread_service.update_by_id(id, input).await?;
+        let thread = thread_service.update_by_id(&id, input).await?;
 
         Ok(thread)
     }
 
     #[graphql(guard = "RoleGuard::new(UserRole::User)")]
-    pub async fn delete_thread<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<Thread>> {
+    pub async fn delete_thread<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Thread> {
         let thread_service = ctx
             .data::<ThreadServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let thread = thread_service.delete_by_id(id).await?;
+        let thread = thread_service.delete_by_id(&id).await?;
 
         Ok(thread)
     }

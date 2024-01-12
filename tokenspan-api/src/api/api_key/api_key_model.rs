@@ -2,16 +2,15 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::{ComplexObject, Context, Result, SimpleObject};
 use chrono::NaiveDateTime;
 use dojo_macros::Model;
-use dojo_orm::pagination::{Cursor, CursorExt};
 use uuid::Uuid;
 
 use crate::api::loaders::{ProviderLoader, UserLoader};
 use crate::api::models::{Provider, User};
 use crate::error::AppError;
 
-#[derive(SimpleObject, Clone, Model)]
+#[derive(SimpleObject, Clone, Model, Debug)]
 #[graphql(complex)]
-#[dojo(name = "api_keys")]
+#[dojo(name = "api_keys", sort_keys = ["created_at", "id"])]
 pub struct ApiKey {
     pub id: Uuid,
     pub name: String,
@@ -43,11 +42,5 @@ impl ApiKey {
         let user = user_loader.load_one(self.owner_id).await?;
 
         Ok(user)
-    }
-}
-
-impl CursorExt<Cursor> for ApiKey {
-    fn cursor(&self) -> Cursor {
-        Cursor::new("created_at".to_string(), self.created_at.timestamp_micros())
     }
 }

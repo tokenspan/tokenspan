@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use chrono::Utc;
-use dojo_orm::ops::{and, eq, in_list};
-use dojo_orm::pagination::{Cursor, Pagination};
+use dojo_orm::pagination::Pagination;
+use dojo_orm::predicates::*;
 use dojo_orm::Database;
 use magic_crypt::{MagicCrypt256, MagicCryptTrait};
 use typed_builder::TypedBuilder;
@@ -15,12 +15,12 @@ use crate::api::api_key::dto::{ApiKeyArgs, ApiKeyCreateInput, ApiKeyUpdateInput}
 #[async_trait::async_trait]
 pub trait ApiKeyServiceExt {
     fn decrypt(&self, key: String) -> String;
-    async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<Cursor, ApiKey>>;
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<ApiKey>>;
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<ApiKey>>;
+    async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<ApiKey>>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<ApiKey>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<ApiKey>>;
     async fn create(&self, input: ApiKeyCreateInput, owner_id: Uuid) -> Result<ApiKey>;
-    async fn update_by_id(&self, id: Uuid, input: ApiKeyUpdateInput) -> Result<Option<ApiKey>>;
-    async fn delete_by_id(&self, id: Uuid) -> Result<Option<ApiKey>>;
+    async fn update_by_id(&self, id: &Uuid, input: ApiKeyUpdateInput) -> Result<ApiKey>;
+    async fn delete_by_id(&self, id: &Uuid) -> Result<ApiKey>;
 }
 
 pub type ApiKeyServiceDyn = Arc<dyn ApiKeyServiceExt + Send + Sync>;
@@ -43,27 +43,25 @@ impl ApiKeyServiceExt for ApiKeyService {
         self.mc.decrypt_base64_to_string(key.as_str()).unwrap()
     }
 
-    async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<Cursor, ApiKey>> {
+    async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<ApiKey>> {
         self.db
             .bind::<ApiKey>()
-            .cursor(&args.before, &args.after)
-            .limit(args.take.unwrap_or(10))
-            .all()
+            .cursor(args.first, args.after, args.last, args.before)
             .await
     }
 
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<ApiKey>> {
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<ApiKey>> {
         self.db
             .bind::<ApiKey>()
-            .where_by(and(&[eq("id", &id)]))
+            .where_by(equals("id", id))
             .first()
             .await
     }
 
-    async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<ApiKey>> {
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<ApiKey>> {
         self.db
             .bind::<ApiKey>()
-            .where_by(and(&[in_list("id", &ids)]))
+            .where_by(in_list("id", &ids))
             .all()
             .await
     }
@@ -82,20 +80,16 @@ impl ApiKeyServiceExt for ApiKeyService {
         self.db.insert(&input).await
     }
 
-    async fn update_by_id(&self, id: Uuid, input: ApiKeyUpdateInput) -> Result<Option<ApiKey>> {
+    async fn update_by_id(&self, id: &Uuid, input: ApiKeyUpdateInput) -> Result<ApiKey> {
         self.db
             .update(&input)
-            .where_by(and(&[eq("id", &id)]))
-            .first()
+            .where_by(equals("id", id))
+            .exec()
             .await
     }
 
-    async fn delete_by_id(&self, id: Uuid) -> Result<Option<ApiKey>> {
-        self.db
-            .delete()
-            .where_by(and(&[eq("id", &id)]))
-            .first()
-            .await
+    async fn delete_by_id(&self, id: &Uuid) -> Result<ApiKey> {
+        self.db.delete().where_by(equals("id", id)).exec().await
     }
 }
 

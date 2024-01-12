@@ -155,7 +155,7 @@ impl AuthServiceExt for AuthService {
     async fn sign_in(&self, email: String, password: String) -> Result<AuthPayload> {
         let user_service = self.user_service.clone();
         let user = user_service
-            .find_by_email(email)
+            .find_by_email(&email)
             .await?
             .ok_or(AuthError::InvalidCredentials)?;
 
@@ -179,7 +179,7 @@ impl AuthServiceExt for AuthService {
     async fn session(&self, parsed_token: &ParsedToken) -> Result<SessionPayload> {
         let user_service = self.user_service.clone();
         let user = user_service
-            .find_by_id(parsed_token.user_id.clone())
+            .find_by_id(&parsed_token.user_id)
             .await?
             .ok_or(AuthError::InvalidToken)?;
 

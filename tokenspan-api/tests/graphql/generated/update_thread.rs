@@ -30,7 +30,7 @@ pub mod update_thread_mutation {
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
         #[serde(rename = "updateThread")]
-        pub update_thread: Option<UpdateThreadMutationUpdateThread>,
+        pub update_thread: UpdateThreadMutationUpdateThread,
     }
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct UpdateThreadMutationUpdateThread {

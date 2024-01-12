@@ -32,7 +32,7 @@ impl ApiKeyQuery {
             .data::<ApiKeyServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let api_key = api_key_service.find_by_id(id).await?;
+        let api_key = api_key_service.find_by_id(&id).await?;
 
         Ok(api_key)
     }

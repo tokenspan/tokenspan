@@ -39,12 +39,12 @@ impl MessageMutation {
         ctx: &Context<'a>,
         id: Uuid,
         input: MessageUpdateInput,
-    ) -> async_graphql::Result<Option<Message>> {
+    ) -> async_graphql::Result<Message> {
         let message_service = ctx
             .data::<MessageServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let message = message_service.update_by_id(id, input).await?;
+        let message = message_service.update_by_id(&id, input).await?;
 
         Ok(message)
     }
@@ -54,12 +54,12 @@ impl MessageMutation {
         &self,
         ctx: &Context<'a>,
         id: Uuid,
-    ) -> async_graphql::Result<Option<Message>> {
+    ) -> async_graphql::Result<Message> {
         let message_service = ctx
             .data::<MessageServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let message = message_service.delete_by_id(id).await?;
+        let message = message_service.delete_by_id(&id).await?;
 
         Ok(message)
     }
