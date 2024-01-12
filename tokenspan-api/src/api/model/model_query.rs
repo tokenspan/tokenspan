@@ -3,7 +3,6 @@ use async_graphql::{Context, Object, Result};
 use dojo_orm::pagination::{AdditionalFields, Cursor};
 use uuid::Uuid;
 
-use crate::api::dto::ModelWhereInput;
 use crate::api::model::dto::ModelArgs;
 use crate::api::model::model_model::Model;
 use crate::api::services::ModelServiceDyn;
@@ -17,23 +16,12 @@ impl ModelQuery {
     pub async fn models<'a>(
         &self,
         ctx: &Context<'a>,
-        #[graphql(default)] first: Option<i64>,
-        #[graphql(default)] last: Option<i64>,
-        #[graphql(default)] before: Option<Cursor>,
-        #[graphql(default)] after: Option<Cursor>,
-        #[graphql(default)] r#where: Option<ModelWhereInput>,
+        #[graphql(default)] args: ModelArgs,
     ) -> Result<Connection<Cursor, Model, AdditionalFields>> {
         let model_service = ctx
             .data::<ModelServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let args = ModelArgs {
-            first,
-            last,
-            before,
-            after,
-            r#where,
-        };
         let paginated_model = model_service.paginate(args).await?;
 
         Ok(paginated_model.into())

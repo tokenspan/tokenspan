@@ -1,5 +1,3 @@
-use std::env;
-
 use anyhow::Result;
 use axum_test::http::{HeaderName, HeaderValue};
 use axum_test::TestServer;
@@ -7,12 +5,8 @@ use googletest::matchers::{anything, eq, some};
 use googletest::prelude::*;
 use googletest::{assert_that, pat};
 use graphql_client::{GraphQLQuery, Response};
-use testcontainers_modules::postgres::Postgres;
-use testcontainers_modules::testcontainers::clients::Cli;
 
 use tokenspan_api::api::models::UserRole;
-use tokenspan_api::app::make_app_with_state;
-use tokenspan_api::configs;
 use tokenspan_api::state::AppState;
 
 use crate::graphql::{create_provider_mutation, CreateProviderMutation};
