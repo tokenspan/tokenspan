@@ -4,7 +4,7 @@ pub mod get_models_query {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "GetModelsQuery";
-    pub const QUERY : & str = "query GetModelsQuery {\n  models {\n    nodes {\n      id\n      name\n      description\n      slug\n      context\n      inputPricing {\n        price\n        tokens\n        currency\n      }\n      outputPricing {\n        price\n        tokens\n        currency\n      }\n      trainingAt\n      providerId\n      createdAt\n      updatedAt\n    }\n    totalNodes\n    pageInfo {\n      hasPreviousPage\n      hasNextPage\n      startCursor\n      endCursor\n    }\n  }\n}" ;
+    pub const QUERY : & str = "query GetModelsQuery($args: ModelArgs!) {\n  models(args: $args) {\n    nodes {\n      id\n      name\n      providerId\n      createdAt\n    }\n    totalNodes\n    pageInfo {\n      hasPreviousPage\n      hasNextPage\n      startCursor\n      endCursor\n    }\n  }\n}" ;
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -15,10 +15,32 @@ pub mod get_models_query {
     type Int = i64;
     #[allow(dead_code)]
     type ID = String;
+    type Cursor = crate::graphql::Cursor;
     type NaiveDateTime = crate::graphql::NaiveDateTime;
     type UUID = crate::graphql::UUID;
     #[derive(Serialize)]
-    pub struct Variables;
+    pub struct ModelArgs {
+        pub after: Option<Cursor>,
+        pub before: Option<Cursor>,
+        pub first: Option<Int>,
+        pub last: Option<Int>,
+        #[serde(rename = "where")]
+        pub where_: Option<ModelWhereInput>,
+    }
+    #[derive(Serialize)]
+    pub struct ModelWhereInput {
+        #[serde(rename = "providerId")]
+        pub provider_id: Option<ModelWhereProviderIdInput>,
+    }
+    #[derive(Serialize)]
+    pub struct ModelWhereProviderIdInput {
+        pub equals: Option<UUID>,
+    }
+    #[derive(Serialize)]
+    pub struct Variables {
+        pub args: ModelArgs,
+    }
+    impl Variables {}
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
         pub models: GetModelsQueryModels,
@@ -35,33 +57,10 @@ pub mod get_models_query {
     pub struct GetModelsQueryModelsNodes {
         pub id: UUID,
         pub name: String,
-        pub description: String,
-        pub slug: String,
-        pub context: Int,
-        #[serde(rename = "inputPricing")]
-        pub input_pricing: GetModelsQueryModelsNodesInputPricing,
-        #[serde(rename = "outputPricing")]
-        pub output_pricing: GetModelsQueryModelsNodesOutputPricing,
-        #[serde(rename = "trainingAt")]
-        pub training_at: NaiveDateTime,
         #[serde(rename = "providerId")]
         pub provider_id: UUID,
         #[serde(rename = "createdAt")]
         pub created_at: NaiveDateTime,
-        #[serde(rename = "updatedAt")]
-        pub updated_at: NaiveDateTime,
-    }
-    #[derive(Deserialize, Debug, PartialEq)]
-    pub struct GetModelsQueryModelsNodesInputPricing {
-        pub price: Float,
-        pub tokens: Int,
-        pub currency: String,
-    }
-    #[derive(Deserialize, Debug, PartialEq)]
-    pub struct GetModelsQueryModelsNodesOutputPricing {
-        pub price: Float,
-        pub tokens: Int,
-        pub currency: String,
     }
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct GetModelsQueryModelsPageInfo {

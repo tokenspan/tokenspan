@@ -57,9 +57,10 @@ features = [
 ]
 
 [dev-dependencies]
+casey = "0.4.0"
 rstest = "0.18.2"
 graphql_client = { version = "0.13.0", features = ["graphql_query_derive"]}
 axum-test = "14.2.2"
 testcontainers-modules = { version = "0.3.0", features = ["postgres"] }
-googletest = "0.10.0"
+googletest = "0.11.0"
 tokenspan-cli = { path = "../tokenspan-cli" }

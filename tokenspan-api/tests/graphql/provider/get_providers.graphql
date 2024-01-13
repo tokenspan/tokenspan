@@ -3,9 +3,7 @@ query GetProvidersQuery($args: ProviderArgs!) {
     nodes {
       id
       name
-      slug
       createdAt
-      updatedAt
     }
     totalNodes
     pageInfo {

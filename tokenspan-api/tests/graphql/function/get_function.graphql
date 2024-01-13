@@ -1,4 +1,4 @@
-query FunctionQuery($functionId: UUID!) {
+query GetFunctionQuery($functionId: UUID!) {
   function(id: $functionId) {
     id
     ownerId

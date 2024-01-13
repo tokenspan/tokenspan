@@ -1,10 +1,10 @@
 #![allow(clippy::all, warnings)]
-pub struct FunctionQuery;
-pub mod function_query {
+pub struct GetFunctionQuery;
+pub mod get_function_query {
     #![allow(dead_code)]
     use std::result::Result;
-    pub const OPERATION_NAME: &str = "FunctionQuery";
-    pub const QUERY : & str = "query FunctionQuery($functionId: UUID!) {\n  function(id: $functionId) {\n    id\n    ownerId\n    name\n    description\n    parameters\n    response\n    createdAt\n    updatedAt\n  }\n}" ;
+    pub const OPERATION_NAME: &str = "GetFunctionQuery";
+    pub const QUERY : & str = "query GetFunctionQuery($functionId: UUID!) {\n  function(id: $functionId) {\n    id\n    ownerId\n    name\n    description\n    parameters\n    response\n    createdAt\n    updatedAt\n  }\n}" ;
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -26,10 +26,10 @@ pub mod function_query {
     impl Variables {}
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
-        pub function: Option<FunctionQueryFunction>,
+        pub function: Option<GetFunctionQueryFunction>,
     }
     #[derive(Deserialize, Debug, PartialEq)]
-    pub struct FunctionQueryFunction {
+    pub struct GetFunctionQueryFunction {
         pub id: UUID,
         #[serde(rename = "ownerId")]
         pub owner_id: UUID,
@@ -43,14 +43,14 @@ pub mod function_query {
         pub updated_at: NaiveDateTime,
     }
 }
-impl graphql_client::GraphQLQuery for FunctionQuery {
-    type Variables = function_query::Variables;
-    type ResponseData = function_query::ResponseData;
+impl graphql_client::GraphQLQuery for GetFunctionQuery {
+    type Variables = get_function_query::Variables;
+    type ResponseData = get_function_query::ResponseData;
     fn build_query(variables: Self::Variables) -> ::graphql_client::QueryBody<Self::Variables> {
         graphql_client::QueryBody {
             variables,
-            query: function_query::QUERY,
-            operation_name: function_query::OPERATION_NAME,
+            query: get_function_query::QUERY,
+            operation_name: get_function_query::OPERATION_NAME,
         }
     }
 }

@@ -1,10 +1,10 @@
 #![allow(clippy::all, warnings)]
-pub struct DeleteFunction;
-pub mod delete_function {
+pub struct DeleteFunctionMutation;
+pub mod delete_function_mutation {
     #![allow(dead_code)]
     use std::result::Result;
-    pub const OPERATION_NAME: &str = "DeleteFunction";
-    pub const QUERY : & str = "mutation DeleteFunction($deleteFunctionId: UUID!) {\n  deleteFunction(id: $deleteFunctionId) {\n    id\n    ownerId\n    name\n    description\n    parameters\n    response\n    createdAt\n    updatedAt\n  }\n}" ;
+    pub const OPERATION_NAME: &str = "DeleteFunctionMutation";
+    pub const QUERY : & str = "mutation DeleteFunctionMutation($deleteFunctionId: UUID!) {\n  deleteFunction(id: $deleteFunctionId) {\n    id\n    ownerId\n    name\n    description\n    parameters\n    response\n    createdAt\n    updatedAt\n  }\n}" ;
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -27,10 +27,10 @@ pub mod delete_function {
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
         #[serde(rename = "deleteFunction")]
-        pub delete_function: DeleteFunctionDeleteFunction,
+        pub delete_function: DeleteFunctionMutationDeleteFunction,
     }
     #[derive(Deserialize, Debug, PartialEq)]
-    pub struct DeleteFunctionDeleteFunction {
+    pub struct DeleteFunctionMutationDeleteFunction {
         pub id: UUID,
         #[serde(rename = "ownerId")]
         pub owner_id: UUID,
@@ -44,14 +44,14 @@ pub mod delete_function {
         pub updated_at: NaiveDateTime,
     }
 }
-impl graphql_client::GraphQLQuery for DeleteFunction {
-    type Variables = delete_function::Variables;
-    type ResponseData = delete_function::ResponseData;
+impl graphql_client::GraphQLQuery for DeleteFunctionMutation {
+    type Variables = delete_function_mutation::Variables;
+    type ResponseData = delete_function_mutation::ResponseData;
     fn build_query(variables: Self::Variables) -> ::graphql_client::QueryBody<Self::Variables> {
         graphql_client::QueryBody {
             variables,
-            query: delete_function::QUERY,
-            operation_name: delete_function::OPERATION_NAME,
+            query: delete_function_mutation::QUERY,
+            operation_name: delete_function_mutation::OPERATION_NAME,
         }
     }
 }

@@ -4,7 +4,7 @@ pub mod get_providers_query {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "GetProvidersQuery";
-    pub const QUERY : & str = "query GetProvidersQuery($args: ProviderArgs!) {\n  providers(args: $args) {\n    nodes {\n      id\n      name\n      slug\n      createdAt\n      updatedAt\n    }\n    totalNodes\n    pageInfo {\n      endCursor\n      startCursor\n      hasNextPage\n      hasPreviousPage\n    }\n  }\n}" ;
+    pub const QUERY : & str = "query GetProvidersQuery($args: ProviderArgs!) {\n  providers(args: $args) {\n    nodes {\n      id\n      name\n      createdAt\n    }\n    totalNodes\n    pageInfo {\n      endCursor\n      startCursor\n      hasNextPage\n      hasPreviousPage\n    }\n  }\n}" ;
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -46,11 +46,8 @@ pub mod get_providers_query {
     pub struct GetProvidersQueryProvidersNodes {
         pub id: UUID,
         pub name: String,
-        pub slug: String,
         #[serde(rename = "createdAt")]
         pub created_at: NaiveDateTime,
-        #[serde(rename = "updatedAt")]
-        pub updated_at: NaiveDateTime,
     }
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct GetProvidersQueryProvidersPageInfo {

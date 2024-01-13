@@ -3,7 +3,6 @@ use axum_test::http::{HeaderName, HeaderValue};
 use axum_test::TestServer;
 use googletest::matchers::{anything, eq, some};
 use googletest::prelude::*;
-use googletest::{assert_that, pat};
 use graphql_client::{GraphQLQuery, Response};
 
 use tokenspan_api::api::dto::{ModelCreateInput, PricingInput, ProviderCreateInput};
@@ -12,8 +11,8 @@ use tokenspan_api::state::AppState;
 
 use crate::graphql::{
     create_model_mutation, delete_model_mutation, get_model_query, get_models_query,
-    paginate_models_query, update_model_mutation, CreateModelMutation, DeleteModelMutation,
-    GetModelQuery, GetModelsQuery, PaginateModelsQuery, UpdateModelMutation,
+    update_model_mutation, CreateModelMutation, DeleteModelMutation, GetModelQuery, GetModelsQuery,
+    UpdateModelMutation,
 };
 
 mod common;
@@ -45,9 +44,9 @@ macro_rules! create_model {
     };
 }
 
-macro_rules! query_models {
-    ($server: ident, resp = $resp: ident, variables = $variables: ident, token = $token: expr) => {
-        let req_body = PaginateModelsQuery::build_query($variables);
+macro_rules! make_request {
+    ($server: ident, $token: expr, $variables: ident) => {{
+        let req_body = GetModelsQuery::build_query($variables);
         let resp = $server
             .post("graphql")
             .add_header(
@@ -56,8 +55,171 @@ macro_rules! query_models {
             )
             .json(&req_body)
             .await;
-        $resp = resp.json::<Response<paginate_models_query::ResponseData>>();
+        resp.json::<Response<get_models_query::ResponseData>>()
+    }};
+}
+
+#[tokio::test]
+async fn test_paginate_forward_models() -> Result<()> {
+    // Setup
+    let state: AppState;
+    let server: TestServer;
+    setup!(state, server);
+
+    // Create new user
+    let auth_fixture = state
+        .auth_service
+        .sign_up_with_role(
+            "linh@gmail.com".to_string(),
+            "linh".to_string(),
+            "123".to_string(),
+            UserRole::Admin,
+        )
+        .await?;
+
+    // Create provider
+    let provider_fixture = state
+        .provider_service
+        .create(ProviderCreateInput {
+            name: "OpenAI".to_string(),
+            slug: "openai".to_string(),
+        })
+        .await?;
+
+    // Create models
+    create_model!(state, name = "gpt-3.5", provider_id = provider_fixture.id);
+    create_model!(state, name = "gpt-4", provider_id = provider_fixture.id);
+    create_model!(state, name = "gpt-5", provider_id = provider_fixture.id);
+
+    // Get models
+    let variables = get_models_query::Variables {
+        args: get_models_query::ModelArgs {
+            first: Some(1),
+            after: None,
+            last: None,
+            before: None,
+            where_: None,
+        },
     };
+    let resp = make_request!(server, auth_fixture.token, variables);
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(get_models_query::ResponseData {
+            models: pat!(get_models_query::GetModelsQueryModels {
+                nodes: contains_each![pat!(get_models_query::GetModelsQueryModelsNodes {
+                    id: anything(),
+                    name: eq("gpt-3.5".to_string()),
+                }),],
+                total_nodes: eq(3),
+                page_info: pat!(get_models_query::GetModelsQueryModelsPageInfo {
+                    has_next_page: eq(true),
+                    has_previous_page: eq(false),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    // Get models
+    let cursor = resp.data.unwrap().models.page_info.end_cursor;
+    let variables = get_models_query::Variables {
+        args: get_models_query::ModelArgs {
+            first: Some(1),
+            after: cursor,
+            last: None,
+            before: None,
+            where_: None,
+        },
+    };
+    let resp = make_request!(server, auth_fixture.token, variables);
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(get_models_query::ResponseData {
+            models: pat!(get_models_query::GetModelsQueryModels {
+                nodes: contains_each![pat!(get_models_query::GetModelsQueryModelsNodes {
+                    id: anything(),
+                    name: eq("gpt-4".to_string()),
+                }),],
+                total_nodes: eq(3),
+                page_info: pat!(get_models_query::GetModelsQueryModelsPageInfo {
+                    has_next_page: eq(true),
+                    has_previous_page: eq(false),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    // Get models
+    let cursor = resp.data.unwrap().models.page_info.end_cursor;
+    let variables = get_models_query::Variables {
+        args: get_models_query::ModelArgs {
+            first: Some(1),
+            after: cursor,
+            last: None,
+            before: None,
+            where_: None,
+        },
+    };
+    let resp = make_request!(server, auth_fixture.token, variables);
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(get_models_query::ResponseData {
+            models: pat!(get_models_query::GetModelsQueryModels {
+                nodes: contains_each![pat!(get_models_query::GetModelsQueryModelsNodes {
+                    id: anything(),
+                    name: eq("gpt-5".to_string()),
+                }),],
+                total_nodes: eq(3),
+                page_info: pat!(get_models_query::GetModelsQueryModelsPageInfo {
+                    has_next_page: eq(false),
+                    has_previous_page: eq(false),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    // Get models
+    let cursor = resp.data.unwrap().models.page_info.end_cursor;
+    let variables = get_models_query::Variables {
+        args: get_models_query::ModelArgs {
+            first: Some(1),
+            after: cursor,
+            last: None,
+            before: None,
+            where_: None,
+        },
+    };
+    let resp = make_request!(server, auth_fixture.token, variables);
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(get_models_query::ResponseData {
+            models: pat!(get_models_query::GetModelsQueryModels {
+                nodes: empty(),
+                total_nodes: eq(3),
+                page_info: pat!(get_models_query::GetModelsQueryModelsPageInfo {
+                    has_next_page: eq(false),
+                    has_previous_page: eq(false),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    Ok(())
 }
 
 #[tokio::test]
@@ -93,8 +255,8 @@ async fn test_paginate_backward_models() -> Result<()> {
     create_model!(state, name = "gpt-5", provider_id = provider_fixture.id);
 
     // Get models
-    let variables = paginate_models_query::Variables {
-        args: paginate_models_query::ModelArgs {
+    let variables = get_models_query::Variables {
+        args: get_models_query::ModelArgs {
             last: Some(1),
             before: None,
             first: None,
@@ -102,300 +264,114 @@ async fn test_paginate_backward_models() -> Result<()> {
             where_: None,
         },
     };
-    let resp: Response<paginate_models_query::ResponseData>;
-    query_models!(
-        server,
-        resp = resp,
-        variables = variables,
-        token = auth_fixture.token
-    );
-
-    // Assert
-    assert_that!(
-        resp.data,
-        some(pat!(paginate_models_query::ResponseData {
-            models: pat!(paginate_models_query::PaginateModelsQueryModels {
-                nodes: contains_each![pat!(
-                    paginate_models_query::PaginateModelsQueryModelsNodes {
-                        id: anything(),
-                        name: eq("gpt-5".to_string()),
-                    }
-                ),],
-                total_nodes: eq(3),
-                page_info: pat!(paginate_models_query::PaginateModelsQueryModelsPageInfo {
-                    has_next_page: eq(false),
-                    has_previous_page: eq(true),
-                    start_cursor: anything(),
-                    end_cursor: anything(),
-                }),
-            })
-        }))
-    );
-
-    // Get models
-    let cursor = resp.data.unwrap().models.page_info.end_cursor;
-    let variables = paginate_models_query::Variables {
-        args: paginate_models_query::ModelArgs {
-            last: Some(1),
-            before: cursor,
-            first: None,
-            after: None,
-            where_: None,
-        },
-    };
-    let resp: Response<paginate_models_query::ResponseData>;
-    query_models!(
-        server,
-        resp = resp,
-        variables = variables,
-        token = auth_fixture.token
-    );
-
-    // Assert
-    assert_that!(
-        resp.data,
-        some(pat!(paginate_models_query::ResponseData {
-            models: pat!(paginate_models_query::PaginateModelsQueryModels {
-                nodes: contains_each![pat!(
-                    paginate_models_query::PaginateModelsQueryModelsNodes {
-                        id: anything(),
-                        name: eq("gpt-4".to_string()),
-                    }
-                ),],
-                total_nodes: eq(3),
-                page_info: pat!(paginate_models_query::PaginateModelsQueryModelsPageInfo {
-                    has_next_page: eq(false),
-                    has_previous_page: eq(true),
-                    start_cursor: anything(),
-                    end_cursor: anything(),
-                }),
-            })
-        }))
-    );
-
-    // Get models
-    let cursor = resp.data.unwrap().models.page_info.end_cursor;
-    let variables = paginate_models_query::Variables {
-        args: paginate_models_query::ModelArgs {
-            last: Some(1),
-            before: cursor,
-            first: None,
-            after: None,
-            where_: None,
-        },
-    };
-    let resp: Response<paginate_models_query::ResponseData>;
-    query_models!(
-        server,
-        resp = resp,
-        variables = variables,
-        token = auth_fixture.token
-    );
-
-    // Assert
-    assert_that!(
-        resp.data,
-        some(pat!(paginate_models_query::ResponseData {
-            models: pat!(paginate_models_query::PaginateModelsQueryModels {
-                nodes: contains_each![pat!(
-                    paginate_models_query::PaginateModelsQueryModelsNodes {
-                        id: anything(),
-                        name: eq("gpt-3.5".to_string()),
-                    }
-                ),],
-                total_nodes: eq(3),
-                page_info: pat!(paginate_models_query::PaginateModelsQueryModelsPageInfo {
-                    has_next_page: eq(false),
-                    has_previous_page: eq(false),
-                    start_cursor: anything(),
-                    end_cursor: anything(),
-                }),
-            })
-        }))
-    );
-
-    // Get models
-    let cursor = resp.data.unwrap().models.page_info.end_cursor;
-    let variables = paginate_models_query::Variables {
-        args: paginate_models_query::ModelArgs {
-            last: Some(1),
-            before: cursor,
-            first: None,
-            after: None,
-            where_: None,
-        },
-    };
-    let resp: Response<paginate_models_query::ResponseData>;
-    query_models!(
-        server,
-        resp = resp,
-        variables = variables,
-        token = auth_fixture.token
-    );
-
-    // Assert
-    assert_that!(
-        resp.data,
-        some(pat!(paginate_models_query::ResponseData {
-            models: pat!(paginate_models_query::PaginateModelsQueryModels {
-                nodes: empty(),
-                total_nodes: eq(3),
-                page_info: pat!(paginate_models_query::PaginateModelsQueryModelsPageInfo {
-                    has_next_page: eq(false),
-                    has_previous_page: eq(false),
-                    start_cursor: anything(),
-                    end_cursor: anything(),
-                }),
-            })
-        }))
-    );
-
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_get_models() -> Result<()> {
-    // Setup
-    let state: AppState;
-    let server: TestServer;
-    setup!(state, server);
-
-    // Create new user
-    let auth_fixture = state
-        .auth_service
-        .sign_up_with_role(
-            "linh@gmail.com".to_string(),
-            "linh".to_string(),
-            "123".to_string(),
-            UserRole::Admin,
-        )
-        .await?;
-
-    // Create provider
-    let provider_fixture = state
-        .provider_service
-        .create(ProviderCreateInput {
-            name: "OpenAI".to_string(),
-            slug: "openai".to_string(),
-        })
-        .await?;
-
-    // Create models
-    state
-        .model_service
-        .create(ModelCreateInput {
-            name: "test".to_string(),
-            description: "test".to_string(),
-            slug: "test".to_string(),
-            context: 256,
-            input_pricing: PricingInput {
-                currency: "USD".to_string(),
-                price: 0.06,
-                tokens: 1,
-            },
-            output_pricing: PricingInput {
-                currency: "USD".to_string(),
-                price: 0.06,
-                tokens: 1,
-            },
-            training_at: Default::default(),
-            provider_id: provider_fixture.id,
-        })
-        .await?;
-
-    state
-        .model_service
-        .create(ModelCreateInput {
-            name: "test1".to_string(),
-            description: "test1".to_string(),
-            slug: "test1".to_string(),
-            context: 256,
-            input_pricing: PricingInput {
-                currency: "USD".to_string(),
-                price: 0.07,
-                tokens: 1,
-            },
-            output_pricing: PricingInput {
-                currency: "USD".to_string(),
-                price: 0.07,
-                tokens: 1,
-            },
-            training_at: Default::default(),
-            provider_id: provider_fixture.id,
-        })
-        .await?;
-
-    // Get models
-    let variables = get_models_query::Variables {};
-    let req_body = GetModelsQuery::build_query(variables);
-    let resp = server
-        .post("graphql")
-        .add_header(
-            HeaderName::from_static("authorization"),
-            HeaderValue::from_str(format!("Bearer {}", auth_fixture.token).as_str())?,
-        )
-        .json(&req_body)
-        .await;
-    let resp = resp.json::<Response<get_models_query::ResponseData>>();
+    let resp = make_request!(server, auth_fixture.token, variables);
 
     // Assert
     assert_that!(
         resp.data,
         some(pat!(get_models_query::ResponseData {
             models: pat!(get_models_query::GetModelsQueryModels {
-                nodes: contains_each![
-                    pat!(get_models_query::GetModelsQueryModelsNodes {
-                        id: anything(),
-                        name: eq("test".to_string()),
-                        slug: eq("test".to_string()),
-                        provider_id: eq(provider_fixture.id),
-                        description: eq("test".to_string()),
-                        output_pricing: pat!(
-                            get_models_query::GetModelsQueryModelsNodesOutputPricing {
-                                price: eq(0.06),
-                                tokens: eq(1),
-                                currency: eq("USD".to_string()),
-                            }
-                        ),
-                        input_pricing: pat!(
-                            get_models_query::GetModelsQueryModelsNodesInputPricing {
-                                price: eq(0.06),
-                                tokens: eq(1),
-                                currency: eq("USD".to_string()),
-                            }
-                        ),
-                        context: eq(256),
-                        training_at: anything(),
-                        created_at: anything(),
-                        updated_at: anything(),
-                    }),
-                    pat!(get_models_query::GetModelsQueryModelsNodes {
-                        id: anything(),
-                        name: eq("test1".to_string()),
-                        slug: eq("test1".to_string()),
-                        provider_id: eq(provider_fixture.id),
-                        description: eq("test1".to_string()),
-                        output_pricing: pat!(
-                            get_models_query::GetModelsQueryModelsNodesOutputPricing {
-                                price: eq(0.07),
-                                tokens: eq(1),
-                                currency: eq("USD".to_string()),
-                            }
-                        ),
-                        input_pricing: pat!(
-                            get_models_query::GetModelsQueryModelsNodesInputPricing {
-                                price: eq(0.07),
-                                tokens: eq(1),
-                                currency: eq("USD".to_string()),
-                            }
-                        ),
-                        context: eq(256),
-                        training_at: anything(),
-                        created_at: anything(),
-                        updated_at: anything(),
-                    })
-                ],
-                total_nodes: eq(2),
+                nodes: contains_each![pat!(get_models_query::GetModelsQueryModelsNodes {
+                    id: anything(),
+                    name: eq("gpt-5".to_string()),
+                }),],
+                total_nodes: eq(3),
+                page_info: pat!(get_models_query::GetModelsQueryModelsPageInfo {
+                    has_next_page: eq(false),
+                    has_previous_page: eq(true),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    // Get models
+    let cursor = resp.data.unwrap().models.page_info.end_cursor;
+    let variables = get_models_query::Variables {
+        args: get_models_query::ModelArgs {
+            last: Some(1),
+            before: cursor,
+            first: None,
+            after: None,
+            where_: None,
+        },
+    };
+    let resp = make_request!(server, auth_fixture.token, variables);
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(get_models_query::ResponseData {
+            models: pat!(get_models_query::GetModelsQueryModels {
+                nodes: contains_each![pat!(get_models_query::GetModelsQueryModelsNodes {
+                    id: anything(),
+                    name: eq("gpt-4".to_string()),
+                }),],
+                total_nodes: eq(3),
+                page_info: pat!(get_models_query::GetModelsQueryModelsPageInfo {
+                    has_next_page: eq(false),
+                    has_previous_page: eq(true),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    // Get models
+    let cursor = resp.data.unwrap().models.page_info.end_cursor;
+    let variables = get_models_query::Variables {
+        args: get_models_query::ModelArgs {
+            last: Some(1),
+            before: cursor,
+            first: None,
+            after: None,
+            where_: None,
+        },
+    };
+    let resp = make_request!(server, auth_fixture.token, variables);
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(get_models_query::ResponseData {
+            models: pat!(get_models_query::GetModelsQueryModels {
+                nodes: contains_each![pat!(get_models_query::GetModelsQueryModelsNodes {
+                    id: anything(),
+                    name: eq("gpt-3.5".to_string()),
+                }),],
+                total_nodes: eq(3),
+                page_info: pat!(get_models_query::GetModelsQueryModelsPageInfo {
+                    has_next_page: eq(false),
+                    has_previous_page: eq(false),
+                    start_cursor: anything(),
+                    end_cursor: anything(),
+                }),
+            })
+        }))
+    );
+
+    // Get models
+    let cursor = resp.data.unwrap().models.page_info.end_cursor;
+    let variables = get_models_query::Variables {
+        args: get_models_query::ModelArgs {
+            last: Some(1),
+            before: cursor,
+            first: None,
+            after: None,
+            where_: None,
+        },
+    };
+    let resp = make_request!(server, auth_fixture.token, variables);
+
+    // Assert
+    assert_that!(
+        resp.data,
+        some(pat!(get_models_query::ResponseData {
+            models: pat!(get_models_query::GetModelsQueryModels {
+                nodes: empty(),
+                total_nodes: eq(3),
                 page_info: pat!(get_models_query::GetModelsQueryModelsPageInfo {
                     has_next_page: eq(false),
                     has_previous_page: eq(false),

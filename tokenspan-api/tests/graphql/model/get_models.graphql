@@ -1,25 +1,10 @@
-query GetModelsQuery {
-  models {
+query GetModelsQuery($args: ModelArgs!) {
+  models(args: $args) {
     nodes {
       id
       name
-      description
-      slug
-      context
-      inputPricing {
-        price
-        tokens
-        currency
-      }
-      outputPricing {
-        price
-        tokens
-        currency
-      }
-      trainingAt
       providerId
       createdAt
-      updatedAt
     }
     totalNodes
     pageInfo {

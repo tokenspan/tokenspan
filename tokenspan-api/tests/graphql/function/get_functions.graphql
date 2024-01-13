@@ -1,21 +1,17 @@
-query GetFunctionsQuery {
-  functions {
+query GetFunctionsQuery($args: FunctionArgs!) {
+  functions(args: $args) {
+    nodes {
+      id
+      name
+      ownerId
+      createdAt
+    }
     totalNodes
     pageInfo {
       hasPreviousPage
       hasNextPage
       startCursor
       endCursor
-    }
-    nodes {
-      id
-      ownerId
-      name
-      description
-      parameters
-      response
-      createdAt
-      updatedAt
     }
   }
 }

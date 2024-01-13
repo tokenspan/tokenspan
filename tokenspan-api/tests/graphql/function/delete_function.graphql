@@ -1,4 +1,4 @@
-mutation DeleteFunction($deleteFunctionId: UUID!) {
+mutation DeleteFunctionMutation($deleteFunctionId: UUID!) {
   deleteFunction(id: $deleteFunctionId) {
     id
     ownerId

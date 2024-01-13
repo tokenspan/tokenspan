@@ -4,7 +4,7 @@ pub mod get_api_keys_query {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "GetApiKeysQuery";
-    pub const QUERY : & str = "query GetApiKeysQuery {\n  apiKeys {\n    nodes {\n      id\n      name\n      ownerId\n      providerId\n      createdAt\n      updatedAt\n      provider {\n        id\n        name\n        slug\n        createdAt\n        updatedAt\n      }\n      owner {\n        id\n        email\n        username\n        role\n      }\n    }\n    totalNodes\n    pageInfo {\n      startCursor\n      endCursor\n      hasNextPage\n      hasPreviousPage\n    }\n  }\n}" ;
+    pub const QUERY : & str = "query GetApiKeysQuery($args: ApiKeyArgs!) {\n  apiKeys(args: $args) {\n    nodes {\n      id\n      name\n      providerId\n      createdAt\n    }\n    totalNodes\n    pageInfo {\n      startCursor\n      endCursor\n      hasNextPage\n      hasPreviousPage\n    }\n  }\n}" ;
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -15,35 +15,21 @@ pub mod get_api_keys_query {
     type Int = i64;
     #[allow(dead_code)]
     type ID = String;
+    type Cursor = crate::graphql::Cursor;
     type NaiveDateTime = crate::graphql::NaiveDateTime;
     type UUID = crate::graphql::UUID;
-    #[derive(Debug, PartialEq)]
-    pub enum UserRole {
-        ADMIN,
-        USER,
-        Other(String),
-    }
-    impl ::serde::Serialize for UserRole {
-        fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
-            ser.serialize_str(match *self {
-                UserRole::ADMIN => "ADMIN",
-                UserRole::USER => "USER",
-                UserRole::Other(ref s) => &s,
-            })
-        }
-    }
-    impl<'de> ::serde::Deserialize<'de> for UserRole {
-        fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let s: String = ::serde::Deserialize::deserialize(deserializer)?;
-            match s.as_str() {
-                "ADMIN" => Ok(UserRole::ADMIN),
-                "USER" => Ok(UserRole::USER),
-                _ => Ok(UserRole::Other(s)),
-            }
-        }
+    #[derive(Serialize)]
+    pub struct ApiKeyArgs {
+        pub after: Option<Cursor>,
+        pub before: Option<Cursor>,
+        pub first: Option<Int>,
+        pub last: Option<Int>,
     }
     #[derive(Serialize)]
-    pub struct Variables;
+    pub struct Variables {
+        pub args: ApiKeyArgs,
+    }
+    impl Variables {}
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
         #[serde(rename = "apiKeys")]
@@ -61,33 +47,10 @@ pub mod get_api_keys_query {
     pub struct GetApiKeysQueryApiKeysNodes {
         pub id: UUID,
         pub name: String,
-        #[serde(rename = "ownerId")]
-        pub owner_id: UUID,
         #[serde(rename = "providerId")]
         pub provider_id: UUID,
         #[serde(rename = "createdAt")]
         pub created_at: NaiveDateTime,
-        #[serde(rename = "updatedAt")]
-        pub updated_at: NaiveDateTime,
-        pub provider: Option<GetApiKeysQueryApiKeysNodesProvider>,
-        pub owner: Option<GetApiKeysQueryApiKeysNodesOwner>,
-    }
-    #[derive(Deserialize, Debug, PartialEq)]
-    pub struct GetApiKeysQueryApiKeysNodesProvider {
-        pub id: UUID,
-        pub name: String,
-        pub slug: String,
-        #[serde(rename = "createdAt")]
-        pub created_at: NaiveDateTime,
-        #[serde(rename = "updatedAt")]
-        pub updated_at: NaiveDateTime,
-    }
-    #[derive(Deserialize, Debug, PartialEq)]
-    pub struct GetApiKeysQueryApiKeysNodesOwner {
-        pub id: UUID,
-        pub email: String,
-        pub username: String,
-        pub role: UserRole,
     }
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct GetApiKeysQueryApiKeysPageInfo {

@@ -44,6 +44,15 @@ impl ApiKeyServiceExt for ApiKeyService {
     }
 
     async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<ApiKey>> {
+        let mut predicates: Vec<Predicate> = vec![];
+        if let Some(where_args) = args.r#where {
+            if let Some(provider_id) = where_args.provider_id {
+                if let Some(id) = provider_id.equals {
+                    predicates.push(equals("provider_id", &id));
+                }
+            }
+        }
+
         self.db
             .bind::<ApiKey>()
             .cursor(args.first, args.after, args.last, args.before)

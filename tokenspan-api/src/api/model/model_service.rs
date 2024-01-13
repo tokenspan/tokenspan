@@ -42,17 +42,17 @@ pub struct ModelService {
 impl ModelServiceExt for ModelService {
     async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Model>> {
         let mut predicates: Vec<Predicate> = vec![];
-        if let Some(r#where) = &args.r#where {
-            if let Some(provider_where) = &r#where.provider_id {
-                if let Some(provider_id) = &provider_where.equals {
-                    predicates.push(equals("provider_id", provider_id));
+        if let Some(where_args) = &args.r#where {
+            if let Some(provider_id) = &where_args.provider_id {
+                if let Some(id) = &provider_id.equals {
+                    predicates.push(equals("provider_id", id));
                 }
             }
         }
 
         self.db
             .bind::<Model>()
-            .where_by(and(predicates.as_slice()))
+            .where_by(and(&predicates))
             .cursor(args.first, args.after, args.last, args.before)
             .await
     }

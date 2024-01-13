@@ -1,11 +1,5 @@
-query GetThreadsQuery {
-  threads {
-    pageInfo {
-      hasPreviousPage
-      hasNextPage
-      startCursor
-      endCursor
-    }
+query GetThreadsQuery($args: ThreadArgs!) {
+  threads(args: $args) {
     nodes {
       id
       name
@@ -13,53 +7,13 @@ query GetThreadsQuery {
       ownerId
       createdAt
       updatedAt
-      version {
-        id
-        semver
-        version
-        releaseNote
-        description
-        document
-        status
-        threadId
-        ownerId
-        createdAt
-        updatedAt
-        parameters {
-          id
-          name
-          temperature
-          maxTokens
-          stopSequences
-          topP
-          frequencyPenalty
-          presencePenalty
-          extra
-          modelId
-          threadVersionId
-          createdAt
-          updatedAt
-        }
-        messages {
-          id
-          threadVersionId
-          ownerId
-          raw
-          content
-          role
-          createdAt
-          updatedAt
-        }
-      }
-      owner {
-        id
-        createdAt
-        email
-        role
-        updatedAt
-        username
-      }
     }
     totalNodes
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
   }
 }

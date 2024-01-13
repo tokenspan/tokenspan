@@ -138,19 +138,6 @@ impl ThreadSeed {
             state,
         })
     }
-
-    #[allow(unused_allocation)]
-    async fn new_with_data(
-        config: AppConfig,
-        state: AppState,
-        data: Vec<Thread>,
-    ) -> anyhow::Result<Self> {
-        Ok(Self {
-            data,
-            config,
-            state,
-        })
-    }
 }
 
 #[async_trait]
