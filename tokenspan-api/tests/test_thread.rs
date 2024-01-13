@@ -56,14 +56,14 @@ macro_rules! create_thread {
     ($state: ident, name = $name: literal, slug = $slug: literal, user_id = $user_id: expr) => {
         $state
             .thread_service
-            .create(
+            .new(
                 ThreadCreateInput {
                     name: $name.to_string(),
                     slug: $slug.to_string(),
                 },
                 $user_id,
             )
-            .await?;
+            .await?
     };
 }
 
@@ -472,6 +472,36 @@ async fn test_get_thread_by_id() -> Result<()> {
                 id: eq(thread_fixture.id),
                 name: eq("test".to_string()),
                 slug: eq("test".to_string()),
+                owner_id: eq(auth_fixture.user.id),
+                version: some(pat!(get_thread_query::GetThreadQueryThreadVersion {
+                    id: anything(),
+                    semver: eq("0.0.0".to_string()),
+                    version: eq(0),
+                    release_note: eq(None),
+                    description: eq(None),
+                    document: eq(None),
+                    status: eq(get_thread_query::ThreadVersionStatus::DRAFT),
+                    thread_id: anything(),
+                    owner_id: eq(auth_fixture.user.id),
+                    created_at: anything(),
+                    updated_at: anything(),
+                    parameters: contains_each![pat!(
+                        get_thread_query::GetThreadQueryThreadVersionParameters {
+                            id: anything(),
+                            name: eq("untitled".to_string()),
+                            temperature: eq(1.0),
+                        }
+                    ),],
+                    messages: empty(),
+                })),
+                owner: some(pat!(get_thread_query::GetThreadQueryThreadOwner {
+                    id: anything(),
+                    email: eq("linh@gmail.com".to_string()),
+                    username: eq("linh".to_string()),
+                    role: eq(get_thread_query::UserRole::ADMIN),
+                    created_at: anything(),
+                    updated_at: anything(),
+                })),
                 created_at: anything(),
                 updated_at: anything(),
             }))

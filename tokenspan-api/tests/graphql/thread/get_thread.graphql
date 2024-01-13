@@ -22,16 +22,6 @@ query GetThreadQuery($threadId: UUID!) {
         id
         name
         temperature
-        maxTokens
-        stopSequences
-        topP
-        frequencyPenalty
-        presencePenalty
-        extra
-        modelId
-        threadVersionId
-        createdAt
-        updatedAt
       }
       messages {
         id
