@@ -57,6 +57,8 @@ mod update_thread;
 pub use update_thread::*;
 mod delete_thread;
 pub use delete_thread::*;
+mod create_thread;
+pub use create_thread::*;
 mod get_thread;
 pub use get_thread::*;
 

@@ -19,6 +19,7 @@ pub mod update_thread_mutation {
     #[derive(Serialize)]
     pub struct ThreadUpdateInput {
         pub name: Option<String>,
+        pub slug: Option<String>,
     }
     #[derive(Serialize)]
     pub struct Variables {

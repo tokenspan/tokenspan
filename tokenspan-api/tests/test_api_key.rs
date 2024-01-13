@@ -98,6 +98,7 @@ async fn test_paginate_forward_api_keys() -> Result<()> {
             after: None,
             last: Some(1),
             before: None,
+            where_: None,
         },
     };
     let resp = make_request!(server, auth_fixture.token, variables);
@@ -131,6 +132,7 @@ async fn test_paginate_forward_api_keys() -> Result<()> {
             after: None,
             last: Some(1),
             before: None,
+            where_: None,
         },
     };
     let resp = make_request!(server, auth_fixture.token, variables);
@@ -219,6 +221,7 @@ async fn test_paginate_backward_api_keys() -> Result<()> {
             after: None,
             last: None,
             before: None,
+            where_: None,
         },
     };
     let req_body = GetApiKeysQuery::build_query(variables);
@@ -324,6 +327,7 @@ async fn test_get_api_keys() -> Result<()> {
             after: None,
             last: None,
             before: None,
+            where_: None,
         },
     };
     let req_body = GetApiKeysQuery::build_query(variables);

@@ -1,10 +1,10 @@
 #![allow(clippy::all, warnings)]
-pub struct GetThreadMutation;
-pub mod get_thread_mutation {
+pub struct GetThreadQuery;
+pub mod get_thread_query {
     #![allow(dead_code)]
     use std::result::Result;
-    pub const OPERATION_NAME: &str = "GetThreadMutation";
-    pub const QUERY : & str = "query GetThreadMutation($threadId: UUID!) {\n  thread(id: $threadId) {\n    id\n    name\n    slug\n    ownerId\n    createdAt\n    updatedAt\n    version {\n      id\n      semver\n      version\n      releaseNote\n      description\n      document\n      status\n      threadId\n      ownerId\n      createdAt\n      updatedAt\n      parameters {\n        id\n        name\n        temperature\n        maxTokens\n        stopSequences\n        topP\n        frequencyPenalty\n        presencePenalty\n        extra\n        modelId\n        threadVersionId\n        createdAt\n        updatedAt\n      }\n      messages {\n        id\n        threadVersionId\n        ownerId\n        raw\n        content\n        role\n        createdAt\n        updatedAt\n      }\n    }\n    owner {\n      id\n      createdAt\n      email\n      role\n      updatedAt\n      username\n    }\n  }\n}" ;
+    pub const OPERATION_NAME: &str = "GetThreadQuery";
+    pub const QUERY : & str = "query GetThreadQuery($threadId: UUID!) {\n  thread(id: $threadId) {\n    id\n    name\n    slug\n    ownerId\n    createdAt\n    updatedAt\n    version {\n      id\n      semver\n      version\n      releaseNote\n      description\n      document\n      status\n      threadId\n      ownerId\n      createdAt\n      updatedAt\n      parameters {\n        id\n        name\n        temperature\n        maxTokens\n        stopSequences\n        topP\n        frequencyPenalty\n        presencePenalty\n        extra\n        modelId\n        threadVersionId\n        createdAt\n        updatedAt\n      }\n      messages {\n        id\n        threadVersionId\n        ownerId\n        raw\n        content\n        role\n        createdAt\n        updatedAt\n      }\n    }\n    owner {\n      id\n      createdAt\n      email\n      role\n      updatedAt\n      username\n    }\n  }\n}" ;
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -76,10 +76,10 @@ pub mod get_thread_mutation {
     impl Variables {}
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct ResponseData {
-        pub thread: Option<GetThreadMutationThread>,
+        pub thread: Option<GetThreadQueryThread>,
     }
     #[derive(Deserialize, Debug, PartialEq)]
-    pub struct GetThreadMutationThread {
+    pub struct GetThreadQueryThread {
         pub id: UUID,
         pub name: String,
         pub slug: String,
@@ -89,11 +89,11 @@ pub mod get_thread_mutation {
         pub created_at: NaiveDateTime,
         #[serde(rename = "updatedAt")]
         pub updated_at: NaiveDateTime,
-        pub version: Option<GetThreadMutationThreadVersion>,
-        pub owner: Option<GetThreadMutationThreadOwner>,
+        pub version: Option<GetThreadQueryThreadVersion>,
+        pub owner: Option<GetThreadQueryThreadOwner>,
     }
     #[derive(Deserialize, Debug, PartialEq)]
-    pub struct GetThreadMutationThreadVersion {
+    pub struct GetThreadQueryThreadVersion {
         pub id: UUID,
         pub semver: String,
         pub version: Int,
@@ -110,11 +110,11 @@ pub mod get_thread_mutation {
         pub created_at: NaiveDateTime,
         #[serde(rename = "updatedAt")]
         pub updated_at: NaiveDateTime,
-        pub parameters: Vec<GetThreadMutationThreadVersionParameters>,
-        pub messages: Vec<GetThreadMutationThreadVersionMessages>,
+        pub parameters: Vec<GetThreadQueryThreadVersionParameters>,
+        pub messages: Vec<GetThreadQueryThreadVersionMessages>,
     }
     #[derive(Deserialize, Debug, PartialEq)]
-    pub struct GetThreadMutationThreadVersionParameters {
+    pub struct GetThreadQueryThreadVersionParameters {
         pub id: UUID,
         pub name: String,
         pub temperature: Float,
@@ -139,7 +139,7 @@ pub mod get_thread_mutation {
         pub updated_at: NaiveDateTime,
     }
     #[derive(Deserialize, Debug, PartialEq)]
-    pub struct GetThreadMutationThreadVersionMessages {
+    pub struct GetThreadQueryThreadVersionMessages {
         pub id: UUID,
         #[serde(rename = "threadVersionId")]
         pub thread_version_id: UUID,
@@ -154,7 +154,7 @@ pub mod get_thread_mutation {
         pub updated_at: NaiveDateTime,
     }
     #[derive(Deserialize, Debug, PartialEq)]
-    pub struct GetThreadMutationThreadOwner {
+    pub struct GetThreadQueryThreadOwner {
         pub id: UUID,
         #[serde(rename = "createdAt")]
         pub created_at: NaiveDateTime,
@@ -165,14 +165,14 @@ pub mod get_thread_mutation {
         pub username: String,
     }
 }
-impl graphql_client::GraphQLQuery for GetThreadMutation {
-    type Variables = get_thread_mutation::Variables;
-    type ResponseData = get_thread_mutation::ResponseData;
+impl graphql_client::GraphQLQuery for GetThreadQuery {
+    type Variables = get_thread_query::Variables;
+    type ResponseData = get_thread_query::ResponseData;
     fn build_query(variables: Self::Variables) -> ::graphql_client::QueryBody<Self::Variables> {
         graphql_client::QueryBody {
             variables,
-            query: get_thread_mutation::QUERY,
-            operation_name: get_thread_mutation::OPERATION_NAME,
+            query: get_thread_query::QUERY,
+            operation_name: get_thread_query::OPERATION_NAME,
         }
     }
 }

@@ -24,6 +24,17 @@ pub mod get_api_keys_query {
         pub before: Option<Cursor>,
         pub first: Option<Int>,
         pub last: Option<Int>,
+        #[serde(rename = "where")]
+        pub where_: Option<ApiKeyWhereArgs>,
+    }
+    #[derive(Serialize)]
+    pub struct ApiKeyWhereArgs {
+        #[serde(rename = "providerId")]
+        pub provider_id: Option<ApiKeyWhereProviderIdArgs>,
+    }
+    #[derive(Serialize)]
+    pub struct ApiKeyWhereProviderIdArgs {
+        pub equals: Option<UUID>,
     }
     #[derive(Serialize)]
     pub struct Variables {

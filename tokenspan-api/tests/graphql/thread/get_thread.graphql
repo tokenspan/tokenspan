@@ -1,4 +1,4 @@
-query GetThreadMutation($threadId: UUID!) {
+query GetThreadQuery($threadId: UUID!) {
   thread(id: $threadId) {
     id
     name

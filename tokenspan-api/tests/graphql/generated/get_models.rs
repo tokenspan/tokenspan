@@ -25,15 +25,15 @@ pub mod get_models_query {
         pub first: Option<Int>,
         pub last: Option<Int>,
         #[serde(rename = "where")]
-        pub where_: Option<ModelWhereInput>,
+        pub where_: Option<ModelWhereArgs>,
     }
     #[derive(Serialize)]
-    pub struct ModelWhereInput {
+    pub struct ModelWhereArgs {
         #[serde(rename = "providerId")]
-        pub provider_id: Option<ModelWhereProviderIdInput>,
+        pub provider_id: Option<ModelWhereProviderIdArgs>,
     }
     #[derive(Serialize)]
-    pub struct ModelWhereProviderIdInput {
+    pub struct ModelWhereProviderIdArgs {
         pub equals: Option<UUID>,
     }
     #[derive(Serialize)]

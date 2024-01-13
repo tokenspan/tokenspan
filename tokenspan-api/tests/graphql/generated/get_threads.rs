@@ -4,7 +4,7 @@ pub mod get_threads_query {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "GetThreadsQuery";
-    pub const QUERY : & str = "query GetThreadsQuery($args: ThreadArgs!) {\n  threads(args: $args) {\n    nodes {\n      id\n      name\n      slug\n      ownerId\n      createdAt\n      updatedAt\n    }\n    totalNodes\n    pageInfo {\n      hasPreviousPage\n      hasNextPage\n      startCursor\n      endCursor\n    }\n  }\n}" ;
+    pub const QUERY : & str = "query GetThreadsQuery($args: ThreadArgs!) {\n  threads(args: $args) {\n    nodes {\n      id\n      name\n      createdAt\n    }\n    totalNodes\n    pageInfo {\n      hasPreviousPage\n      hasNextPage\n      startCursor\n      endCursor\n    }\n  }\n}" ;
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -22,22 +22,19 @@ pub mod get_threads_query {
     pub struct ThreadArgs {
         pub after: Option<Cursor>,
         pub before: Option<Cursor>,
-        pub filter: Option<ThreadFilter>,
         pub first: Option<Int>,
         pub last: Option<Int>,
-        pub sort: Option<ThreadSort>,
+        #[serde(rename = "where")]
+        pub where_: Option<ThreadWhereArgs>,
     }
     #[derive(Serialize)]
-    pub struct ThreadFilter {
-        pub name: Option<String>,
+    pub struct ThreadWhereArgs {
         #[serde(rename = "ownerId")]
-        pub owner_id: Option<UUID>,
-        pub slug: Option<String>,
+        pub owner_id: Option<ThreadWhereOwnerIdArgs>,
     }
     #[derive(Serialize)]
-    pub struct ThreadSort {
-        #[serde(rename = "createdAt")]
-        pub created_at: Option<NaiveDateTime>,
+    pub struct ThreadWhereOwnerIdArgs {
+        pub equals: Option<UUID>,
     }
     #[derive(Serialize)]
     pub struct Variables {
@@ -60,13 +57,8 @@ pub mod get_threads_query {
     pub struct GetThreadsQueryThreadsNodes {
         pub id: UUID,
         pub name: String,
-        pub slug: String,
-        #[serde(rename = "ownerId")]
-        pub owner_id: UUID,
         #[serde(rename = "createdAt")]
         pub created_at: NaiveDateTime,
-        #[serde(rename = "updatedAt")]
-        pub updated_at: NaiveDateTime,
     }
     #[derive(Deserialize, Debug, PartialEq)]
     pub struct GetThreadsQueryThreadsPageInfo {

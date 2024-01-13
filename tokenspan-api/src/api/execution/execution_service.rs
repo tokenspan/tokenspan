@@ -32,8 +32,18 @@ pub struct ExecutionService {
 #[async_trait::async_trait]
 impl ExecutionServiceExt for ExecutionService {
     async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Execution>> {
+        let mut predicates = vec![];
+        if let Some(r#where) = &args.r#where {
+            if let Some(thread_id_args) = &r#where.thread_id {
+                if let Some(id) = &thread_id_args.equals {
+                    predicates.push(equals("thread_id", id));
+                }
+            }
+        }
+
         self.db
             .bind::<Execution>()
+            .where_by(and(&predicates))
             .cursor(args.first, args.after, args.last, args.before)
             .await
     }

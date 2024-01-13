@@ -15,6 +15,7 @@ pub struct ThreadCreateInput {
 #[derive(InputObject, UpdateModel)]
 pub struct ThreadUpdateInput {
     pub name: Option<String>,
+    pub slug: Option<String>,
 }
 
 #[derive(Deserialize, Validate, Clone)]

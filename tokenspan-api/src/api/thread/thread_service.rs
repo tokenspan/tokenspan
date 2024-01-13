@@ -109,8 +109,18 @@ impl ThreadService {
 #[async_trait::async_trait]
 impl ThreadServiceExt for ThreadService {
     async fn paginate(&self, args: ThreadArgs) -> Result<Pagination<Thread>> {
+        let mut predicates = vec![];
+        if let Some(r#where) = &args.r#where {
+            if let Some(thread_owner_args) = &r#where.owner_id {
+                if let Some(id) = &thread_owner_args.equals {
+                    predicates.push(equals("owner_id", id));
+                }
+            }
+        }
+
         self.db
             .bind::<Thread>()
+            .where_by(and(&predicates))
             .cursor(args.first, args.after, args.last, args.before)
             .await
     }

@@ -1,18 +1,15 @@
 use async_graphql::InputObject;
-use chrono::NaiveDateTime;
 use dojo_orm::pagination::Cursor;
 use uuid::Uuid;
 
 #[derive(InputObject, Default)]
-pub struct ThreadSort {
-    pub created_at: Option<NaiveDateTime>,
+pub struct ThreadWhereOwnerIdArgs {
+    pub equals: Option<Uuid>,
 }
 
 #[derive(InputObject, Default)]
-pub struct ThreadFilter {
-    pub name: Option<String>,
-    pub slug: Option<String>,
-    pub owner_id: Option<Uuid>,
+pub struct ThreadWhereArgs {
+    pub owner_id: Option<ThreadWhereOwnerIdArgs>,
 }
 
 #[derive(InputObject, Default)]
@@ -21,6 +18,5 @@ pub struct ThreadArgs {
     pub last: Option<i64>,
     pub before: Option<Cursor>,
     pub after: Option<Cursor>,
-    pub filter: Option<ThreadFilter>,
-    pub sort: Option<ThreadSort>,
+    pub r#where: Option<ThreadWhereArgs>,
 }
