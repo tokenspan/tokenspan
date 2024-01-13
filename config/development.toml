@@ -1,4 +1,4 @@
 env = "development"
 
 [database]
-url = "mongodb://mongo1:30001/tokenspan?replicaSet=local-replica-set"
+url = "postgres://postgres:123456@localhost:5432/tokenspan"

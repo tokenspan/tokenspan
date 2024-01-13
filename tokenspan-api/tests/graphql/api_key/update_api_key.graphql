@@ -1,0 +1,6 @@
+mutation UpdateApiKeyMutation($updateApiKeyId: UUID!, $input: ApiKeyUpdateInput!) {
+  updateApiKey(id: $updateApiKeyId, input: $input) {
+    id
+    name
+  }
+}

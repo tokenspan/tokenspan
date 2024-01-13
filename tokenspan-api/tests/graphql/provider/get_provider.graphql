@@ -1,0 +1,9 @@
+query GetProviderQuery($providerId: UUID!) {
+  provider(id: $providerId) {
+    id
+    name
+    slug
+    createdAt
+    updatedAt
+  }
+}

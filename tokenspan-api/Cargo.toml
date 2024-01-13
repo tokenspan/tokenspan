@@ -4,42 +4,63 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-tokio = { version = "1", features = ["full"] }
-tokio-stream = "0.1.14"
-axum = { git = "https://github.com/linrium/axum", branch = "feat/support-custom-sse-event", features = ["ws"] }
+anyhow = "1.0"
+async-graphql = { git = "https://github.com/async-graphql/async-graphql", features = ["tokio", "chrono", "dataloader", "tracing", "uuid"] }
+async-graphql-axum = { git = "https://github.com/async-graphql/async-graphql" }
+async-openai = "0.18"
+async-stream = "0.3.5"
+async-trait = "0.1"
+axum = { version = "0.7", features = ["ws"] }
 axum-extra = { version = "0.9.0", features = ["typed-header"] }
 axum-macros = "0.4.0"
-tower-http = { version = "0.5.0", features = ["trace", "timeout", "cors"] }
-async-graphql = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom", features = ["tokio", "chrono", "dataloader", "tracing"] }
-async-graphql-axum = { git = "https://github.com/linrium/async-graphql", branch = "support-axum-0.7-custom" }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-jsonwebtoken = "9"
-anyhow = "1.0.75"
-thiserror = "1.0.50"
-async-trait = "0.1.74"
 chrono = { version = "0.4.31", features = ["serde"] }
-ring = "0.17.5"
+config = "0.13.1"
 data-encoding = "2.4.0"
+dotenv = "0.15.0"
+futures = "0.3"
+futures-util = "0.3.29"
+jsonwebtoken = "9"
+magic-crypt = "3.1.13"
+openssl = { version = "0.10", features = ["vendored"] }
+regex = "1.10.2"
+ring = "0.17"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["raw_value"] }
+strum = "0.25"
+strum_macros = "0.25"
+thiserror = "1.0"
+tokenspan-extra = { path = "../tokenspan-extra" }
+tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1.14"
+tower-http = { version = "0.5.0", features = ["trace", "timeout", "cors"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "ansi"] }
+uuid = { version = "1.6.1", features = ["v4"] }
 validator = { version = "0.16", features = ["derive"] }
-mongodb = { version = "2.0", features = ["tokio-runtime"] }
-bson = { version = "2.0", features = ["chrono-0_4"] }
-futures = "0.3"
-config = "0.13.1"
-magic-crypt = "3.1.13"
-async-openai = "0.17.1"
-futures-util = "0.3.29"
-dotenv = "0.15.0"
-async-stream = "0.3.5"
-bytes = { version = "1.5.0" }
-openssl = { version = "0.10.59", features = ["vendored"] }
-regex = "1.10.2"
-redis = { version = "0.24.0", features = ["tokio-comp"] }
+typed-builder = "0.18.0"
+refinery = { version = "0.8.11", features = ["tokio-postgres"] }
 
-tokenspan-macros = { path = "../tokenspan-macros" }
-tokenspan-extra = { path = "../tokenspan-extra" }
+[dependencies.dojo-orm]
+path = "../../dojo/dojo-orm"
+#git = "https://github.com/tokenspan/dojo-orm.git"
 
-[lints]
-workspace = true
+[dependencies.dojo-macros]
+path = "../../dojo/dojo-macros"
+#git = "https://github.com/tokenspan/dojo-orm.git"
+
+[dependencies.tokio-postgres]
+version = "0.7.2"
+features = [
+    "with-chrono-0_4",
+    "with-uuid-1",
+    "array-impls"
+]
+
+[dev-dependencies]
+casey = "0.4.0"
+rstest = "0.18.2"
+graphql_client = { version = "0.13.0", features = ["graphql_query_derive"]}
+axum-test = "14.2.2"
+testcontainers-modules = { version = "0.3.0", features = ["postgres"] }
+googletest = "0.11.0"
+tokenspan-cli = { path = "../tokenspan-cli" }

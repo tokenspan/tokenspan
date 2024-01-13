@@ -1,0 +1,6 @@
+mutation DeleteThreadMutation($deleteThreadId: UUID!) {
+  deleteThread(id: $deleteThreadId) {
+    id
+    name
+  }
+}

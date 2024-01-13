@@ -1,0 +1,17 @@
+query GetThreadVersionsQuery($args: ThreadVersionArgs!) {
+  threadVersions(args: $args) {
+    nodes {
+      id
+      threadId
+      ownerId
+      createdAt
+    }
+    totalNodes
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+  }
+}

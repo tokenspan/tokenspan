@@ -1,0 +1,40 @@
+query GetThreadVersionQuery($by: ThreadVersionBy!) {
+  threadVersion(by: $by) {
+    id
+    semver
+    version
+    releaseNote
+    description
+    document
+    status
+    threadId
+    ownerId
+    createdAt
+    updatedAt
+    parameters {
+      id
+      name
+      temperature
+      maxTokens
+      stopSequences
+      topP
+      frequencyPenalty
+      presencePenalty
+      extra
+      modelId
+      threadVersionId
+      createdAt
+      updatedAt
+    }
+    messages {
+      id
+      threadVersionId
+      ownerId
+      raw
+      content
+      role
+      createdAt
+      updatedAt
+    }
+  }
+}

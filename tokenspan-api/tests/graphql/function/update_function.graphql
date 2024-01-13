@@ -1,0 +1,12 @@
+mutation UpdateFunctionMutation($updateFunctionId: UUID!, $input: FunctionUpdateInput!) {
+  updateFunction(id: $updateFunctionId, input: $input) {
+    id
+    ownerId
+    name
+    description
+    parameters
+    response
+    createdAt
+    updatedAt
+  }
+}

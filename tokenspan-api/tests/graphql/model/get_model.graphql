@@ -1,0 +1,23 @@
+query GetModelQuery($modelId: UUID!) {
+  model(id: $modelId) {
+    id
+    name
+    description
+    slug
+    context
+    inputPricing {
+      price
+      tokens
+      currency
+    }
+    outputPricing {
+      price
+      tokens
+      currency
+    }
+    trainingAt
+    providerId
+    createdAt
+    updatedAt
+  }
+}

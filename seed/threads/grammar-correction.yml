@@ -1,0 +1,33 @@
+owner:
+  email: wang_yu_meng@gmail.com
+name: Grammar correction
+slug: grammar-correction
+private: false
+versions:
+  - owner:
+      email: wang_yu_meng@gmail.com
+    semver: 0.0.0
+    version: 0
+    releaseNote: ""
+    description: Convert ungrammatical statements into standard English.
+    document: ""
+    status: published
+    releaseAt: null
+    parameters:
+      - name: default
+        temperature: 0.7
+        maxTokens: 64
+        stopSequences: [ ]
+        topP: 1.0
+        frequencyPenalty: 0.0
+        presencePenalty: 0.0
+        extra: null
+        model:
+          slug: gpt-3.5-turbo-1106
+    messages:
+      - role: system
+        content: You will be provided with statements, and your task is to convert them to standard English.
+        raw: You will be provided with statements, and your task is to convert them to standard English.
+      - role: user
+        content: <var name="statement"/>
+        raw: <var name="statement"/>

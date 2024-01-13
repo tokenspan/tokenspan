@@ -1,0 +1,102 @@
+### Create provider
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation CreateProvider($input: ProviderCreateInput!) {
+  createProvider(input: $input) {
+    id
+    name
+    slug
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "input": {
+    "name": "test",
+    "slug": "test"
+  }
+}
+
+### Get providers
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query GetProviders {
+  providers {
+    edges {
+      node {
+        id
+        name
+        slug
+        createdAt
+        updatedAt
+      }
+      cursor
+    }
+    pageInfo {
+      endCursor
+      startCursor
+      hasNextPage
+      hasPreviousPage
+    }
+  }
+}
+
+### Get provider by id
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query Provider($providerId: UUID!) {
+  provider(id: $providerId) {
+    id
+    name
+    slug
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "providerId": "56df57c5-6bec-43d6-8aeb-4f508246fdb0"
+}
+
+### Update provider by id
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation UpdateProvider($id: UUID!, $input: ProviderUpdateInput!) {
+  updateProvider(id: $id, input: $input) {
+    id
+    name
+    slug
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "id": "c0660675-0b86-4bb2-aaed-f806e2823e2d",
+  "input": {
+    "slug": "zzz"
+  }
+}
+
+### Delete provider by id
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation DeleteProvider($id: UUID!) {
+  deleteProvider(id: $id) {
+    id
+    name
+    slug
+    createdAt
+    updatedAt
+  }
+}
+
+{
+  "id": "1a67e2ca-750e-4870-b976-195da7a6e03d"
+}

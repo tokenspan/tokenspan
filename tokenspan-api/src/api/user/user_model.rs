@@ -1,35 +1,32 @@
-use async_graphql::SimpleObject;
-use bson::oid::ObjectId;
-use serde::{Deserialize, Serialize};
+use async_graphql::{Enum, SimpleObject};
+use chrono::NaiveDateTime;
+use dojo_macros::{Model, Type};
+use serde::Deserialize;
+use strum_macros::{Display, EnumString};
+use uuid::Uuid;
 
-use tokenspan_macros::ID;
-
-use crate::api::user::user_type::Role;
-
-#[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub struct UserId(ObjectId);
-
-#[derive(SimpleObject, Clone, Debug)]
+#[derive(SimpleObject, Clone, Debug, Model)]
+#[dojo(name = "users", sort_keys = ["created_at", "id"])]
 pub struct User {
-    pub id: UserId,
+    pub id: Uuid,
     pub email: String,
     pub username: String,
     #[graphql(skip)]
     pub password: String,
     #[graphql(skip)]
     pub salt: String,
-    pub role: Role,
+    pub role: UserRole,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
-impl From<super::user_repository::UserEntity> for User {
-    fn from(value: super::user_repository::UserEntity) -> Self {
-        Self {
-            id: value.id,
-            email: value.email,
-            username: value.username,
-            password: value.password,
-            salt: value.salt,
-            role: value.role,
-        }
-    }
+#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq, Display, EnumString, Deserialize, Type)]
+#[dojo(name = "user_role", rename_all = "lowercase")]
+pub enum UserRole {
+    #[strum(serialize = "admin")]
+    #[serde(rename = "admin")]
+    Admin,
+    #[strum(serialize = "user")]
+    #[serde(rename = "user")]
+    User,
 }

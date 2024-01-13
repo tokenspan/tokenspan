@@ -4,10 +4,10 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "parameterId": "657d1cd748f0aa3bba3aaf41",
-  "taskVersionId": "657d1cd748f0aa3bba3aaf42",
-  "apiKeyId": "657d208932fc0103875d623c",
+  "parameterId": "00000000-0000-0000-0000-000000000000",
+  "taskVersionId": "2e48ccab-c9ce-4982-9af7-e69c2fa25680",
+  "apiKeyId": "862c53e7-7c84-472c-92eb-26880ada7bd8",
   "variables": {
-    "statement": "She no went to the market."
+    "text": "She no went to the market."
   }
 }

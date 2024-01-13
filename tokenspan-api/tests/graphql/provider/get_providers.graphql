@@ -1,0 +1,16 @@
+query GetProvidersQuery($args: ProviderArgs!) {
+  providers(args: $args) {
+    nodes {
+      id
+      name
+      createdAt
+    }
+    totalNodes
+    pageInfo {
+      endCursor
+      startCursor
+      hasNextPage
+      hasPreviousPage
+    }
+  }
+}

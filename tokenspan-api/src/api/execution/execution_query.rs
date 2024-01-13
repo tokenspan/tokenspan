@@ -1,12 +1,12 @@
-use crate::api::models::ExecutionId;
 use async_graphql::connection::Connection;
 use async_graphql::{Context, Object, Result};
+use dojo_orm::pagination::{AdditionalFields, Cursor};
+use uuid::Uuid;
 
 use crate::api::execution::dto::ExecutionArgs;
 use crate::api::execution::execution_model::Execution;
 use crate::api::services::ExecutionServiceDyn;
 use crate::error::AppError;
-use tokenspan_extra::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]
 pub struct ExecutionQuery;
@@ -27,16 +27,12 @@ impl ExecutionQuery {
         Ok(paginated_execution.into())
     }
 
-    pub async fn execution<'a>(
-        &self,
-        ctx: &Context<'a>,
-        id: ExecutionId,
-    ) -> Result<Option<Execution>> {
+    pub async fn execution<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Option<Execution>> {
         let execution_service = ctx
             .data::<ExecutionServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let execution = execution_service.find_by_id(id).await?;
+        let execution = execution_service.find_by_id(&id).await?;
 
         Ok(execution)
     }

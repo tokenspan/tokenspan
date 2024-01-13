@@ -1,72 +1,105 @@
 use anyhow::Result;
+use dojo_orm::Database;
+use magic_crypt::new_magic_crypt;
+use std::ops::DerefMut;
 
-use crate::api::caches::api_key_cache::{ApiKeyCache, ApiKeyCacheDyn};
-use crate::api::caches::model_cache::{ModelCache, ModelCacheDyn};
 use crate::api::services::*;
 use crate::configs::AppConfig;
-use crate::repository::RootRepository;
+
+mod embedded {
+    use refinery::embed_migrations;
+
+    embed_migrations!("./migrations");
+}
 
 #[derive(Clone)]
 pub struct AppState {
-    pub repository: RootRepository,
     pub user_service: UserServiceDyn,
     pub auth_service: AuthServiceDyn,
     pub api_key_service: ApiKeyServiceDyn,
     pub provider_service: ProviderServiceDyn,
     pub model_service: ModelServiceDyn,
-    pub task_version_service: TaskVersionServiceDyn,
-    pub task_service: TaskServiceDyn,
+    pub thread_version_service: ThreadVersionServiceDyn,
+    pub thread_service: ThreadServiceDyn,
     pub execution_service: ExecutionServiceDyn,
-
-    pub api_key_cache: ApiKeyCacheDyn,
-    pub model_cache: ModelCacheDyn,
+    pub parameter_service: ParameterServiceDyn,
+    pub message_service: MessageServiceDyn,
+    pub function_service: FunctionServiceDyn,
 }
 
 impl AppState {
-    pub async fn new(app_config: AppConfig) -> Result<Self> {
-        let url = app_config.database.url.clone();
+    pub async fn new(app_config: &AppConfig) -> Result<Self> {
+        let mc = new_magic_crypt!(app_config.encryption.secret.clone(), 256);
+        let db = Database::new(app_config.database.url.as_str()).await?;
+        let mut conn = db.get().await?;
+        let client = conn.deref_mut();
+        embedded::migrations::runner()
+            .run_async(client)
+            .await
+            .unwrap();
 
-        let repository = RootRepository::new_with_uri(url).await;
+        let user_service: UserServiceDyn = UserService::builder().db(db.clone()).build().into();
+        let auth_service: AuthServiceDyn = AuthService::builder()
+            .user_service(user_service.clone())
+            .auth_config(app_config.auth.clone())
+            .build()
+            .into();
 
-        let user_service: UserServiceDyn = UserService::new(repository.clone()).into();
-        let auth_service: AuthServiceDyn =
-            AuthService::new(user_service.clone(), app_config.auth.clone()).into();
+        let api_key_service: ApiKeyServiceDyn = ApiKeyService::builder()
+            .db(db.clone())
+            .mc(mc)
+            .build()
+            .into();
 
-        let api_key_service: ApiKeyServiceDyn =
-            ApiKeyService::new(repository.clone(), app_config.encryption.clone()).into();
+        let provider_service: ProviderServiceDyn =
+            ProviderService::builder().db(db.clone()).build().into();
+        let model_service: ModelServiceDyn = ModelService::builder().db(db.clone()).build().into();
 
-        let api_key_cache: ApiKeyCacheDyn = ApiKeyCache::new(api_key_service.clone()).await?.into();
+        let message_service: MessageServiceDyn =
+            MessageService::builder().db(db.clone()).build().into();
 
-        let model_service: ModelServiceDyn = ModelService::new(repository.clone()).into();
-        let model_cache: ModelCacheDyn = ModelCache::new(model_service.clone()).await?.into();
+        let execution_service: ExecutionServiceDyn = ExecutionService::builder()
+            .db(db.clone())
+            .message_service(message_service.clone())
+            .build()
+            .into();
 
-        let provider_service: ProviderServiceDyn = ProviderService::new(repository.clone()).into();
-        let task_version_service: TaskVersionServiceDyn =
-            TaskVersionService::new(repository.clone()).into();
-        let execution_service: ExecutionServiceDyn =
-            ExecutionService::new(repository.clone()).into();
-        let task_service: TaskServiceDyn = TaskService::new(
-            repository.clone(),
-            api_key_cache.clone(),
-            model_cache.clone(),
-            execution_service.clone(),
-            task_version_service.clone(),
-        )
-        .into();
+        let parameter_service: ParameterServiceDyn =
+            ParameterService::builder().db(db.clone()).build().into();
+
+        let thread_version_service: ThreadVersionServiceDyn = ThreadVersionService::builder()
+            .db(db.clone())
+            .parameter_service(parameter_service.clone())
+            .message_service(message_service.clone())
+            .build()
+            .into();
+
+        let thread_service: ThreadServiceDyn = ThreadService::builder()
+            .db(db.clone())
+            .api_key_service(api_key_service.clone())
+            .model_service(model_service.clone())
+            .execution_service(execution_service.clone())
+            .thread_version_service(thread_version_service.clone())
+            .parameter_service(parameter_service.clone())
+            .message_service(message_service.clone())
+            .build()
+            .into();
+
+        let function_service: FunctionServiceDyn =
+            FunctionService::builder().db(db.clone()).build().into();
 
         Ok(Self {
-            repository,
             user_service,
             auth_service,
             api_key_service,
             provider_service,
             model_service,
-            task_version_service,
-            task_service,
+            thread_version_service,
+            thread_service,
             execution_service,
-
-            api_key_cache,
-            model_cache,
+            parameter_service,
+            message_service,
+            function_service,
         })
     }
 }

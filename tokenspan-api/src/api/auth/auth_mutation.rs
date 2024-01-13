@@ -78,6 +78,8 @@ impl AuthMutation {
         //     .ok_or(AppError::Unauthorized("no refresh_token cookie".to_string()).extend())?
         //     .to_owned();
 
-        auth_service.refresh_token(input.refresh_token).await
+        let payload = auth_service.refresh_token(input.refresh_token).await?;
+
+        Ok(payload)
     }
 }

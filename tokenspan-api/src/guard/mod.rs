@@ -5,10 +5,10 @@ use axum::middleware::Next;
 use axum::response::Response;
 use axum_extra::headers::authorization::Bearer;
 use axum_extra::headers::{Authorization, HeaderMapExt};
+use tracing::info;
 
-use crate::api::models::ParsedToken;
+use crate::api::models::{ParsedToken, UserRole};
 use crate::api::services::AuthService;
-use crate::api::types::Role;
 use crate::configs::AppConfig;
 
 pub async fn guard(
@@ -41,11 +41,11 @@ pub async fn guard(
 }
 
 pub struct RoleGuard {
-    role: Role,
+    role: UserRole,
 }
 
 impl RoleGuard {
-    pub fn new(role: Role) -> Self {
+    pub fn new(role: UserRole) -> Self {
         Self { role }
     }
 }
@@ -56,11 +56,11 @@ impl Guard for RoleGuard {
         let parsed_token = ctx.data_opt::<Option<ParsedToken>>();
 
         if let Some(Some(parsed_token)) = parsed_token {
-            println!("parsed_token: {:?}", parsed_token);
+            info!("parsed_token: {:?}", parsed_token);
             return match self.role {
-                Role::Admin if parsed_token.role == Role::Admin => Ok(()),
-                Role::User if parsed_token.role == Role::Admin => Ok(()),
-                Role::User if parsed_token.role == Role::User => Ok(()),
+                UserRole::Admin if parsed_token.role == UserRole::Admin => Ok(()),
+                UserRole::User if parsed_token.role == UserRole::Admin => Ok(()),
+                UserRole::User if parsed_token.role == UserRole::User => Ok(()),
                 _ => Err(async_graphql::Error::new("Forbidden")),
             };
         }

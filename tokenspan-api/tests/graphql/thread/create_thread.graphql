@@ -1,0 +1,10 @@
+mutation CreateThreadMutation($input: ThreadCreateInput!) {
+  createThread(input: $input) {
+    id
+    name
+    slug
+    ownerId
+    createdAt
+    updatedAt
+  }
+}

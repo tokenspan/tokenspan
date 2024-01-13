@@ -17,8 +17,8 @@
         },
         "role": {
           "enum": [
-            "ADMIN",
-            "USER"
+            "admin",
+            "user"
           ]
         }
       },

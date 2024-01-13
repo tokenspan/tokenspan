@@ -8,17 +8,46 @@ use axum::response::{IntoResponse, Redirect};
 use axum::{response, Extension};
 use axum_extra::headers::HeaderMap;
 
+use crate::api::loaders::{
+    ApiKeyLoader, ExecutionLoader, ModelLoader, ProviderLoader, ThreadLoader, ThreadVersionLoader,
+    UserLoader,
+};
 use crate::api::models::ParsedToken;
 use crate::api::{MutationRoot, QueryRoot, SubscriptionRoot};
 use crate::configs::AppConfig;
-use crate::loader::AppLoader;
 use crate::state::AppState;
 
 pub type AppSchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
 
 pub async fn build_schema(app_state: AppState) -> AppSchema {
-    let loader = DataLoader::new(AppLoader::from(app_state.clone()), tokio::spawn);
-
+    let api_key_loader = DataLoader::new(
+        ApiKeyLoader::new(app_state.api_key_service.clone()),
+        tokio::spawn,
+    );
+    let model_loader = DataLoader::new(
+        ModelLoader::new(app_state.model_service.clone()),
+        tokio::spawn,
+    );
+    let provider_loader = DataLoader::new(
+        ProviderLoader::new(app_state.provider_service.clone()),
+        tokio::spawn,
+    );
+    let thread_loader = DataLoader::new(
+        ThreadLoader::new(app_state.thread_service.clone()),
+        tokio::spawn,
+    );
+    let thread_version_loader = DataLoader::new(
+        ThreadVersionLoader::new(app_state.thread_version_service.clone()),
+        tokio::spawn,
+    );
+    let user_loader = DataLoader::new(
+        UserLoader::new(app_state.user_service.clone()),
+        tokio::spawn,
+    );
+    let execution_loader = DataLoader::new(
+        ExecutionLoader::new(app_state.execution_service.clone()),
+        tokio::spawn,
+    );
     Schema::build(
         QueryRoot::default(),
         MutationRoot::default(),
@@ -30,10 +59,19 @@ pub async fn build_schema(app_state: AppState) -> AppSchema {
     .data(app_state.api_key_service)
     .data(app_state.provider_service)
     .data(app_state.model_service)
-    .data(app_state.task_version_service)
-    .data(app_state.task_service)
+    .data(app_state.thread_version_service)
+    .data(app_state.thread_service)
     .data(app_state.execution_service)
-    .data(loader)
+    .data(app_state.parameter_service)
+    .data(app_state.message_service)
+    .data(app_state.function_service)
+    .data(api_key_loader)
+    .data(model_loader)
+    .data(provider_loader)
+    .data(thread_loader)
+    .data(thread_version_loader)
+    .data(user_loader)
+    .data(execution_loader)
     .finish()
 }
 pub async fn graphiql() -> impl IntoResponse {

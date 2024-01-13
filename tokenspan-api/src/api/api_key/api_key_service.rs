@@ -1,57 +1,37 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use magic_crypt::{new_magic_crypt, MagicCrypt256, MagicCryptTrait};
+use chrono::Utc;
+use dojo_orm::pagination::Pagination;
+use dojo_orm::predicates::*;
+use dojo_orm::Database;
+use magic_crypt::{MagicCrypt256, MagicCryptTrait};
+use typed_builder::TypedBuilder;
+use uuid::Uuid;
 
-use tokenspan_extra::pagination::{Cursor, Pagination};
-
-use crate::api::api_key::api_key_error::ApiKeyError;
 use crate::api::api_key::api_key_model::ApiKey;
 use crate::api::api_key::dto::{ApiKeyArgs, ApiKeyCreateInput, ApiKeyUpdateInput};
-use crate::api::models::{ApiKeyId, UserId};
-use crate::api::repositories::{ApiKeyCreateEntity, ApiKeyUpdateEntity};
-use crate::configs::EncryptionConfig;
-use crate::repository::RootRepository;
 
 #[async_trait::async_trait]
 pub trait ApiKeyServiceExt {
     fn decrypt(&self, key: String) -> String;
-    async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<Cursor, ApiKey>>;
-    async fn find_by_id(&self, id: ApiKeyId) -> Result<Option<ApiKey>>;
-    async fn find_by_ids(&self, ids: Vec<ApiKeyId>) -> Result<Vec<ApiKey>>;
-    async fn count(&self) -> Result<u64>;
-    async fn create(&self, input: ApiKeyCreateInput, owner_id: UserId) -> Result<ApiKey>;
-    async fn update_by_id(&self, id: ApiKeyId, input: ApiKeyUpdateInput) -> Result<Option<ApiKey>>;
-    async fn delete_by_id(&self, id: ApiKeyId) -> Result<Option<ApiKey>>;
+    async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<ApiKey>>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<ApiKey>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<ApiKey>>;
+    async fn create(&self, input: ApiKeyCreateInput, owner_id: Uuid) -> Result<ApiKey>;
+    async fn update_by_id(&self, id: &Uuid, input: ApiKeyUpdateInput) -> Result<ApiKey>;
+    async fn delete_by_id(&self, id: &Uuid) -> Result<ApiKey>;
 }
 
 pub type ApiKeyServiceDyn = Arc<dyn ApiKeyServiceExt + Send + Sync>;
 
+#[derive(TypedBuilder)]
 pub struct ApiKeyService {
-    repository: RootRepository,
+    db: Database,
     mc: MagicCrypt256,
 }
 
 impl ApiKeyService {
-    const HINT_SIZE: usize = 3;
-
-    pub fn new(repository: RootRepository, encryption_config: EncryptionConfig) -> Self {
-        let mc = new_magic_crypt!(encryption_config.secret.clone(), 256);
-
-        Self { repository, mc }
-    }
-
-    fn create_hint(&self, key: String) -> String {
-        let mut hint = String::new();
-        let key_len = key.len();
-        let key_first = &key[0..Self::HINT_SIZE];
-        let key_last = &key[key_len - Self::HINT_SIZE..key_len];
-        hint.push_str(key_first);
-        hint.push_str("...");
-        hint.push_str(key_last);
-        hint
-    }
-
     pub fn encrypt(&self, key: String) -> String {
         self.mc.encrypt_str_to_base64(key.as_str())
     }
@@ -63,99 +43,62 @@ impl ApiKeyServiceExt for ApiKeyService {
         self.mc.decrypt_base64_to_string(key.as_str()).unwrap()
     }
 
-    async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<Cursor, ApiKey>> {
-        let paginated = self
-            .repository
-            .api_key
-            .paginate::<ApiKey>(args.into())
-            .await
-            .map_err(|e| {
-                println!("error: {:?}", e);
-                ApiKeyError::Unknown(anyhow::anyhow!(e))
-            })?;
+    async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<ApiKey>> {
+        let mut predicates: Vec<Predicate> = vec![];
+        if let Some(where_args) = args.r#where {
+            if let Some(provider_id) = where_args.provider_id {
+                if let Some(id) = provider_id.equals {
+                    predicates.push(equals("provider_id", &id));
+                }
+            }
+        }
 
-        Ok(paginated)
+        self.db
+            .bind::<ApiKey>()
+            .cursor(args.first, args.after, args.last, args.before)
+            .await
     }
 
-    async fn find_by_id(&self, id: ApiKeyId) -> Result<Option<ApiKey>> {
-        let api_key = self
-            .repository
-            .api_key
-            .find_by_id(id)
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<ApiKey>> {
+        self.db
+            .bind::<ApiKey>()
+            .where_by(equals("id", id))
+            .first()
             .await
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
-            .map(|api_key| api_key.into());
-
-        Ok(api_key)
     }
 
-    async fn find_by_ids(&self, ids: Vec<ApiKeyId>) -> Result<Vec<ApiKey>> {
-        let api_keys = self
-            .repository
-            .api_key
-            .find_many_by_ids(ids)
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<ApiKey>> {
+        self.db
+            .bind::<ApiKey>()
+            .where_by(in_list("id", &ids))
+            .all()
             .await
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
-            .into_iter()
-            .map(|api_key| api_key.into())
-            .collect();
-
-        Ok(api_keys)
     }
 
-    async fn count(&self) -> Result<u64> {
-        let count = self
-            .repository
-            .api_key
-            .count()
-            .await
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?;
+    async fn create(&self, input: ApiKeyCreateInput, owner_id: Uuid) -> Result<ApiKey> {
+        let input = ApiKey {
+            id: Uuid::new_v4(),
+            owner_id,
+            name: input.name,
+            key: self.encrypt(input.key),
+            provider_id: input.provider_id,
+            created_at: Utc::now().naive_utc(),
+            updated_at: Utc::now().naive_utc(),
+        };
 
-        Ok(count)
+        self.db.insert(&input).await
     }
 
-    async fn create(&self, input: ApiKeyCreateInput, owner_id: UserId) -> Result<ApiKey> {
-        let encrypted_key = self.encrypt(input.key.clone());
-        let hint = self.create_hint(input.key);
-
-        let created_api_key = self
-            .repository
-            .api_key
-            .create(ApiKeyCreateEntity {
-                owner_id,
-                provider_id: input.provider_id,
-                name: input.name,
-                key: encrypted_key,
-                hint,
-            })
+    async fn update_by_id(&self, id: &Uuid, input: ApiKeyUpdateInput) -> Result<ApiKey> {
+        self.db
+            .update(&input)
+            .where_by(equals("id", id))
+            .exec()
             .await
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?;
-
-        Ok(created_api_key.into())
     }
 
-    async fn update_by_id(&self, id: ApiKeyId, input: ApiKeyUpdateInput) -> Result<Option<ApiKey>> {
-        let updated_api_key = self
-            .repository
-            .api_key
-            .update_by_id(id, ApiKeyUpdateEntity { name: input.name })
-            .await
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
-            .map(|api_key| api_key.into());
-
-        Ok(updated_api_key)
-    }
-
-    async fn delete_by_id(&self, id: ApiKeyId) -> Result<Option<ApiKey>> {
-        let deleted_api_key = self
-            .repository
-            .api_key
-            .delete_by_id(id)
-            .await
-            .map_err(|e| ApiKeyError::Unknown(anyhow::anyhow!(e)))?
-            .map(|api_key| api_key.into());
-
-        Ok(deleted_api_key)
+    async fn delete_by_id(&self, id: &Uuid) -> Result<ApiKey> {
+        self.db.delete().where_by(equals("id", id)).exec().await
     }
 }
 

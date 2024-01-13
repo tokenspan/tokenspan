@@ -1,18 +1,19 @@
 use async_graphql::InputObject;
-use chrono::{DateTime, Utc};
-use serde::Deserialize;
+use chrono::NaiveDateTime;
+use dojo_macros::{EmbeddedModel, UpdateModel};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-use crate::api::models::ProviderId;
-use crate::api::repositories::PricingEntity;
+use crate::api::models::Pricing;
 
-#[derive(InputObject, Deserialize, Debug, Clone)]
+#[derive(InputObject, Clone, Serialize, Deserialize, Debug, EmbeddedModel)]
 pub struct PricingInput {
     pub price: f64,
     pub tokens: u32,
     pub currency: String,
 }
 
-impl From<PricingInput> for PricingEntity {
+impl From<PricingInput> for Pricing {
     fn from(value: PricingInput) -> Self {
         Self {
             price: value.price,
@@ -27,20 +28,20 @@ pub struct ModelCreateInput {
     pub name: String,
     pub description: String,
     pub slug: String,
-    pub context: u32,
+    pub context: i32,
     pub input_pricing: PricingInput,
     pub output_pricing: PricingInput,
-    pub training_at: DateTime<Utc>,
-    pub provider_id: ProviderId,
+    pub training_at: NaiveDateTime,
+    pub provider_id: Uuid,
 }
 
-#[derive(InputObject)]
+#[derive(InputObject, UpdateModel)]
 pub struct ModelUpdateInput {
     pub name: Option<String>,
     pub description: Option<String>,
     pub slug: Option<String>,
-    pub context: Option<u32>,
+    pub context: Option<i32>,
     pub input_pricing: Option<PricingInput>,
     pub output_pricing: Option<PricingInput>,
-    pub training_at: Option<DateTime<Utc>>,
+    pub training_at: Option<NaiveDateTime>,
 }

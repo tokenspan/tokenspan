@@ -25,9 +25,8 @@ pub struct ProviderSeed {
     pub state: AppState,
 }
 
-#[async_trait]
-impl Seed for ProviderSeed {
-    async fn new(config: AppConfig, state: AppState) -> anyhow::Result<Self> {
+impl ProviderSeed {
+    pub async fn new(config: AppConfig, state: AppState) -> anyhow::Result<Self> {
         let data = Self::load().await?;
         Ok(Self {
             data,
@@ -36,11 +35,26 @@ impl Seed for ProviderSeed {
         })
     }
 
+    pub async fn new_with_data(
+        config: AppConfig,
+        state: AppState,
+        data: Vec<Provider>,
+    ) -> anyhow::Result<Self> {
+        Ok(Self {
+            data,
+            config,
+            state,
+        })
+    }
+}
+
+#[async_trait]
+impl Seed for ProviderSeed {
     async fn save(&self) -> anyhow::Result<()> {
         let provider_service = self.state.provider_service.clone();
         let mut stream = tokio_stream::iter(self.data.clone());
         while let Some(provider) = stream.next().await {
-            let result = provider_service.find_by_slug(provider.slug.clone()).await?;
+            let result = provider_service.find_by_slug(&provider.slug).await?;
             if let Some(provider) = result {
                 println!("Provider: {} already existed", provider.name);
                 continue;

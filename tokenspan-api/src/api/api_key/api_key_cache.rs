@@ -1,27 +1,27 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::api::cache::CacheExt;
 use anyhow::Result;
 use async_trait::async_trait;
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
+use crate::api::cache::CacheExt;
 use crate::api::dto::ApiKeyArgs;
-use crate::api::models::ApiKeyId;
 use crate::api::services::ApiKeyServiceDyn;
 
 #[derive(Clone)]
 pub struct ApiKeyCache {
-    cache: Arc<Mutex<HashMap<ApiKeyId, String>>>,
+    cache: Arc<Mutex<HashMap<Uuid, String>>>,
 }
 
-pub type ApiKeyCacheDyn = Arc<dyn CacheExt<ApiKeyId, String> + Send + Sync>;
+pub type ApiKeyCacheDyn = Arc<dyn CacheExt<Uuid, String> + Send + Sync>;
 
 impl ApiKeyCache {
     pub async fn new(api_key_service: ApiKeyServiceDyn) -> Result<Self> {
         let keys = api_key_service
             .paginate(ApiKeyArgs {
-                take: Some(100),
+                last: Some(100),
                 ..Default::default()
             })
             .await?;
@@ -38,13 +38,13 @@ impl ApiKeyCache {
 }
 
 #[async_trait]
-impl CacheExt<ApiKeyId, String> for ApiKeyCache {
-    async fn set(&self, key: ApiKeyId, value: String) {
+impl CacheExt<Uuid, String> for ApiKeyCache {
+    async fn set(&self, key: Uuid, value: String) {
         let mut cache = self.cache.lock().await;
         cache.insert(key, value);
     }
 
-    async fn get(&self, key: ApiKeyId) -> Option<String> {
+    async fn get(&self, key: Uuid) -> Option<String> {
         let cache = self.cache.lock().await;
         cache.get(&key).cloned()
     }

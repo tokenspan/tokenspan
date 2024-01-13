@@ -1,8 +1,8 @@
 use async_graphql::SimpleObject;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-use crate::api::models::{User, UserId};
-use crate::api::types::Role;
+use crate::api::models::{User, UserRole};
 
 #[derive(SimpleObject)]
 pub struct AuthPayload {
@@ -27,12 +27,12 @@ pub struct Claims {
     pub role: String,
     pub iss: String,
     pub aud: String,
-    pub sub: String,
+    pub sub: Uuid,
     pub exp: i64,
 }
 
 #[derive(Clone, Debug)]
 pub struct ParsedToken {
-    pub role: Role,
-    pub user_id: UserId,
+    pub role: UserRole,
+    pub user_id: Uuid,
 }

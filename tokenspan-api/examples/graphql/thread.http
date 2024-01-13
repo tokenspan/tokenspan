@@ -1,0 +1,235 @@
+### Create thread
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation CreateThread($input: ThreadCreateInput!) {
+  createThread(input: $input) {
+    id
+    name
+    slug
+    ownerId
+    createdAt
+    updatedAt
+    version {
+      id
+      semver
+      version
+      releaseNote
+      description
+      document
+      status
+      threadId
+      ownerId
+      createdAt
+      updatedAt
+      parameters {
+        id
+        name
+        temperature
+        maxTokens
+        stopSequences
+        topP
+        frequencyPenalty
+        presencePenalty
+        extra
+        modelId
+        threadVersionId
+        createdAt
+        updatedAt
+      }
+      messages {
+        id
+        threadVersionId
+        ownerId
+        raw
+        content
+        role
+        createdAt
+        updatedAt
+      }
+    }
+    owner {
+      id
+      createdAt
+      email
+      role
+      updatedAt
+      username
+    }
+  }
+}
+
+{
+  "input": {
+    "name": "test",
+    "slug": "test"
+  }
+}
+
+### Update thread
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation UpdateThread($updateThreadId: UUID!, $input: ThreadUpdateInput!) {
+  updateThread(id: $updateThreadId, input: $input) {
+    id
+    name
+  }
+}
+
+{
+  "updateThreadId": "069b92ab-1206-4acc-80a0-558f2ebe0d99",
+  "input": {
+    "name": "test1"
+  }
+}
+
+### Get threads
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query Threads {
+  threads {
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    nodes {
+      id
+      name
+      slug
+      ownerId
+      createdAt
+      updatedAt
+      version {
+        id
+        semver
+        version
+        releaseNote
+        description
+        document
+        status
+        threadId
+        ownerId
+        createdAt
+        updatedAt
+        parameters {
+          id
+          name
+          temperature
+          maxTokens
+          stopSequences
+          topP
+          frequencyPenalty
+          presencePenalty
+          extra
+          modelId
+          threadVersionId
+          createdAt
+          updatedAt
+        }
+        messages {
+          id
+          threadVersionId
+          ownerId
+          raw
+          content
+          role
+          createdAt
+          updatedAt
+        }
+      }
+      owner {
+        id
+        createdAt
+        email
+        role
+        updatedAt
+        username
+      }
+    }
+    totalNodes
+  }
+}
+
+### Get thread by id
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+query Thread($threadId: UUID!) {
+  thread(id: $threadId) {
+    id
+    name
+    slug
+    ownerId
+    createdAt
+    updatedAt
+    version {
+      id
+      semver
+      version
+      releaseNote
+      description
+      document
+      status
+      threadId
+      ownerId
+      createdAt
+      updatedAt
+      parameters {
+        id
+        name
+        temperature
+        maxTokens
+        stopSequences
+        topP
+        frequencyPenalty
+        presencePenalty
+        extra
+        modelId
+        threadVersionId
+        createdAt
+        updatedAt
+      }
+      messages {
+        id
+        threadVersionId
+        ownerId
+        raw
+        content
+        role
+        createdAt
+        updatedAt
+      }
+    }
+    owner {
+      id
+      createdAt
+      email
+      role
+      updatedAt
+      username
+    }
+  }
+}
+
+{
+  "threadId": "d78d0bad-2daa-4b69-b718-73a1588f9116"
+}
+
+### Delete thread
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation DeleteThread($deleteThreadId: UUID!) {
+  deleteThread(id: $deleteThreadId) {
+    id
+    name
+  }
+}
+
+{
+  "deleteThreadId": "069b92ab-1206-4acc-80a0-558f2ebe0d99"
+}

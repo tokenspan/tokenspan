@@ -1,0 +1,17 @@
+query GetModelsQuery($args: ModelArgs!) {
+  models(args: $args) {
+    nodes {
+      id
+      name
+      providerId
+      createdAt
+    }
+    totalNodes
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+  }
+}

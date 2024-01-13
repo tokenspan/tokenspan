@@ -1,0 +1,6 @@
+mutation DeleteApiKeyMutation($deleteApiKeyId: UUID!) {
+  deleteApiKey(id: $deleteApiKeyId) {
+    id
+    name
+  }
+}

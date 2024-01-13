@@ -12,4 +12,4 @@ outputPricing:
   price: 0.002
   tokens: 1000
   currency: USD
-trainingAt: 2021-09-01T00:00:00Z
+trainingAt: '2023-04-05T14:30:30'

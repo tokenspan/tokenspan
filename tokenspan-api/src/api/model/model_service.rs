@@ -2,27 +2,27 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use axum::extract::FromRef;
-
-use tokenspan_extra::pagination::{Cursor, Pagination};
+use chrono::Utc;
+use dojo_orm::pagination::Pagination;
+use dojo_orm::prelude::*;
+use dojo_orm::Database;
+use typed_builder::TypedBuilder;
+use uuid::Uuid;
 
 use crate::api::model::dto::{ModelArgs, ModelCreateInput, ModelUpdateInput};
-use crate::api::model::model_error::ModelError;
 use crate::api::model::model_model::Model;
-use crate::api::models::ModelId;
-use crate::api::repositories::{ModelCreateEntity, ModelUpdateEntity};
-use crate::repository::RootRepository;
 use crate::state::AppState;
 
 #[async_trait::async_trait]
 pub trait ModelServiceExt {
-    async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>>;
-    async fn find_by_id(&self, id: ModelId) -> Result<Option<Model>>;
-    async fn find_by_ids(&self, ids: Vec<ModelId>) -> Result<Vec<Model>>;
-    async fn find_by_slug(&self, slug: String) -> Result<Option<Model>>;
-    async fn count(&self) -> Result<u64>;
+    async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Model>>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Model>>;
+    async fn find_first(&self) -> Result<Option<Model>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Model>>;
+    async fn find_by_slug(&self, slug: &String) -> Result<Option<Model>>;
     async fn create(&self, input: ModelCreateInput) -> Result<Model>;
-    async fn update_by_id(&self, id: ModelId, input: ModelUpdateInput) -> Result<Option<Model>>;
-    async fn delete_by_id(&self, id: ModelId) -> Result<Option<Model>>;
+    async fn update_by_id(&self, id: &Uuid, input: ModelUpdateInput) -> Result<Model>;
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Model>;
 }
 
 pub type ModelServiceDyn = Arc<dyn ModelServiceExt + Send + Sync>;
@@ -33,131 +33,86 @@ impl FromRef<AppState> for ModelServiceDyn {
     }
 }
 
+#[derive(TypedBuilder)]
 pub struct ModelService {
-    repository: RootRepository,
-}
-
-impl ModelService {
-    pub fn new(repository: RootRepository) -> Self {
-        Self { repository }
-    }
+    db: Database,
 }
 
 #[async_trait::async_trait]
 impl ModelServiceExt for ModelService {
-    async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Cursor, Model>> {
-        let paginated = self
-            .repository
-            .model
-            .paginate::<Model>(args.into())
-            .await
-            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?;
+    async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Model>> {
+        let mut predicates: Vec<Predicate> = vec![];
+        if let Some(where_args) = &args.r#where {
+            if let Some(provider_id) = &where_args.provider_id {
+                if let Some(id) = &provider_id.equals {
+                    predicates.push(equals("provider_id", id));
+                }
+            }
+        }
 
-        Ok(paginated)
+        self.db
+            .bind::<Model>()
+            .where_by(and(&predicates))
+            .cursor(args.first, args.after, args.last, args.before)
+            .await
     }
 
-    async fn find_by_id(&self, id: ModelId) -> Result<Option<Model>> {
-        let model = self
-            .repository
-            .model
-            .find_by_id(id)
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Model>> {
+        self.db
+            .bind::<Model>()
+            .where_by(equals("id", id))
+            .first()
             .await
-            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
-            .map(|model| model.into());
-
-        Ok(model)
     }
 
-    async fn find_by_ids(&self, ids: Vec<ModelId>) -> Result<Vec<Model>> {
-        let models = self
-            .repository
-            .model
-            .find_many_by_ids(ids)
-            .await
-            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
-            .into_iter()
-            .map(|model| model.into())
-            .collect();
-
-        Ok(models)
+    async fn find_first(&self) -> Result<Option<Model>> {
+        self.db.bind::<Model>().first().await
     }
 
-    async fn find_by_slug(&self, slug: String) -> Result<Option<Model>> {
-        let model = self
-            .repository
-            .model
-            .find_by_slug(slug)
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Model>> {
+        self.db
+            .bind::<Model>()
+            .where_by(in_list("id", &ids))
+            .all()
             .await
-            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
-            .map(|model| model.into());
-
-        Ok(model)
     }
 
-    async fn count(&self) -> Result<u64> {
-        let count = self
-            .repository
-            .model
-            .count()
+    async fn find_by_slug(&self, slug: &String) -> Result<Option<Model>> {
+        self.db
+            .bind::<Model>()
+            .where_by(equals("slug", slug))
+            .first()
             .await
-            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?;
-
-        Ok(count)
     }
 
     async fn create(&self, input: ModelCreateInput) -> Result<Model> {
-        let created_model = self
-            .repository
-            .model
-            .create(ModelCreateEntity {
-                provider_id: input.provider_id,
-                name: input.name,
-                description: input.description,
-                slug: input.slug,
-                context: input.context,
-                input_pricing: input.input_pricing.into(),
-                output_pricing: input.output_pricing.into(),
-                training_at: input.training_at,
-            })
-            .await
-            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?;
+        let input = Model {
+            id: Uuid::new_v4(),
+            name: input.name,
+            description: input.description,
+            slug: input.slug,
+            context: input.context,
+            input_pricing: input.input_pricing.into(),
+            output_pricing: input.output_pricing.into(),
+            training_at: input.training_at,
+            provider_id: input.provider_id,
+            created_at: Utc::now().naive_utc(),
+            updated_at: Utc::now().naive_utc(),
+        };
 
-        Ok(created_model.into())
+        self.db.insert(&input).await
     }
 
-    async fn update_by_id(&self, id: ModelId, input: ModelUpdateInput) -> Result<Option<Model>> {
-        let updated_model = self
-            .repository
-            .model
-            .update_by_id(
-                id,
-                ModelUpdateEntity {
-                    name: input.name,
-                    description: input.description,
-                    slug: input.slug,
-                    context: input.context,
-                    input_pricing: input.input_pricing.map(|pricing| pricing.into()),
-                    output_pricing: input.output_pricing.map(|pricing| pricing.into()),
-                    training_at: input.training_at,
-                },
-            )
+    async fn update_by_id(&self, id: &Uuid, input: ModelUpdateInput) -> Result<Model> {
+        self.db
+            .update(&input)
+            .where_by(equals("id", id))
+            .exec()
             .await
-            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
-            .map(|model| model.into());
-
-        Ok(updated_model)
     }
 
-    async fn delete_by_id(&self, id: ModelId) -> Result<Option<Model>> {
-        let deleted_model = self
-            .repository
-            .model
-            .delete_by_id(id)
-            .await
-            .map_err(|e| ModelError::Unknown(anyhow::anyhow!(e)))?
-            .map(|model| model.into());
-
-        Ok(deleted_model)
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Model> {
+        self.db.delete().where_by(equals("id", id)).exec().await
     }
 }
 

@@ -1,20 +1,22 @@
-use crate::repository::PaginateArgs;
 use async_graphql::InputObject;
-use tokenspan_extra::pagination::Cursor;
+use dojo_orm::pagination::Cursor;
+use uuid::Uuid;
+
+#[derive(InputObject, Default)]
+pub struct ModelWhereProviderIdArgs {
+    pub equals: Option<Uuid>,
+}
+
+#[derive(InputObject, Default)]
+pub struct ModelWhereArgs {
+    pub provider_id: Option<ModelWhereProviderIdArgs>,
+}
 
 #[derive(InputObject, Default)]
 pub struct ModelArgs {
-    pub take: Option<i64>,
+    pub first: Option<i64>,
+    pub last: Option<i64>,
     pub before: Option<Cursor>,
     pub after: Option<Cursor>,
-}
-
-impl From<ModelArgs> for PaginateArgs {
-    fn from(args: ModelArgs) -> Self {
-        Self {
-            take: args.take,
-            before: args.before,
-            after: args.after,
-        }
-    }
+    pub r#where: Option<ModelWhereArgs>,
 }

@@ -1,18 +1,21 @@
-use async_graphql::SimpleObject;
-use bson::oid::ObjectId;
-use chrono::{DateTime, Utc};
+use async_graphql::{Enum, SimpleObject};
+use chrono::NaiveDateTime;
+use dojo_macros::{EmbeddedModel, Model, Type};
 use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumString};
+use uuid::Uuid;
 
-use tokenspan_extra::pagination::{Cursor, CursorExt};
-use tokenspan_extra::serialize_oid;
-use tokenspan_macros::ID;
+use crate::api::models::Message;
 
-use crate::api::execution::execution_type::Usage;
-use crate::api::models::{TaskVersionId, UserId};
-use crate::api::repositories::ExecutionEntity;
-use crate::api::types::{Endpoint, ExecutionStatus};
+#[derive(SimpleObject, Debug, Clone, Serialize, Deserialize, EmbeddedModel)]
+#[serde(rename_all = "camelCase")]
+pub struct Usage {
+    pub input_tokens: i32,
+    pub output_tokens: i32,
+    pub total_tokens: i32,
+}
 
-#[derive(SimpleObject, Debug, Clone, Serialize)]
+#[derive(SimpleObject, Default, Debug, Clone, Serialize, Deserialize, EmbeddedModel)]
 #[serde(rename_all = "camelCase")]
 pub struct Elapsed {
     pub pre_elapsed: f64,
@@ -20,52 +23,32 @@ pub struct Elapsed {
     pub post_elapsed: f64,
 }
 
-#[derive(ID, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub struct ExecutionId(pub ObjectId);
-
-#[derive(SimpleObject, Debug, Clone, Serialize)]
+#[derive(SimpleObject, Clone, Serialize, Debug, Model)]
 #[serde(rename_all = "camelCase")]
+#[dojo(name = "executions", sort_keys = ["created_at", "id"])]
 pub struct Execution {
-    #[serde(serialize_with = "serialize_oid")]
-    pub id: ExecutionId,
-    #[serde(serialize_with = "serialize_oid")]
-    pub task_version_id: TaskVersionId,
-    #[serde(serialize_with = "serialize_oid")]
-    pub executed_by_id: UserId,
-    pub endpoint: Endpoint,
+    pub id: Uuid,
+    pub thread_version_id: Uuid,
+    pub executed_by_id: Uuid,
+    pub parameter_id: Uuid,
+    #[dojo(embedded)]
     pub elapsed: Elapsed,
-    pub status: ExecutionStatus,
-    pub messages: Vec<serde_json::Value>,
-    pub parameter: serde_json::Value,
+    #[dojo(embedded)]
+    pub messages: Vec<Message>,
     pub output: Option<serde_json::Value>,
     pub error: Option<serde_json::Value>,
+    #[dojo(embedded)]
     pub usage: Option<Usage>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub status: ExecutionStatus,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
-impl CursorExt<Cursor> for Execution {
-    fn cursor(&self) -> Cursor {
-        self.id.clone().into()
-    }
-}
-
-impl From<ExecutionEntity> for Execution {
-    fn from(value: ExecutionEntity) -> Self {
-        Self {
-            id: value.id,
-            task_version_id: value.task_version_id,
-            executed_by_id: value.executed_by_id,
-            endpoint: value.endpoint,
-            elapsed: value.elapsed.into(),
-            status: value.status,
-            messages: value.messages,
-            parameter: value.parameter,
-            output: value.output,
-            error: value.error,
-            usage: value.usage,
-            created_at: value.created_at,
-            updated_at: value.updated_at,
-        }
-    }
+#[derive(Type, Enum, Copy, Clone, Debug, Eq, PartialEq, EnumString, Display, Serialize)]
+#[dojo(name = "execution_status", rename_all = "lowercase")]
+pub enum ExecutionStatus {
+    #[strum(serialize = "success")]
+    Success,
+    #[strum(serialize = "failed")]
+    Failed,
 }

@@ -1,0 +1,46 @@
+query GetThreadQuery($threadId: UUID!) {
+  thread(id: $threadId) {
+    id
+    name
+    slug
+    ownerId
+    createdAt
+    updatedAt
+    version {
+      id
+      semver
+      version
+      releaseNote
+      description
+      document
+      status
+      threadId
+      ownerId
+      createdAt
+      updatedAt
+      parameters {
+        id
+        name
+        temperature
+      }
+      messages {
+        id
+        threadVersionId
+        ownerId
+        raw
+        content
+        role
+        createdAt
+        updatedAt
+      }
+    }
+    owner {
+      id
+      createdAt
+      email
+      role
+      updatedAt
+      username
+    }
+  }
+}

@@ -1,0 +1,17 @@
+query GetApiKeysQuery($args: ApiKeyArgs!) {
+  apiKeys(args: $args) {
+    nodes {
+      id
+      name
+      providerId
+      createdAt
+    }
+    totalNodes
+    pageInfo {
+      startCursor
+      endCursor
+      hasNextPage
+      hasPreviousPage
+    }
+  }
+}

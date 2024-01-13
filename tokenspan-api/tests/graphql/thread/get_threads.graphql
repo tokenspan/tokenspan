@@ -1,0 +1,16 @@
+query GetThreadsQuery($args: ThreadArgs!) {
+  threads(args: $args) {
+    nodes {
+      id
+      name
+      createdAt
+    }
+    totalNodes
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+  }
+}

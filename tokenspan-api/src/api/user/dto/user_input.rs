@@ -1,8 +1,15 @@
 use async_graphql::InputObject;
+use dojo_macros::UpdateModel;
 
 #[derive(InputObject)]
-pub struct CreateUserInput {
+pub struct UserCreateInput {
     pub email: String,
     pub username: String,
     pub password: String,
+}
+
+#[derive(InputObject, Debug, UpdateModel)]
+pub struct UserUpdateInput {
+    pub email: Option<String>,
+    pub username: Option<String>,
 }

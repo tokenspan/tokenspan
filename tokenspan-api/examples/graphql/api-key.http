@@ -6,7 +6,6 @@ mutation CreateApiKey($input: ApiKeyCreateInput!) {
   createApiKey(input: $input) {
     id
     name
-    hint
     ownerId
     providerId
     createdAt
@@ -25,9 +24,9 @@ mutation CreateApiKey($input: ApiKeyCreateInput!) {
 
 {
   "input": {
-    "name": "test",
-    "key": "",
-    "providerId": "657d1cd748f0aa3bba3aaf3d"
+    "name": "test1",
+    "key": "{{open_ai_key}}",
+    "providerId": "56df57c5-6bec-43d6-8aeb-4f508246fdb0"
   }
 }
 
@@ -40,7 +39,6 @@ query ApiKeys {
     nodes {
       id
       name
-      hint
       ownerId
       providerId
       createdAt
@@ -77,7 +75,6 @@ query GetApiKey($id: ID!) {
   apiKey(id: $id) {
     id
     name
-    hint
     ownerId
     providerId
     createdAt
@@ -95,5 +92,38 @@ query GetApiKey($id: ID!) {
 }
 
 {
-  "id": "657d208932fc0103875d623c"
+  "id": "6a369d0c-2c1e-4e88-8936-b786c7176f80"
+}
+
+### Update api key
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation UpdateApiKey($updateApiKeyId: UUID!, $input: ApiKeyUpdateInput!) {
+  updateApiKey(id: $updateApiKeyId, input: $input) {
+    id
+    name
+  }
+}
+
+{
+  "updateApiKeyId": "6a369d0c-2c1e-4e88-8936-b786c7176f80",
+  "input": {
+    "name": "test2"
+  }
+}
+
+### Delete api key
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation DeleteApiKey($deleteApiKeyId: UUID!) {
+  deleteApiKey(id: $deleteApiKeyId) {
+    id
+    name
+  }
+}
+
+{
+  "deleteApiKeyId": "6a369d0c-2c1e-4e88-8936-b786c7176f80"
 }

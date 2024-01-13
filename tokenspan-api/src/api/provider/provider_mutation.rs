@@ -1,10 +1,10 @@
 use async_graphql::{Context, Object, Result};
+use uuid::Uuid;
 
-use crate::api::models::ProviderId;
+use crate::api::models::UserRole;
 use crate::api::provider::dto::{ProviderCreateInput, ProviderUpdateInput};
 use crate::api::provider::provider_model::Provider;
 use crate::api::services::ProviderServiceDyn;
-use crate::api::types::Role;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
 
@@ -13,7 +13,7 @@ pub struct ProviderMutation;
 
 #[Object]
 impl ProviderMutation {
-    #[graphql(guard = "RoleGuard::new(Role::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn create_provider<'a>(
         &self,
         ctx: &Context<'a>,
@@ -28,33 +28,29 @@ impl ProviderMutation {
         Ok(provider)
     }
 
-    #[graphql(guard = "RoleGuard::new(Role::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn update_provider<'a>(
         &self,
         ctx: &Context<'a>,
-        id: ProviderId,
+        id: Uuid,
         input: ProviderUpdateInput,
-    ) -> Result<Option<Provider>> {
+    ) -> Result<Provider> {
         let provider_service = ctx
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let provider = provider_service.update_by_id(id, input).await?;
+        let provider = provider_service.update_by_id(&id, input).await?;
 
         Ok(provider)
     }
 
-    #[graphql(guard = "RoleGuard::new(Role::Admin)")]
-    pub async fn delete_provider<'a>(
-        &self,
-        ctx: &Context<'a>,
-        id: ProviderId,
-    ) -> Result<Option<Provider>> {
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
+    pub async fn delete_provider<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Provider> {
         let provider_service = ctx
             .data::<ProviderServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let provider = provider_service.delete_by_id(id).await?;
+        let provider = provider_service.delete_by_id(&id).await?;
 
         Ok(provider)
     }

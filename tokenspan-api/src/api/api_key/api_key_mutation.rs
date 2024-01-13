@@ -1,10 +1,10 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
+use uuid::Uuid;
 
 use crate::api::api_key::api_key_model::ApiKey;
 use crate::api::api_key::dto::{ApiKeyCreateInput, ApiKeyUpdateInput};
-use crate::api::models::{ApiKeyId, ParsedToken};
+use crate::api::models::{ParsedToken, UserRole};
 use crate::api::services::ApiKeyServiceDyn;
-use crate::api::types::Role;
 use crate::error::AppError;
 use crate::guard::RoleGuard;
 
@@ -13,7 +13,7 @@ pub struct ApiKeyMutation;
 
 #[Object]
 impl ApiKeyMutation {
-    #[graphql(guard = "RoleGuard::new(Role::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn create_api_key<'a>(
         &self,
         ctx: &Context<'a>,
@@ -36,33 +36,29 @@ impl ApiKeyMutation {
         Ok(api_key)
     }
 
-    #[graphql(guard = "RoleGuard::new(Role::Admin)")]
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
     pub async fn update_api_key<'a>(
         &self,
         ctx: &Context<'a>,
-        id: ApiKeyId,
+        id: Uuid,
         input: ApiKeyUpdateInput,
-    ) -> Result<Option<ApiKey>> {
+    ) -> Result<ApiKey> {
         let api_key_service = ctx
             .data::<ApiKeyServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let api_key = api_key_service.update_by_id(id, input).await?;
+        let api_key = api_key_service.update_by_id(&id, input).await?;
 
         Ok(api_key)
     }
 
-    #[graphql(guard = "RoleGuard::new(Role::Admin)")]
-    pub async fn delete_api_key<'a>(
-        &self,
-        ctx: &Context<'a>,
-        id: ApiKeyId,
-    ) -> Result<Option<ApiKey>> {
+    #[graphql(guard = "RoleGuard::new(UserRole::User)")]
+    pub async fn delete_api_key<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<ApiKey> {
         let api_key_service = ctx
             .data::<ApiKeyServiceDyn>()
             .map_err(|_| AppError::ContextExtractionError)?;
 
-        let api_key = api_key_service.delete_by_id(id).await?;
+        let api_key = api_key_service.delete_by_id(&id).await?;
 
         Ok(api_key)
     }

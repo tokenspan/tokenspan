@@ -3,10 +3,8 @@ resolver = "2"
 
 members = [
     "tokenspan-api",
-    "tokenspan-extra",
-    "tokenspan-macros",
-    "tokenspan-sdk",
-    "tokenspan-cli"
+    "tokenspan-cli",
+    "tokenspan-extra"
 ]
 
 [workspace.lints.clippy]

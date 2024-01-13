@@ -1,21 +1,24 @@
 use async_graphql::{Enum, InputObject, SimpleObject};
 use async_openai::types::ChatCompletionRequestMessage;
 use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumString};
 use validator::Validate;
 
-#[derive(Deserialize, Serialize, Enum, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Deserialize, Serialize, Enum, EnumString, Display, Debug, Copy, Clone, Eq, PartialEq)]
 pub enum PromptRole {
     #[serde(rename = "user")]
+    #[strum(serialize = "USER", serialize = "user")]
     User,
     #[serde(rename = "system")]
+    #[strum(serialize = "SYSTEM", serialize = "system")]
     System,
     #[serde(rename = "assistant")]
+    #[strum(serialize = "ASSISTANT", serialize = "assistant")]
     Assistant,
 }
 
 #[derive(Deserialize, Serialize, InputObject, Debug, Validate, Clone)]
 pub struct ChatMessageInput {
-    pub raw: String,
     pub content: String,
     pub role: PromptRole,
 }
@@ -23,7 +26,6 @@ pub struct ChatMessageInput {
 impl From<ChatMessageInput> for ChatMessage {
     fn from(value: ChatMessageInput) -> Self {
         Self {
-            raw: value.raw,
             content: value.content,
             role: value.role,
         }
@@ -32,7 +34,6 @@ impl From<ChatMessageInput> for ChatMessage {
 
 #[derive(Deserialize, Serialize, SimpleObject, Debug, Validate, Clone)]
 pub struct ChatMessage {
-    pub raw: String,
     pub content: String,
     pub role: PromptRole,
 }

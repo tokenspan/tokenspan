@@ -1,0 +1,23 @@
+mutation UpdateModelMutation($updateModelId: UUID!, $input: ModelUpdateInput!) {
+  updateModel(id: $updateModelId, input: $input) {
+    id
+    name
+    description
+    slug
+    context
+    inputPricing {
+      price
+      tokens
+      currency
+    }
+    outputPricing {
+      price
+      tokens
+      currency
+    }
+    trainingAt
+    providerId
+    createdAt
+    updatedAt
+  }
+}

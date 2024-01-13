@@ -1,125 +1,98 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use bson::doc;
-use bson::oid::ObjectId;
-
-use tokenspan_extra::pagination::{Cursor, Pagination};
+use chrono::Utc;
+use dojo_orm::pagination::Pagination;
+use dojo_orm::predicates::*;
+use dojo_orm::Database;
+use typed_builder::TypedBuilder;
+use uuid::Uuid;
 
 use crate::api::execution::dto::{ExecutionArgs, ExecutionCreateInput};
-use crate::api::execution::execution_error::ExecutionError;
 use crate::api::execution::execution_model::Execution;
-use crate::api::models::{ExecutionId, UserId};
-use crate::api::repositories::ExecutionCreateEntity;
-use crate::repository::RootRepository;
+use crate::api::services::MessageServiceDyn;
 
 #[async_trait::async_trait]
 pub trait ExecutionServiceExt {
-    async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>>;
-    async fn find_by_id(&self, id: ExecutionId) -> Result<Option<Execution>>;
-    async fn find_by_ids(&self, ids: Vec<ExecutionId>) -> Result<Vec<Execution>>;
-    async fn create(
-        &self,
-        input: ExecutionCreateInput,
-        executed_by_id: UserId,
-    ) -> Result<Execution>;
-    async fn delete_by_id(&self, id: ExecutionId) -> Result<Option<Execution>>;
+    async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Execution>>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Execution>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Execution>>;
+    async fn create(&self, input: ExecutionCreateInput, executor_id: Uuid) -> Result<Execution>;
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Execution>;
 }
 
 pub type ExecutionServiceDyn = Arc<dyn ExecutionServiceExt + Send + Sync>;
 
+#[derive(TypedBuilder)]
 pub struct ExecutionService {
-    repository: RootRepository,
-}
-
-impl ExecutionService {
-    pub fn new(repository: RootRepository) -> Self {
-        Self { repository }
-    }
+    db: Database,
+    message_service: MessageServiceDyn,
 }
 
 #[async_trait::async_trait]
 impl ExecutionServiceExt for ExecutionService {
-    async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Cursor, Execution>> {
-        let task_id = ObjectId::from(args.task_id.clone());
-        let paginated = self
-            .repository
-            .execution
-            .paginate_with_filter::<Execution>(
-                doc! {
-                    "taskId": task_id,
-                },
-                args.into(),
-            )
-            .await
-            .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?;
+    async fn paginate(&self, args: ExecutionArgs) -> Result<Pagination<Execution>> {
+        let mut predicates = vec![];
+        if let Some(r#where) = &args.r#where {
+            if let Some(thread_id_args) = &r#where.thread_id {
+                if let Some(id) = &thread_id_args.equals {
+                    predicates.push(equals("thread_id", id));
+                }
+            }
+        }
 
-        Ok(paginated)
+        self.db
+            .bind::<Execution>()
+            .where_by(and(&predicates))
+            .cursor(args.first, args.after, args.last, args.before)
+            .await
     }
 
-    async fn find_by_id(&self, id: ExecutionId) -> Result<Option<Execution>> {
-        let execution = self
-            .repository
-            .execution
-            .find_by_id(id)
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Execution>> {
+        self.db
+            .bind::<Execution>()
+            .where_by(equals("id", id))
+            .first()
             .await
-            .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?
-            .map(|execution| execution.into());
-
-        Ok(execution)
     }
 
-    async fn find_by_ids(&self, ids: Vec<ExecutionId>) -> Result<Vec<Execution>> {
-        let executions = self
-            .repository
-            .execution
-            .find_many_by_ids(ids)
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Execution>> {
+        self.db
+            .bind::<Execution>()
+            .where_by(equals("id", &ids))
+            .all()
             .await
-            .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?
-            .into_iter()
-            .map(|execution| execution.into())
-            .collect();
-
-        Ok(executions)
     }
 
-    async fn create(
-        &self,
-        input: ExecutionCreateInput,
-        executed_by_id: UserId,
-    ) -> Result<Execution> {
-        let created_execution = self
-            .repository
-            .execution
-            .create(ExecutionCreateEntity {
-                endpoint: input.endpoint,
-                elapsed: input.elapsed.into(),
-                status: input.status,
-                messages: input.messages,
-                parameter: input.parameter,
-                output: input.output,
-                error: input.error,
-                usage: input.usage,
-                task_id: input.task_id,
-                task_version_id: input.task_version_id,
-                executed_by_id,
-            })
-            .await
-            .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?;
+    async fn create(&self, input: ExecutionCreateInput, executor_id: Uuid) -> Result<Execution> {
+        let elapsed = input.elapsed.into();
+        let usage = input.usage.map(|u| u.into());
 
-        Ok(created_execution.into())
+        let messages = self
+            .message_service
+            .find_by_thread_version_id(&input.thread_version_id)
+            .await?;
+
+        let input = Execution {
+            id: Uuid::new_v4(),
+            thread_version_id: input.thread_version_id,
+            executed_by_id: executor_id,
+            parameter_id: input.parameter_id,
+            messages,
+            elapsed,
+            usage,
+            output: input.output,
+            error: input.error,
+            status: input.status,
+            created_at: Utc::now().naive_utc(),
+            updated_at: Utc::now().naive_utc(),
+        };
+
+        self.db.insert(&input).await
     }
 
-    async fn delete_by_id(&self, id: ExecutionId) -> Result<Option<Execution>> {
-        let deleted_execution = self
-            .repository
-            .execution
-            .delete_by_id(id)
-            .await
-            .map_err(|e| ExecutionError::Unknown(anyhow::anyhow!(e)))?
-            .map(|execution| execution.into());
-
-        Ok(deleted_execution)
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Execution> {
+        self.db.delete().where_by(equals("id", id)).exec().await
     }
 }
 

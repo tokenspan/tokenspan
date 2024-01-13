@@ -1,151 +1,89 @@
 use std::sync::Arc;
 
 use anyhow::Result;
+use chrono::Utc;
+use dojo_orm::pagination::Pagination;
+use dojo_orm::prelude::*;
+use dojo_orm::Database;
+use typed_builder::TypedBuilder;
+use uuid::Uuid;
 
-use crate::api::models::ProviderId;
+use crate::api::models::Provider;
 use crate::api::provider::dto::{ProviderArgs, ProviderCreateInput, ProviderUpdateInput};
-use crate::api::provider::provider_error::ProviderError;
-use crate::api::provider::provider_model::Provider;
-use crate::api::repositories::{ProviderCreateEntity, ProviderUpdateEntity};
-use crate::repository::RootRepository;
-use tokenspan_extra::pagination::{Cursor, Pagination};
 
 #[async_trait::async_trait]
 pub trait ProviderServiceExt {
-    async fn paginate(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>>;
-    async fn find_by_id(&self, id: ProviderId) -> Result<Option<Provider>>;
-    async fn find_by_slug(&self, slug: String) -> Result<Option<Provider>>;
-    async fn find_by_ids(&self, ids: Vec<ProviderId>) -> Result<Vec<Provider>>;
-    async fn count(&self) -> Result<u64>;
+    async fn paginate(&self, args: ProviderArgs) -> Result<Pagination<Provider>>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Provider>>;
+    async fn find_by_slug(&self, slug: &String) -> Result<Option<Provider>>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Provider>>;
     async fn create(&self, input: ProviderCreateInput) -> Result<Provider>;
-    async fn update_by_id(
-        &self,
-        id: ProviderId,
-        input: ProviderUpdateInput,
-    ) -> Result<Option<Provider>>;
-    async fn delete_by_id(&self, id: ProviderId) -> Result<Option<Provider>>;
+    async fn update_by_id(&self, id: &Uuid, input: ProviderUpdateInput) -> Result<Provider>;
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Provider>;
 }
 
 pub type ProviderServiceDyn = Arc<dyn ProviderServiceExt + Send + Sync>;
 
+#[derive(TypedBuilder)]
 pub struct ProviderService {
-    repository: RootRepository,
-}
-
-impl ProviderService {
-    pub fn new(repository: RootRepository) -> Self {
-        Self { repository }
-    }
+    db: Database,
 }
 
 #[async_trait::async_trait]
 impl ProviderServiceExt for ProviderService {
-    async fn paginate(&self, args: ProviderArgs) -> Result<Pagination<Cursor, Provider>> {
-        let paginated = self
-            .repository
-            .provider
-            .paginate::<Provider>(args.into())
+    async fn paginate(&self, args: ProviderArgs) -> Result<Pagination<Provider>> {
+        self.db
+            .bind::<Provider>()
+            .cursor(args.first, args.after, args.last, args.before)
             .await
-            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?;
-
-        Ok(paginated)
     }
 
-    async fn find_by_id(&self, id: ProviderId) -> Result<Option<Provider>> {
-        let provider = self
-            .repository
-            .provider
-            .find_by_id(id)
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Provider>> {
+        self.db
+            .bind::<Provider>()
+            .where_by(equals("id", id))
+            .first()
             .await
-            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?
-            .map(|provider| provider.into());
-
-        Ok(provider)
     }
 
-    async fn find_by_slug(&self, slug: String) -> Result<Option<Provider>> {
-        let provider = self
-            .repository
-            .provider
-            .find_by_slug(slug)
+    async fn find_by_slug(&self, slug: &String) -> Result<Option<Provider>> {
+        self.db
+            .bind::<Provider>()
+            .where_by(equals("slug", &slug))
+            .first()
             .await
-            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?
-            .map(|provider| provider.into());
-
-        Ok(provider)
     }
 
-    async fn find_by_ids(&self, ids: Vec<ProviderId>) -> Result<Vec<Provider>> {
-        let providers = self
-            .repository
-            .provider
-            .find_many_by_ids(ids)
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Provider>> {
+        self.db
+            .bind::<Provider>()
+            .where_by(in_list("id", &ids))
+            .all()
             .await
-            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?
-            .into_iter()
-            .map(|provider| provider.into())
-            .collect();
-
-        Ok(providers)
-    }
-
-    async fn count(&self) -> Result<u64> {
-        let count = self
-            .repository
-            .provider
-            .count()
-            .await
-            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?;
-
-        Ok(count)
     }
 
     async fn create(&self, input: ProviderCreateInput) -> Result<Provider> {
-        let created_provider = self
-            .repository
-            .provider
-            .create(ProviderCreateEntity {
-                name: input.name,
-                slug: input.slug,
-            })
-            .await
-            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?;
+        let input = Provider {
+            id: Uuid::new_v4(),
+            name: input.name,
+            slug: input.slug,
+            created_at: Utc::now().naive_utc(),
+            updated_at: Utc::now().naive_utc(),
+        };
 
-        Ok(created_provider.into())
+        self.db.insert(&input).await
     }
 
-    async fn update_by_id(
-        &self,
-        id: ProviderId,
-        input: ProviderUpdateInput,
-    ) -> Result<Option<Provider>> {
-        let updated_provider = self
-            .repository
-            .provider
-            .update_by_id(
-                id,
-                ProviderUpdateEntity {
-                    name: input.name,
-                    slug: input.slug,
-                },
-            )
+    async fn update_by_id(&self, id: &Uuid, input: ProviderUpdateInput) -> Result<Provider> {
+        self.db
+            .update(&input)
+            .where_by(equals("id", id))
+            .exec()
             .await
-            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?
-            .map(|provider| provider.into());
-
-        Ok(updated_provider)
     }
 
-    async fn delete_by_id(&self, id: ProviderId) -> Result<Option<Provider>> {
-        let deleted_provider = self
-            .repository
-            .provider
-            .delete_by_id(id)
-            .await
-            .map_err(|e| ProviderError::Unknown(anyhow::anyhow!(e)))?
-            .map(|provider| provider.into());
-
-        Ok(deleted_provider)
+    async fn delete_by_id(&self, id: &Uuid) -> Result<Provider> {
+        self.db.delete().where_by(equals("id", id)).exec().await
     }
 }
 

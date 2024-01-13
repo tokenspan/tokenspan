@@ -1,14 +1,17 @@
+use std::str::FromStr;
 use std::sync::Arc;
 
-use async_graphql::Result;
+use anyhow::Result;
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use tracing::info;
+use typed_builder::TypedBuilder;
+use uuid::Uuid;
 
 use crate::api::auth::auth_error::AuthError;
 use crate::api::auth::auth_model::{AuthPayload, Claims, ParsedToken, SessionPayload};
-use crate::api::models::{RefreshPayload, UserId};
+use crate::api::models::{RefreshPayload, UserRole};
 use crate::api::services::UserServiceDyn;
-use crate::api::types::Role;
 use crate::configs::AuthConfig;
 
 #[async_trait::async_trait]
@@ -19,6 +22,13 @@ pub trait AuthServiceExt {
         username: String,
         password: String,
     ) -> Result<AuthPayload>;
+    async fn sign_up_with_role(
+        &self,
+        email: String,
+        username: String,
+        password: String,
+        role: UserRole,
+    ) -> Result<AuthPayload>;
     async fn sign_in(&self, email: String, password: String) -> Result<AuthPayload>;
 
     async fn session(&self, parsed_token: &ParsedToken) -> Result<SessionPayload>;
@@ -28,22 +38,14 @@ pub trait AuthServiceExt {
 
 pub type AuthServiceDyn = Arc<dyn AuthServiceExt + Send + Sync>;
 
+#[derive(TypedBuilder)]
 pub struct AuthService {
     user_service: UserServiceDyn,
     auth_config: AuthConfig,
 }
 
 impl AuthService {
-    pub fn new(user_service: UserServiceDyn, auth_config: AuthConfig) -> Self {
-        Self {
-            user_service,
-            auth_config,
-        }
-    }
-}
-
-impl AuthService {
-    fn create_token(&self, user_id: UserId, role: &Role) -> Result<String, AuthError> {
+    fn create_token(&self, user_id: Uuid, role: &UserRole) -> Result<String, AuthError> {
         let exp = Utc::now()
             .checked_add_signed(chrono::Duration::seconds(self.auth_config.token_exp))
             .ok_or(AuthError::TimeAdditionOverflow)?
@@ -52,7 +54,7 @@ impl AuthService {
         let claims = Claims {
             iss: self.auth_config.iss.clone(),
             aud: self.auth_config.aud.clone(),
-            sub: user_id.to_string(),
+            sub: user_id,
             exp,
             role: role.to_string(),
         };
@@ -66,7 +68,7 @@ impl AuthService {
         .map_err(AuthError::JwtError)
     }
 
-    fn create_refresh_token(&self, user_id: UserId, role: &Role) -> Result<String, AuthError> {
+    fn create_refresh_token(&self, user_id: Uuid, role: &UserRole) -> Result<String, AuthError> {
         let exp = Utc::now()
             .checked_add_signed(chrono::Duration::seconds(
                 self.auth_config.refresh_token_exp,
@@ -77,7 +79,7 @@ impl AuthService {
         let claims = Claims {
             iss: self.auth_config.iss.clone(),
             aud: self.auth_config.aud.clone(),
-            sub: user_id.to_string(),
+            sub: user_id.into(),
             exp,
             role: role.to_string(),
         };
@@ -101,12 +103,15 @@ impl AuthService {
         validation.set_issuer(&[iss]);
         validation.set_audience(&[aud]);
 
+        info!("jwt: {:?}", jwt);
         let decoded = decode::<Claims>(jwt, &DecodingKey::from_secret(secret), &validation)
             .map_err(AuthError::JwtError)?;
+        info!("decoded: {:?}", decoded);
 
+        let role = UserRole::from_str(&decoded.claims.role).map_err(|_| AuthError::InvalidToken)?;
         Ok(ParsedToken {
-            role: Role::from(decoded.claims.role),
-            user_id: UserId::try_from(decoded.claims.sub).unwrap(),
+            role,
+            user_id: decoded.claims.sub,
         })
     }
 }
@@ -119,8 +124,21 @@ impl AuthServiceExt for AuthService {
         username: String,
         password: String,
     ) -> Result<AuthPayload> {
+        self.sign_up_with_role(email, username, password, UserRole::User)
+            .await
+    }
+
+    async fn sign_up_with_role(
+        &self,
+        email: String,
+        username: String,
+        password: String,
+        role: UserRole,
+    ) -> Result<AuthPayload> {
         let user_service = self.user_service.clone();
-        let created_user = user_service.create(email, username, password).await?;
+        let created_user = user_service
+            .create_with_role(email, username, password, role)
+            .await?;
 
         let token = self.create_token(created_user.id.clone(), &created_user.role)?;
 
@@ -137,9 +155,11 @@ impl AuthServiceExt for AuthService {
     async fn sign_in(&self, email: String, password: String) -> Result<AuthPayload> {
         let user_service = self.user_service.clone();
         let user = user_service
-            .find_by_email(email.clone())
+            .find_by_email(&email)
             .await?
             .ok_or(AuthError::InvalidCredentials)?;
+
+        info!("user: {:?}", user);
 
         user_service
             .verify_password(&password, &user.salt, &user.password)
@@ -159,7 +179,7 @@ impl AuthServiceExt for AuthService {
     async fn session(&self, parsed_token: &ParsedToken) -> Result<SessionPayload> {
         let user_service = self.user_service.clone();
         let user = user_service
-            .find_by_id(parsed_token.user_id.clone())
+            .find_by_id(&parsed_token.user_id)
             .await?
             .ok_or(AuthError::InvalidToken)?;
 

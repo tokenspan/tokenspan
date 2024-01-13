@@ -1,22 +1,23 @@
-use crate::api::models::TaskId;
-use crate::repository::PaginateArgs;
 use async_graphql::InputObject;
-use tokenspan_extra::pagination::Cursor;
+use uuid::Uuid;
 
-#[derive(InputObject)]
-pub struct ExecutionArgs {
-    pub task_id: TaskId,
-    pub take: Option<i64>,
-    pub before: Option<Cursor>,
-    pub after: Option<Cursor>,
+use dojo_orm::pagination::Cursor;
+
+#[derive(InputObject, Default)]
+pub struct ExecutionWhereThreadIdArgs {
+    pub equals: Option<Uuid>,
 }
 
-impl From<ExecutionArgs> for PaginateArgs {
-    fn from(args: ExecutionArgs) -> Self {
-        Self {
-            take: args.take,
-            before: args.before,
-            after: args.after,
-        }
-    }
+#[derive(InputObject, Default)]
+pub struct ExecutionWhereArgs {
+    pub thread_id: Option<ExecutionWhereThreadIdArgs>,
+}
+
+#[derive(InputObject, Default)]
+pub struct ExecutionArgs {
+    pub first: Option<i64>,
+    pub last: Option<i64>,
+    pub before: Option<Cursor>,
+    pub after: Option<Cursor>,
+    pub r#where: Option<ExecutionWhereArgs>,
 }
