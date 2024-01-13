@@ -1,5 +1,8 @@
+use axum_test::http::{HeaderName, HeaderValue};
 use axum_test::TestServer;
+use graphql_client::{GraphQLQuery, Response};
 
+use crate::graphql::{publish_thread_version_mutation, PublishThreadVersionMutation};
 use tokenspan_api::api::models::UserRole;
 use tokenspan_api::state::AppState;
 
@@ -44,7 +47,7 @@ macro_rules! create_thread {
     ($state: ident, name = $name: literal, slug = $slug: literal, user_id = $user_id: expr) => {{
         $state
             .thread_service
-            .create(
+            .new(
                 tokenspan_api::api::dto::ThreadCreateInput {
                     name: $name.to_string(),
                     slug: $slug.to_string(),
@@ -55,20 +58,20 @@ macro_rules! create_thread {
     }};
 }
 
-macro_rules! make_request {
-    ($server: ident, $token: expr, $variables: ident) => {{
-        let req_body = GetThreadsQuery::build_query($variables);
-        let resp = $server
-            .post("graphql")
-            .add_header(
-                HeaderName::from_static("authorization"),
-                HeaderValue::from_str(format!("Bearer {}", $token).as_str())?,
-            )
-            .json(&req_body)
-            .await;
-        resp.json::<Response<get_threads_query::ResponseData>>()
-    }};
-}
+// macro_rules! make_request {
+//     ($server: ident, $token: expr, $variables: ident) => {{
+//         let req_body = GetThreadsQuery::build_query($variables);
+//         let resp = $server
+//             .post("graphql")
+//             .add_header(
+//                 HeaderName::from_static("authorization"),
+//                 HeaderValue::from_str(format!("Bearer {}", $token).as_str())?,
+//             )
+//             .json(&req_body)
+//             .await;
+//         resp.json::<Response<get_threads_query::ResponseData>>()
+//     }};
+// }
 
 #[tokio::test]
 async fn test_create_thread_version() -> anyhow::Result<()> {
@@ -98,17 +101,31 @@ async fn test_create_thread_version() -> anyhow::Result<()> {
     );
     println!("thread_fixture: {:#?}", thread_fixture);
 
-    // Create thread version
-    // let req_body = CreateThreadVersionMutation::build_query(variables);
-    // let resp = server
-    //     .post("graphql")
-    //     .add_header(
-    //         HeaderName::from_static("authorization"),
-    //         HeaderValue::from_str(format!("Bearer {}", auth_fixture.token).as_str())?,
-    //     )
-    //     .json(&req_body)
-    //     .await;
-    // let resp = resp.json::<Response<create_thread_mutation::ResponseData>>();
+    let thread_version = state
+        .thread_version_service
+        .find_latest(&thread_fixture.id)
+        .await?
+        .ok_or(anyhow::anyhow!("Thread version not found"))?;
+
+    // Publish thread version
+    let variables = publish_thread_version_mutation::Variables {
+        publish_thread_version_id: thread_version.id,
+        input: publish_thread_version_mutation::ThreadVersionPublishInput {
+            release_note: "Initial release".to_string(),
+            semver: "0.1.0".to_string(),
+        },
+    };
+    let req_body = PublishThreadVersionMutation::build_query(variables);
+    let resp = server
+        .post("graphql")
+        .add_header(
+            HeaderName::from_static("authorization"),
+            HeaderValue::from_str(format!("Bearer {}", auth_fixture.token).as_str())?,
+        )
+        .json(&req_body)
+        .await;
+    let resp = resp.json::<Response<publish_thread_version_mutation::ResponseData>>();
+    println!("resp: {:#?}", resp);
 
     Ok(())
 }

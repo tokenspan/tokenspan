@@ -90,7 +90,7 @@ impl ThreadVersionServiceExt for ThreadVersionService {
     async fn find_latest(&self, thread_id: &Uuid) -> Result<Option<ThreadVersion>> {
         self.db
             .bind::<ThreadVersion>()
-            .where_by(and(&[equals("thread_id", thread_id)]))
+            .where_by(equals("thread_id", thread_id))
             .order_by(desc("version"))
             .first()
             .await

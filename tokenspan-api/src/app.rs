@@ -47,7 +47,7 @@ pub fn register_tracing(env: AppEnv, config: &configs::LogConfig) {
         AppEnv::Development => {
             trace.with(tracing_subscriber::fmt::layer().pretty()).init();
         }
-        _ => (),
+        _ => trace.with(tracing_subscriber::fmt::layer().pretty()).init(),
     }
 }
 

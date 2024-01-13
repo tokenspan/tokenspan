@@ -98,6 +98,11 @@ impl MessageServiceExt for MessageService {
         let mut messages = self
             .find_by_thread_version_id(current_thread_version_id)
             .await?;
+
+        if messages.is_empty() {
+            return Ok(vec![]);
+        }
+
         for message in &mut messages {
             message.id = Uuid::new_v4();
             message.thread_version_id = new_thread_version_id;
@@ -105,7 +110,7 @@ impl MessageServiceExt for MessageService {
             message.updated_at = Utc::now().naive_utc();
         }
 
-        self.db.insert_many(messages.as_slice()).await
+        self.db.insert_many(&messages).await
     }
 
     async fn update_by_id(&self, id: &Uuid, input: MessageUpdateInput) -> Result<Message> {
