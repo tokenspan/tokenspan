@@ -67,6 +67,7 @@ impl ProviderServiceExt for ProviderService {
             id: Uuid::new_v4(),
             name: input.name,
             slug: input.slug,
+            base_url: input.base_url,
             created_at: Utc::now().naive_utc(),
             updated_at: Utc::now().naive_utc(),
         };

@@ -1,2 +1,3 @@
 name: OpenAI
 slug: open-ai
+base_url: https://api.openai.com/v1

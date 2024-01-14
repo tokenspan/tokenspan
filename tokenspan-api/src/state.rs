@@ -82,6 +82,7 @@ impl AppState {
             .thread_version_service(thread_version_service.clone())
             .parameter_service(parameter_service.clone())
             .message_service(message_service.clone())
+            .provider_service(provider_service.clone())
             .build()
             .into();
 

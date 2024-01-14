@@ -26,7 +26,7 @@ use crate::api::dto::{
 use crate::api::models::{Elapsed, Execution, ExecutionStatus, Model, Parameter, Thread, Usage};
 use crate::api::services::{
     ApiKeyServiceDyn, ExecutionServiceDyn, MessageServiceDyn, ModelServiceDyn, ParameterServiceDyn,
-    ThreadVersionServiceDyn,
+    ProviderServiceDyn, ThreadVersionServiceDyn,
 };
 use crate::api::thread::dto::{ThreadArgs, ThreadCreateInput, ThreadUpdateInput};
 use crate::api::thread::thread_error::ThreadError;
@@ -60,6 +60,7 @@ pub struct ThreadService {
     db: Database,
     api_key_service: ApiKeyServiceDyn,
     model_service: ModelServiceDyn,
+    provider_service: ProviderServiceDyn,
     parameter_service: ParameterServiceDyn,
     execution_service: ExecutionServiceDyn,
     thread_version_service: ThreadVersionServiceDyn,
@@ -69,6 +70,7 @@ pub struct ThreadService {
 impl ThreadService {
     pub async fn chat_completion(
         &self,
+        base_url: &String,
         chat_messages: &[ChatMessage],
         parameter: Parameter,
         api_key: String,
@@ -94,7 +96,9 @@ impl ThreadService {
             .build()
             .map_err(|e| anyhow::anyhow!(e))?;
 
-        let config = OpenAIConfig::new().with_api_key(api_key);
+        let config = OpenAIConfig::new()
+            .with_api_key(api_key)
+            .with_api_base(base_url);
         let client = Client::with_config(config);
         let response = client
             .chat()
@@ -234,7 +238,7 @@ impl ThreadServiceExt for ThreadService {
             .find_by_thread_version_id(&input.thread_version_id)
             .await?;
 
-        let re = Regex::new(r#"<var\sname="([a-zA-Z]+)"/>"#).unwrap();
+        let re = Regex::new(r#"\$\{([a-zA-Z]+)}"#).unwrap();
         let chat_messages: Vec<ChatMessage> = messages
             .clone()
             .into_iter()
@@ -266,11 +270,24 @@ impl ThreadServiceExt for ThreadService {
             .find_by_id(&parameter.model_id)
             .await?
             .ok_or(ThreadError::Unknown(anyhow::anyhow!("Model not found")))?;
+
+        let provider = self
+            .provider_service
+            .find_by_id(&model.provider_id)
+            .await?
+            .ok_or(ThreadError::Unknown(anyhow::anyhow!("Provider not found")))?;
+
         let pre_elapsed = start.elapsed();
 
         let start = Instant::now();
         let response = self
-            .chat_completion(&chat_messages, parameter.clone(), api_key.key, model)
+            .chat_completion(
+                &provider.base_url,
+                &chat_messages,
+                parameter.clone(),
+                api_key.key,
+                model,
+            )
             .await;
         let elapsed = start.elapsed();
 

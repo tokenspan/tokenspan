@@ -363,6 +363,7 @@ async fn test_get_provider_by_id() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "https://api.openai.com".to_string(),
         })
         .await?;
 
@@ -476,6 +477,7 @@ async fn test_update_provider() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "https://api.openai.com".to_string(),
         })
         .await?;
 
@@ -541,6 +543,7 @@ async fn test_delete_provider() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "https://api.openai.com".to_string(),
         })
         .await?;
 

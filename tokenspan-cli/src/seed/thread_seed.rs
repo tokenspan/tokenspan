@@ -30,6 +30,14 @@ pub struct Parameter {
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct Message {
+    pub role: String,
+    pub content: String,
+    pub raw: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ThreadVersion {
     pub owner: UserRef,
     pub semver: String,
@@ -39,7 +47,7 @@ pub struct ThreadVersion {
     pub document: Option<String>,
     pub status: ThreadVersionStatus,
     pub release_at: Option<DateTime<Utc>>,
-    pub messages: Vec<MessageCreateInput>,
+    pub messages: Vec<Message>,
     pub parameters: Vec<Parameter>,
 }
 
@@ -58,6 +66,31 @@ pub struct ThreadSeed {
 }
 
 impl ThreadSeed {
+    async fn save_messages(
+        &self,
+        messages: Vec<Message>,
+        thread_version_id: Uuid,
+        owner_id: Uuid,
+    ) -> anyhow::Result<()> {
+        let message_service = self.state.message_service.clone();
+
+        let mut stream = tokio_stream::iter(messages);
+
+        while let Some(message) = stream.next().await {
+            let input = MessageCreateInput {
+                role: message.role,
+                content: message.content,
+                raw: message.raw,
+                thread_version_id,
+            };
+
+            let message = message_service.create(input, owner_id).await?;
+            println!("Message: {} created", message.content);
+        }
+
+        Ok(())
+    }
+
     async fn save_parameters(
         &self,
         parameters: Vec<Parameter>,
@@ -118,10 +151,13 @@ impl ThreadSeed {
                 description: thread_version.description,
                 document: thread_version.document,
             };
-            let result = thread_version_service.create(input, owner.id).await?;
-            println!("ThreadVersion: {} created", result.version);
+            let created_thread_version = thread_version_service.create(input, owner.id).await?;
+            println!("ThreadVersion: {} created", created_thread_version.version);
 
-            self.save_parameters(thread_version.parameters, result.id)
+            self.save_parameters(thread_version.parameters, created_thread_version.id)
+                .await?;
+
+            self.save_messages(thread_version.messages, created_thread_version.id, owner.id)
                 .await?;
         }
 

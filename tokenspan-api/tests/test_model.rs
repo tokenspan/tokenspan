@@ -83,6 +83,7 @@ async fn test_paginate_forward_models() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "http://localhost:8080".to_string(),
         })
         .await?;
 
@@ -246,6 +247,7 @@ async fn test_paginate_backward_models() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "http://localhost:8080".to_string(),
         })
         .await?;
 
@@ -409,6 +411,7 @@ async fn test_get_model_by_id() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "http://localhost:8080".to_string(),
         })
         .await?;
 
@@ -505,6 +508,7 @@ async fn test_create_model() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "http://localhost:8080".to_string(),
         })
         .await?;
 
@@ -598,6 +602,7 @@ async fn test_update_model() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "http://localhost:8080".to_string(),
         })
         .await?;
 
@@ -713,6 +718,7 @@ async fn test_delete_model() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "http://localhost:8080".to_string(),
         })
         .await?;
 

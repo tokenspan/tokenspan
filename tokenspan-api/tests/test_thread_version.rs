@@ -99,7 +99,6 @@ async fn test_create_thread_version() -> anyhow::Result<()> {
         slug = "gpt-3",
         user_id = auth_fixture.user.id
     );
-    println!("thread_fixture: {:#?}", thread_fixture);
 
     let thread_version = state
         .thread_version_service

@@ -29,7 +29,6 @@ serde_json = { version = "1.0", features = ["raw_value"] }
 strum = "0.25"
 strum_macros = "0.25"
 thiserror = "1.0"
-tokenspan-extra = { path = "../tokenspan-extra" }
 tokio = { version = "1", features = ["full"] }
 tokio-stream = "0.1.14"
 tower-http = { version = "0.5.0", features = ["trace", "timeout", "cors"] }
@@ -65,4 +64,5 @@ graphql_client = { version = "0.13.0", features = ["graphql_query_derive"]}
 axum-test = "14.2.2"
 testcontainers-modules = { version = "0.3.0", features = ["postgres"] }
 googletest = "0.11.0"
-tokenspan-cli = { path = "../tokenspan-cli" }
+httpmock = "0.7.0"
+reqwest = { version = "0.11", features = ["json"] }

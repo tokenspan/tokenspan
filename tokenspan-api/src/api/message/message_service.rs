@@ -63,7 +63,7 @@ impl MessageServiceExt for MessageService {
         self.db
             .bind::<Message>()
             .where_by(equals("thread_version_id", thread_version_id))
-            .all()
+            .limit(20)
             .await
     }
 

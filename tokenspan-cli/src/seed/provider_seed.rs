@@ -17,6 +17,7 @@ pub struct ProviderRef {
 pub struct Provider {
     pub name: String,
     pub slug: String,
+    pub base_url: String,
 }
 
 pub struct ProviderSeed {
@@ -64,9 +65,10 @@ impl Seed for ProviderSeed {
                 .create(ProviderCreateInput {
                     name: provider.name,
                     slug: provider.slug,
+                    base_url: "https://api.openai.com/v1".to_string(),
                 })
                 .await?;
-            println!("Provider: {} created", provider.name)
+            println!("Provider: {} created", provider.name);
         }
 
         Ok(())

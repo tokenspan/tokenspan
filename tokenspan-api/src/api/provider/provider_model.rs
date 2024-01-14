@@ -9,6 +9,7 @@ pub struct Provider {
     pub id: Uuid,
     pub name: String,
     pub slug: String,
+    pub base_url: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
