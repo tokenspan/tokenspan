@@ -1,6 +1,7 @@
 use axum::extract::State;
 use axum::routing::post;
 use axum::{Extension, Json, Router};
+use tracing::info;
 
 use crate::api::models::{Execution, ParsedToken};
 use crate::api::services::ThreadServiceDyn;
@@ -17,6 +18,7 @@ async fn execute_thread(
     Extension(token): Extension<Option<ParsedToken>>,
     ValidJson(input): ValidJson<ThreadExecuteInput>,
 ) -> anyhow::Result<Json<Execution>, ThreadError> {
+    info!("{:?}", input);
     match version {
         Version::V1 => execute_thread_v1(thread_service, input, token).await,
     }

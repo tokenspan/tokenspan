@@ -18,8 +18,13 @@ pub struct Usage {
 #[derive(SimpleObject, Default, Debug, Clone, Serialize, Deserialize, EmbeddedModel)]
 #[serde(rename_all = "camelCase")]
 pub struct Elapsed {
-    pub pre_elapsed: f64,
-    pub elapsed: f64,
+    pub api_key_elapsed: f64,
+    pub thread_version_elapsed: f64,
+    pub messages_elapsed: f64,
+    pub parameter_elapsed: f64,
+    pub model_elapsed: f64,
+    pub provider_elapsed: f64,
+    pub api_call_elapsed: f64,
     pub post_elapsed: f64,
 }
 
@@ -34,8 +39,9 @@ pub struct Execution {
     #[dojo(embedded)]
     pub elapsed: Elapsed,
     #[dojo(embedded)]
-    pub messages: Vec<Message>,
-    pub output: Option<serde_json::Value>,
+    pub input_messages: Vec<Message>,
+    pub output_messages: Vec<Message>,
+    pub response: Option<serde_json::Value>,
     pub error: Option<serde_json::Value>,
     #[dojo(embedded)]
     pub usage: Option<Usage>,

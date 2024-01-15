@@ -25,12 +25,16 @@ pub struct ThreadVersionPublishInput {
     pub release_note: String,
 }
 
-#[derive(InputObject, UpdateModel, Debug, Default)]
+#[derive(InputObject, UpdateModel, Debug, Default, TypedBuilder)]
 pub struct ThreadVersionUpdateInput {
+    #[builder(default = None)]
     pub description: Option<String>,
+    #[builder(default = None)]
     pub document: Option<String>,
+    #[builder(default = None)]
     #[graphql(skip, default)]
     pub release_note: Option<String>,
+    #[builder(default = None)]
     #[graphql(skip, default)]
     pub status: Option<ThreadVersionStatus>,
 }

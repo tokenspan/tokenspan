@@ -51,6 +51,16 @@ impl ThreadVersion {
         Ok(parameters)
     }
 
+    pub async fn parameter<'a>(&self, ctx: &Context<'a>) -> Result<Option<Parameter>> {
+        let parameter_service = ctx
+            .data::<ParameterServiceDyn>()
+            .map_err(|_| AppError::ContextExtractionError)?;
+
+        let parameter = parameter_service.find_default(&self.id).await?;
+
+        Ok(parameter)
+    }
+
     pub async fn messages<'a>(&self, ctx: &Context<'a>) -> Result<Vec<Message>> {
         let message_service = ctx
             .data::<MessageServiceDyn>()

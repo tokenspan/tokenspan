@@ -15,6 +15,7 @@ use crate::api::models::Parameter;
 pub trait ParameterServiceExt {
     async fn paginate(&self, args: ParameterArgs) -> Result<Pagination<Parameter>>;
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Parameter>>;
+    async fn find_default(&self, id: &Uuid) -> Result<Option<Parameter>>;
     async fn find_by_thread_version_id(&self, thread_version_id: &Uuid) -> Result<Vec<Parameter>>;
     async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Parameter>>;
     async fn create(&self, inputs: ParameterCreateInput) -> Result<Parameter>;
@@ -51,6 +52,14 @@ impl ParameterServiceExt for ParameterService {
             .await
     }
 
+    async fn find_default(&self, id: &Uuid) -> Result<Option<Parameter>> {
+        self.db
+            .bind::<Parameter>()
+            .where_by(and(&[equals("id", id), equals("is_default", &true)]))
+            .first()
+            .await
+    }
+
     async fn find_by_thread_version_id(&self, thread_version_id: &Uuid) -> Result<Vec<Parameter>> {
         self.db
             .bind::<Parameter>()
@@ -80,6 +89,7 @@ impl ParameterServiceExt for ParameterService {
             presence_penalty: input.presence_penalty,
             extra: input.extra,
             thread_version_id: input.thread_version_id,
+            is_default: input.is_default,
             created_at: Utc::now().naive_utc(),
             updated_at: Utc::now().naive_utc(),
         };

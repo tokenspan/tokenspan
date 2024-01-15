@@ -9,7 +9,7 @@ mutation PublishThreadVersion($publishThreadVersionId: UUID!, $input: ThreadVers
 }
 
 {
-  "publishThreadVersionId": "22bc8e4b-2649-400a-9dc2-d9d8b7b788a4",
+  "publishThreadVersionId": "a1475648-0e5e-4120-80b7-80c464280a90",
   "input": {
     "releaseNote": "test",
     "semver": "0.0.1"

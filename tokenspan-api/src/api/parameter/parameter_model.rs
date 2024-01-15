@@ -22,4 +22,5 @@ pub struct Parameter {
     pub thread_version_id: Uuid,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+    pub is_default: bool,
 }

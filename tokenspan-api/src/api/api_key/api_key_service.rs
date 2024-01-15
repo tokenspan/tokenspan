@@ -14,7 +14,7 @@ use crate::api::api_key::dto::{ApiKeyArgs, ApiKeyCreateInput, ApiKeyUpdateInput}
 
 #[async_trait::async_trait]
 pub trait ApiKeyServiceExt {
-    fn decrypt(&self, key: String) -> String;
+    fn decrypt(&self, key: &String) -> Result<String>;
     async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<ApiKey>>;
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<ApiKey>>;
     async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<ApiKey>>;
@@ -39,8 +39,10 @@ impl ApiKeyService {
 
 #[async_trait::async_trait]
 impl ApiKeyServiceExt for ApiKeyService {
-    fn decrypt(&self, key: String) -> String {
-        self.mc.decrypt_base64_to_string(key.as_str()).unwrap()
+    fn decrypt(&self, key: &String) -> Result<String> {
+        self.mc
+            .decrypt_base64_to_string(key)
+            .map_err(|_| anyhow::anyhow!("Failed to decrypt key: {}", key))
     }
 
     async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<ApiKey>> {

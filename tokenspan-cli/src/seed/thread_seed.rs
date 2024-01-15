@@ -26,6 +26,7 @@ pub struct Parameter {
     pub presence_penalty: f32,
     pub extra: Option<serde_json::Value>,
     pub model: ModelRef,
+    pub is_default: bool,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -117,6 +118,7 @@ impl ThreadSeed {
                 presence_penalty: parameter.presence_penalty,
                 extra: parameter.extra,
                 model_id: model.id,
+                is_default: parameter.is_default,
                 thread_version_id,
             };
             let parameter = parameter_service.create(input).await?;

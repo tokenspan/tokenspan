@@ -13,6 +13,7 @@ CREATE TABLE parameters
     extra             jsonb,
     model_id          uuid      NOT NULL,
     thread_version_id uuid      NOT NULL,
+    is_default        BOOLEAN   NOT NULL DEFAULT FALSE,
     created_at        TIMESTAMP NOT NULL,
     updated_at        TIMESTAMP NOT NULL,
 

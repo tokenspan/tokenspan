@@ -16,6 +16,7 @@ use dojo_orm::prelude::*;
 use dojo_orm::Database;
 use regex::Regex;
 use serde_json::json;
+use tracing::info;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
@@ -72,8 +73,8 @@ impl ThreadService {
         &self,
         base_url: &String,
         chat_messages: &[ChatMessage],
+        api_key: &String,
         parameter: Parameter,
-        api_key: String,
         model: Model,
     ) -> Result<(
         CreateChatCompletionResponse,
@@ -224,7 +225,10 @@ impl ThreadServiceExt for ThreadService {
             .find_by_id(&input.api_key_id)
             .await?
             .ok_or(ApiKeyError::Unknown(anyhow::anyhow!("API key not found")))?;
+        let decrypted_key = self.api_key_service.decrypt(&api_key.key)?;
+        let api_key_elapsed = start.elapsed();
 
+        let start = Instant::now();
         let thread_version = self
             .thread_version_service
             .find_by_id(&input.thread_version_id)
@@ -232,14 +236,16 @@ impl ThreadServiceExt for ThreadService {
             .ok_or(ThreadError::Unknown(anyhow::anyhow!(
                 "Thread version not found"
             )))?;
+        let thread_version_elapsed = start.elapsed();
 
-        let messages = self
+        let start = Instant::now();
+        let input_messages = self
             .message_service
             .find_by_thread_version_id(&input.thread_version_id)
             .await?;
 
         let re = Regex::new(r#"\$\{([a-zA-Z]+)}"#).unwrap();
-        let chat_messages: Vec<ChatMessage> = messages
+        let chat_messages: Vec<ChatMessage> = input_messages
             .clone()
             .into_iter()
             .map(|message| {
@@ -258,41 +264,46 @@ impl ThreadServiceExt for ThreadService {
                 })
             })
             .collect::<Result<Vec<ChatMessage>>>()?;
+        let messages_elapsed = start.elapsed();
 
+        let start = Instant::now();
         let parameter = self
             .parameter_service
             .find_by_id(&input.parameter_id)
             .await?
             .ok_or(ThreadError::Unknown(anyhow::anyhow!("Parameter not found")))?;
+        let parameter_elapsed = start.elapsed();
 
+        let start = Instant::now();
         let model = self
             .model_service
             .find_by_id(&parameter.model_id)
             .await?
             .ok_or(ThreadError::Unknown(anyhow::anyhow!("Model not found")))?;
+        let model_elapsed = start.elapsed();
 
+        let start = Instant::now();
         let provider = self
             .provider_service
             .find_by_id(&model.provider_id)
             .await?
             .ok_or(ThreadError::Unknown(anyhow::anyhow!("Provider not found")))?;
-
-        let pre_elapsed = start.elapsed();
+        let provider_elapsed = start.elapsed();
 
         let start = Instant::now();
         let response = self
             .chat_completion(
                 &provider.base_url,
                 &chat_messages,
+                &decrypted_key,
                 parameter.clone(),
-                api_key.key,
                 model,
             )
             .await;
-        let elapsed = start.elapsed();
+        let api_call_elapsed = start.elapsed();
 
         let start = Instant::now();
-        let (status, output, usage, error) = match response {
+        let (status, response, usage, error) = match response {
             Err(e) => (
                 ExecutionStatus::Failed,
                 None,
@@ -306,17 +317,24 @@ impl ThreadServiceExt for ThreadService {
                 None,
             ),
         };
+        info!(?response);
 
         let usage = usage.map(|usage| Usage {
             input_tokens: usage.prompt_tokens as i32,
             output_tokens: usage.completion_tokens as i32,
             total_tokens: usage.total_tokens as i32,
         });
+
         let post_elapsed = start.elapsed();
 
         let elapsed = Elapsed {
-            pre_elapsed: pre_elapsed.as_secs_f64(),
-            elapsed: elapsed.as_secs_f64(),
+            api_key_elapsed: api_key_elapsed.as_secs_f64(),
+            thread_version_elapsed: thread_version_elapsed.as_secs_f64(),
+            messages_elapsed: messages_elapsed.as_secs_f64(),
+            parameter_elapsed: parameter_elapsed.as_secs_f64(),
+            model_elapsed: model_elapsed.as_secs_f64(),
+            provider_elapsed: provider_elapsed.as_secs_f64(),
+            api_call_elapsed: api_call_elapsed.as_secs_f64(),
             post_elapsed: post_elapsed.as_secs_f64(),
         };
 
@@ -328,10 +346,11 @@ impl ThreadServiceExt for ThreadService {
                     thread_version_id: input.thread_version_id,
                     parameter_id: parameter.id,
                     variables: input.variables,
-                    messages,
+                    input_messages,
+                    output_messages: vec![],
                     elapsed,
                     status,
-                    output,
+                    response,
                     error,
                     usage,
                 },

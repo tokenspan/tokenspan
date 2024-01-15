@@ -18,7 +18,7 @@ pub struct ThreadUpdateInput {
     pub slug: Option<String>,
 }
 
-#[derive(Deserialize, Validate, Clone)]
+#[derive(Deserialize, Validate, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ThreadExecuteInput {
     pub thread_version_id: Uuid,

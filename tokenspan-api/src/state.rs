@@ -58,11 +58,8 @@ impl AppState {
         let message_service: MessageServiceDyn =
             MessageService::builder().db(db.clone()).build().into();
 
-        let execution_service: ExecutionServiceDyn = ExecutionService::builder()
-            .db(db.clone())
-            .message_service(message_service.clone())
-            .build()
-            .into();
+        let execution_service: ExecutionServiceDyn =
+            ExecutionService::builder().db(db.clone()).build().into();
 
         let parameter_service: ParameterServiceDyn =
             ParameterService::builder().db(db.clone()).build().into();

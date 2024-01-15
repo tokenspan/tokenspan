@@ -40,7 +40,7 @@ typed-builder = "0.18.0"
 refinery = { version = "0.8.11", features = ["tokio-postgres"] }
 
 [dependencies.dojo-orm]
-version = "0.1.0"
+version = "0.1.1"
 #path = "../../dojo/dojo-orm"
 #git = "https://github.com/tokenspan/dojo-orm.git"
 

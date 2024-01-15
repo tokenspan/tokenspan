@@ -28,7 +28,7 @@ impl ApiKeyCache {
 
         let mut cache = HashMap::new();
         for key in keys.items {
-            cache.insert(key.id, api_key_service.decrypt(key.key));
+            cache.insert(key.id, api_key_service.decrypt(&key.key)?);
         }
 
         Ok(Self {

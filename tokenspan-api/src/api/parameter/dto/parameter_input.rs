@@ -1,4 +1,3 @@
-use crate::api::models::Parameter;
 use async_graphql::InputObject;
 use dojo_macros::UpdateModel;
 use serde::Serialize;
@@ -23,45 +22,10 @@ pub struct ParameterCreateInput {
     pub presence_penalty: f32,
     #[builder(default)]
     pub extra: Option<serde_json::Value>,
+    #[builder(default = false)]
+    pub is_default: bool,
     pub model_id: Uuid,
     pub thread_version_id: Uuid,
-}
-
-impl From<ParameterCreateInput> for Parameter {
-    fn from(value: ParameterCreateInput) -> Self {
-        Parameter {
-            id: Default::default(),
-            name: value.name,
-            temperature: value.temperature,
-            max_tokens: value.max_tokens,
-            stop_sequences: value.stop_sequences,
-            top_p: value.top_p,
-            frequency_penalty: value.frequency_penalty,
-            presence_penalty: value.presence_penalty,
-            extra: value.extra,
-            model_id: value.model_id,
-            thread_version_id: value.thread_version_id,
-            created_at: Default::default(),
-            updated_at: Default::default(),
-        }
-    }
-}
-
-impl From<Parameter> for ParameterCreateInput {
-    fn from(value: Parameter) -> Self {
-        ParameterCreateInput {
-            name: value.name,
-            temperature: value.temperature,
-            max_tokens: value.max_tokens,
-            stop_sequences: value.stop_sequences,
-            top_p: value.top_p,
-            frequency_penalty: value.frequency_penalty,
-            presence_penalty: value.presence_penalty,
-            extra: value.extra,
-            model_id: value.model_id,
-            thread_version_id: value.thread_version_id,
-        }
-    }
 }
 
 #[derive(InputObject, TypedBuilder, Serialize, Clone, UpdateModel)]

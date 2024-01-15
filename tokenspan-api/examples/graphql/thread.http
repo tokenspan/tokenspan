@@ -89,7 +89,7 @@ GRAPHQL {{host}}/graphql
 Authorization: Bearer {{token}}
 
 query Threads {
-  threads {
+  threads(args: {last: 10}) {
     pageInfo {
       hasPreviousPage
       hasNextPage
