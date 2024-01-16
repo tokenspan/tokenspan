@@ -17,17 +17,18 @@ async-trait = "0.1.74"
 uuid = { version = "1.6.1", features = ["v4"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "ansi"] }
+refinery = { version = "0.8.11", features = ["tokio-postgres"] }
 
 tokenspan-api = { path = "../tokenspan-api" }
 
 [dependencies.dojo-orm]
-#version = "0.1.1"
-path = "../../dojo/dojo-orm"
+version = "0.1.1"
+#path = "../../dojo/dojo-orm"
 #git = "https://github.com/tokenspan/dojo-orm.git"
 
 [dependencies.dojo-macros]
-#version = "0.1.0"
-path = "../../dojo/dojo-macros"
+version = "0.1.0"
+#path = "../../dojo/dojo-macros"
 #git = "https://github.com/tokenspan/dojo-orm.git"
 
 

@@ -4,13 +4,18 @@ use tokenspan_cli::seed::prelude::*;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
+mod embedded {
+    use refinery::embed_migrations;
+
+    embed_migrations!("../tokenspan-api/migrations");
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::registry()
         .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                tracing_subscriber::EnvFilter::new("dojo_orm=info,tokenspan_cli=info")
-            }),
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("tokenspan_cli=info")),
         )
         .with(tracing_subscriber::fmt::layer().pretty())
         .init();
