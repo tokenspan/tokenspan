@@ -1,4 +1,8 @@
+id: 3bde4767-4e87-4a5c-a622-c8fa7c97f471
 email: wang_yu_meng@gmail.com
 username: wang_yu_meng
 password: '123456'
 role: admin
+salt: ''
+created_at: 2024-01-15T14:58:19.757300
+updated_at: 2024-01-15T14:58:19.757300

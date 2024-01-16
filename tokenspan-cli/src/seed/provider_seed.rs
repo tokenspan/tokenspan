@@ -1,74 +1,41 @@
 use async_trait::async_trait;
-use serde::Deserialize;
-use tokio_stream::StreamExt;
+use dojo_orm::predicates::equals;
+use dojo_orm::Database;
+use tracing::{info, warn};
 
-use tokenspan_api::api::dto::ProviderCreateInput;
-use tokenspan_api::configs::AppConfig;
-use tokenspan_api::state::AppState;
+use tokenspan_api::api::models::Provider;
 
 use crate::seed::Seed;
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct ProviderRef {
-    pub slug: String,
+pub struct ProviderSeed<'a> {
+    pub db: &'a Database,
 }
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct Provider {
-    pub name: String,
-    pub slug: String,
-    pub base_url: String,
-}
-
-pub struct ProviderSeed {
-    pub data: Vec<Provider>,
-    pub config: AppConfig,
-    pub state: AppState,
-}
-
-impl ProviderSeed {
-    pub async fn new(config: AppConfig, state: AppState) -> anyhow::Result<Self> {
-        let data = Self::load().await?;
-        Ok(Self {
-            data,
-            config,
-            state,
-        })
-    }
-
-    pub async fn new_with_data(
-        config: AppConfig,
-        state: AppState,
-        data: Vec<Provider>,
-    ) -> anyhow::Result<Self> {
-        Ok(Self {
-            data,
-            config,
-            state,
-        })
+impl<'a> ProviderSeed<'a> {
+    pub fn new(db: &'a Database) -> Self {
+        Self { db }
     }
 }
 
 #[async_trait]
-impl Seed for ProviderSeed {
+impl<'a> Seed for ProviderSeed<'a> {
     async fn save(&self) -> anyhow::Result<()> {
-        let provider_service = self.state.provider_service.clone();
-        let mut stream = tokio_stream::iter(self.data.clone());
-        while let Some(provider) = stream.next().await {
-            let result = provider_service.find_by_slug(&provider.slug).await?;
-            if let Some(provider) = result {
-                println!("Provider: {} already existed", provider.name);
+        let items = Self::load::<Provider>().await?;
+
+        for item in items {
+            let provider = self
+                .db
+                .bind::<Provider>()
+                .where_by(equals("id", &item.id))
+                .first()
+                .await?;
+            if provider.is_some() {
+                warn!("Provider {} already exists", item.id);
                 continue;
             }
 
-            let provider = provider_service
-                .create(ProviderCreateInput {
-                    name: provider.name,
-                    slug: provider.slug,
-                    base_url: "https://api.openai.com/v1".to_string(),
-                })
-                .await?;
-            println!("Provider: {} created", provider.name);
+            self.db.insert(&item).await?;
+            info!("Provider {} created", item.id);
         }
 
         Ok(())

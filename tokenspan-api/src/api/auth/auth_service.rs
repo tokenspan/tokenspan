@@ -159,12 +159,7 @@ impl AuthServiceExt for AuthService {
             .await?
             .ok_or(AuthError::InvalidCredentials)?;
 
-        info!("user: {:?}", user);
-
-        user_service
-            .verify_password(&password, &user.salt, &user.password)
-            .map_err(|_| AuthError::InvalidPassword)?;
-
+        user.verify_password(&password)?;
         let token = self.create_token(user.id.clone(), &user.role)?;
 
         let refresh_token = self.create_refresh_token(user.id.clone(), &user.role)?;

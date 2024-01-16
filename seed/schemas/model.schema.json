@@ -6,8 +6,11 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "provider": {
-          "$ref": "#/definitions/Provider"
+        "id": {
+          "type": "string"
+        },
+        "provider_id": {
+          "type": "string"
         },
         "name": {
           "type": "string"
@@ -21,26 +24,35 @@
         "context": {
           "type": "integer"
         },
-        "inputPricing": {
+        "input_pricing": {
           "$ref": "#/definitions/PutPricing"
         },
-        "outputPricing": {
+        "output_pricing": {
           "$ref": "#/definitions/PutPricing"
         },
-        "trainingAt": {
+        "training_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
           "type": "string",
           "format": "date-time"
         }
       },
       "required": [
+        "id",
         "context",
         "description",
-        "inputPricing",
+        "input_pricing",
         "name",
         "slug",
-        "outputPricing",
-        "provider",
-        "trainingAt"
+        "provider_id",
+        "output_pricing",
+        "training_at"
       ],
       "title": "Model"
     },

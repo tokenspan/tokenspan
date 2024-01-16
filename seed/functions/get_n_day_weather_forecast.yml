@@ -1,0 +1,26 @@
+id: c98bedfb-f41e-4334-98ba-f0de78c6075e
+name: get_n_day_weather_forecast
+description: Get an N-day weather forecast
+parameters:
+  type: object
+  properties:
+    location:
+      type: string
+      description: The city and state, e.g. San Francisco, CA
+    format:
+      type: string
+      enum:
+        - celsius
+        - fahrenheit
+      description: The temperature unit to use. Infer this from the users location.
+    num_days:
+      type: integer
+      description: The number of days to forecast
+  required:
+    - location
+    - format
+    - num_days
+response:
+owner_id: 3bde4767-4e87-4a5c-a622-c8fa7c97f471
+created_at: 2024-01-15T14:58:19.757300
+updated_at: 2024-01-15T14:58:19.757300

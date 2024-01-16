@@ -119,6 +119,7 @@ impl ThreadVersionServiceExt for ThreadVersionService {
             description: None,
             thread_id: input.thread_id,
             owner_id,
+            published_at: None,
             created_at: Utc::now().naive_utc(),
             updated_at: Utc::now().naive_utc(),
         };
@@ -158,6 +159,7 @@ impl ThreadVersionServiceExt for ThreadVersionService {
             semver: input.semver,
             version: new_version,
             thread_id: current_thread_version.thread_id,
+            published_at: None,
             status: ThreadVersionStatus::Draft,
             created_at: Utc::now().naive_utc(),
             updated_at: Utc::now().naive_utc(),

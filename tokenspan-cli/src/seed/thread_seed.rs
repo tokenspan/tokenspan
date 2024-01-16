@@ -1,215 +1,141 @@
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
-use serde::Deserialize;
-use tokio_stream::StreamExt;
-use uuid::Uuid;
+use dojo_orm::predicates::equals;
+use dojo_orm::Database;
+use tracing::{info, warn};
 
-use tokenspan_api::api::dto::{
-    MessageCreateInput, ParameterCreateInput, ThreadCreateInput, ThreadVersionCreateInput,
-};
-use tokenspan_api::api::models::ThreadVersionStatus;
-use tokenspan_api::configs::AppConfig;
-use tokenspan_api::state::AppState;
+use tokenspan_api::api::models::{Message, Parameter, Thread, ThreadVersion};
 
-use crate::seed::prelude::{ModelRef, UserRef};
 use crate::seed::Seed;
 
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct Parameter {
-    pub name: String,
-    pub temperature: f32,
-    pub max_tokens: i32,
-    pub stop_sequences: Vec<String>,
-    pub top_p: f32,
-    pub frequency_penalty: f32,
-    pub presence_penalty: f32,
-    pub extra: Option<serde_json::Value>,
-    pub model: ModelRef,
-    pub is_default: bool,
+pub struct ThreadSeed<'a> {
+    pub db: &'a Database,
 }
 
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct Message {
-    pub role: String,
-    pub content: String,
-    pub raw: String,
+impl<'a> ThreadSeed<'a> {
+    pub fn new(db: &'a Database) -> Self {
+        Self { db }
+    }
 }
 
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct ThreadVersion {
-    pub owner: UserRef,
-    pub semver: String,
-    pub version: i32,
-    pub release_note: Option<String>,
-    pub description: Option<String>,
-    pub document: Option<String>,
-    pub status: ThreadVersionStatus,
-    pub release_at: Option<DateTime<Utc>>,
-    pub messages: Vec<Message>,
-    pub parameters: Vec<Parameter>,
-}
+impl<'a> ThreadSeed<'a> {
+    async fn save_messages(&self, json_data: serde_json::Value) -> anyhow::Result<()> {
+        let messages = serde_json::from_value::<Vec<Message>>(json_data)?;
+        info!(?messages);
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct Thread {
-    pub owner: UserRef,
-    pub name: String,
-    pub slug: String,
-    pub versions: Vec<ThreadVersion>,
-}
-
-pub struct ThreadSeed {
-    pub data: Vec<Thread>,
-    pub config: AppConfig,
-    pub state: AppState,
-}
-
-impl ThreadSeed {
-    async fn save_messages(
-        &self,
-        messages: Vec<Message>,
-        thread_version_id: Uuid,
-        owner_id: Uuid,
-    ) -> anyhow::Result<()> {
-        let message_service = self.state.message_service.clone();
-
-        let mut stream = tokio_stream::iter(messages);
-
-        while let Some(message) = stream.next().await {
-            let input = MessageCreateInput {
-                role: message.role,
-                content: message.content,
-                raw: message.raw,
-                thread_version_id,
-            };
-
-            let message = message_service.create(input, owner_id).await?;
-            println!("Message: {} created", message.content);
+        for message in messages {
+            self.save_message(&message).await?;
         }
 
         Ok(())
     }
 
-    async fn save_parameters(
-        &self,
-        parameters: Vec<Parameter>,
-        thread_version_id: Uuid,
-    ) -> anyhow::Result<()> {
-        let model_service = self.state.model_service.clone();
-        let parameter_service = self.state.parameter_service.clone();
+    async fn save_message(&self, data: &Message) -> anyhow::Result<()> {
+        let message = self
+            .db
+            .bind::<Message>()
+            .where_by(equals("id", &data.id))
+            .first()
+            .await?;
+        if message.is_some() {
+            warn!("Message {} already exists", data.id);
+            return Ok(());
+        }
 
-        let mut stream = tokio_stream::iter(parameters);
+        self.db.insert::<Message>(data).await?;
+        info!("Message {} created", data.id);
 
-        while let Some(parameter) = stream.next().await {
-            let model = model_service
-                .find_by_slug(&parameter.model.slug)
-                .await?
-                .ok_or(anyhow::anyhow!("Model not found"))?;
+        Ok(())
+    }
 
-            let input = ParameterCreateInput {
-                name: parameter.name,
-                temperature: parameter.temperature,
-                max_tokens: parameter.max_tokens,
-                stop_sequences: parameter.stop_sequences,
-                top_p: parameter.top_p,
-                frequency_penalty: parameter.frequency_penalty,
-                presence_penalty: parameter.presence_penalty,
-                extra: parameter.extra,
-                model_id: model.id,
-                is_default: parameter.is_default,
-                thread_version_id,
-            };
-            let parameter = parameter_service.create(input).await?;
-            println!("Parameter: {} created", parameter.name);
+    async fn save_parameters(&self, json_data: serde_json::Value) -> anyhow::Result<()> {
+        let parameters = serde_json::from_value::<Vec<Parameter>>(json_data)?;
+        info!(?parameters);
+
+        for parameter in parameters {
+            self.save_parameter(&parameter).await?;
         }
 
         Ok(())
     }
-    async fn save_thread_versions(
-        &self,
-        thread_id: Uuid,
-        thread_versions: Vec<ThreadVersion>,
-    ) -> anyhow::Result<()> {
-        let thread_version_service = self.state.thread_version_service.clone();
-        let user_service = self.state.user_service.clone();
 
-        println!("ThreadVersion: {} creating", thread_versions.len());
+    async fn save_parameter(&self, data: &Parameter) -> anyhow::Result<()> {
+        let parameter = self
+            .db
+            .bind::<Parameter>()
+            .where_by(equals("id", &data.id))
+            .first()
+            .await?;
+        if parameter.is_some() {
+            warn!("Parameter {} already exists", data.id);
+            return Ok(());
+        }
 
-        let mut stream = tokio_stream::iter(thread_versions);
+        self.db.insert::<Parameter>(data).await?;
+        info!("Parameter {} created", data.id);
 
-        while let Some(thread_version) = stream.next().await {
-            let owner = user_service
-                .find_by_email(&thread_version.owner.email)
-                .await?
-                .ok_or(anyhow::anyhow!("User not found"))?;
+        Ok(())
+    }
 
-            let input = ThreadVersionCreateInput {
-                thread_id,
-                semver: thread_version.semver,
-                version: thread_version.version,
-                release_note: thread_version.release_note,
-                description: thread_version.description,
-                document: thread_version.document,
-            };
-            let created_thread_version = thread_version_service.create(input, owner.id).await?;
-            println!("ThreadVersion: {} created", created_thread_version.version);
+    async fn save_thread_versions(&self, json_data: serde_json::Value) -> anyhow::Result<()> {
+        for json_data in json_data.as_array().cloned().unwrap_or_default() {
+            let version = serde_json::from_value::<ThreadVersion>(json_data.clone())?;
+            info!(?version);
 
-            self.save_parameters(thread_version.parameters, created_thread_version.id)
+            self.save_thread_version(&version).await?;
+            self.save_parameters(json_data["parameters"].clone())
                 .await?;
-
-            self.save_messages(thread_version.messages, created_thread_version.id, owner.id)
-                .await?;
+            self.save_messages(json_data["messages"].clone()).await?;
         }
 
         Ok(())
     }
-}
 
-impl ThreadSeed {
-    pub async fn new(config: AppConfig, state: AppState) -> anyhow::Result<Self> {
-        let data = Self::load().await?;
-        Ok(Self {
-            data,
-            config,
-            state,
-        })
+    async fn save_thread_version(&self, data: &ThreadVersion) -> anyhow::Result<()> {
+        let thread_version = self
+            .db
+            .bind::<ThreadVersion>()
+            .where_by(equals("id", &data.id))
+            .first()
+            .await?;
+        if thread_version.is_some() {
+            warn!("ThreadVersion {} already exists", data.id);
+            return Ok(());
+        }
+
+        self.db.insert::<ThreadVersion>(data).await?;
+        info!("ThreadVersion {} created", data.id);
+
+        Ok(())
+    }
+
+    async fn save_thread(&self, item: &Thread) -> anyhow::Result<()> {
+        let thread = self
+            .db
+            .bind::<Thread>()
+            .where_by(equals("id", &item.id))
+            .first()
+            .await?;
+        if thread.is_some() {
+            warn!("Thread {} already exists", item.id);
+            return Ok(());
+        }
+
+        self.db.insert(item).await?;
+        info!("Thread {} created", item.id);
+
+        Ok(())
     }
 }
 
 #[async_trait]
-impl Seed for ThreadSeed {
+impl<'a> Seed for ThreadSeed<'a> {
     async fn save(&self) -> anyhow::Result<()> {
-        let thread_service = self.state.thread_service.clone();
-        let user_service = self.state.user_service.clone();
+        let items = Self::load::<serde_json::Value>().await?;
 
-        let mut stream = tokio_stream::iter(self.data.clone());
-        while let Some(thread) = stream.next().await {
-            let result = thread_service.find_by_slug(&thread.slug).await?;
-            if let Some(thread) = result {
-                println!("Thread: {} already existed", thread.name);
-                continue;
-            }
-
-            let owner = user_service
-                .find_by_email(&thread.owner.email)
-                .await?
-                .ok_or(anyhow::anyhow!("User not found"))?;
-
-            let versions = thread.versions;
-            let thread = thread_service
-                .create(
-                    ThreadCreateInput {
-                        name: thread.name,
-                        slug: thread.slug,
-                    },
-                    owner.id,
-                )
-                .await?;
-
-            self.save_thread_versions(thread.id, versions).await?;
-            println!("Thread: {} created", thread.name)
+        for item in items {
+            let thread = serde_json::from_value::<Thread>(item.clone())?;
+            self.save_thread(&thread).await?;
+            self.save_thread_versions(item["versions"].clone()).await?;
         }
 
         Ok(())

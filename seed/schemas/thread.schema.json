@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-06/schema#",
-  "$ref": "#/definitions/Task",
+  "$ref": "#/definitions/Thread",
   "definitions": {
-    "Task": {
+    "Thread": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "owner": {
-          "$ref": "#/definitions/Owner"
+        "id": {
+          "type": "string"
         },
         "name": {
           "type": "string"
@@ -18,6 +18,17 @@
         "private": {
           "type": "boolean"
         },
+        "owner_id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
         "versions": {
           "type": "array",
           "items": {
@@ -26,8 +37,9 @@
         }
       },
       "required": [
+        "id",
         "name",
-        "owner",
+        "owner_id",
         "private",
         "slug",
         "versions"
@@ -51,8 +63,11 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "owner": {
-          "$ref": "#/definitions/Owner"
+        "id": {
+          "type": "string"
+        },
+        "owner_id": {
+          "type": "string"
         },
         "semver": {
           "type": "string"
@@ -60,7 +75,10 @@
         "version": {
           "type": "integer"
         },
-        "releaseNote": {
+        "release_note": {
+          "type": "string"
+        },
+        "thread_id": {
           "type": "string"
         },
         "description": {
@@ -70,10 +88,15 @@
           "type": "string"
         },
         "status": {
-          "enum": ["draft", "published", "archived"]
+          "enum": [
+            "draft",
+            "published",
+            "archived"
+          ]
         },
-        "releaseAt": {
-          "type": "null"
+        "published_at": {
+          "type": "string",
+          "format": "date-time"
         },
         "parameters": {
           "type": "array",
@@ -86,19 +109,31 @@
           "items": {
             "$ref": "#/definitions/Message"
           }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
         }
       },
       "required": [
+        "id",
         "description",
         "document",
+        "thread_id",
         "messages",
-        "owner",
+        "owner_id",
         "parameters",
-        "releaseAt",
-        "releaseNote",
+        "published_at",
+        "release_note",
         "status",
         "semver",
-        "version"
+        "version",
+        "created_at",
+        "updated_at"
       ],
       "title": "Version"
     },
@@ -106,20 +141,46 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "id": {
+          "type": "string"
+        },
         "role": {
-          "enum": ["system", "user", "assistant"]
+          "enum": [
+            "system",
+            "user",
+            "assistant"
+          ]
         },
         "content": {
           "type": "string"
         },
         "raw": {
           "type": "string"
+        },
+        "thread_version_id": {
+          "type": "string"
+        },
+        "owner_id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
         }
       },
       "required": [
+        "id",
         "content",
         "role",
-        "raw"
+        "raw",
+        "thread_version_id",
+        "owner_id",
+        "created_at",
+        "updated_at"
       ],
       "title": "Message"
     },
@@ -127,6 +188,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "id": {
+          "type": "string"
+        },
         "name": {
           "type": "string"
         },
@@ -135,56 +199,62 @@
           "minimum": 0,
           "maximum": 1
         },
-        "maxTokens": {
+        "thread_version_id": {
+          "type": "string"
+        },
+        "max_tokens": {
           "type": "integer"
         },
-        "stopSequences": {
+        "stop_sequences": {
           "type": "array",
           "items": {}
         },
-        "topP": {
+        "is_default": {
+          "type": "boolean"
+        },
+        "top_p": {
           "type": "number",
           "minimum": 0,
           "maximum": 1
         },
-        "frequencyPenalty": {
+        "frequency_penalty": {
           "type": "number"
         },
-        "presencePenalty": {
+        "presence_penalty": {
           "type": "number"
         },
         "extra": {
           "type": "null"
         },
-        "model": {
-          "$ref": "#/definitions/Model"
+        "model_id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
         }
       },
       "required": [
+        "id",
         "extra",
-        "frequencyPenalty",
-        "maxTokens",
-        "model",
+        "thread_version_id",
+        "frequency_penalty",
+        "max_tokens",
         "name",
-        "presencePenalty",
-        "stopSequences",
+        "is_default",
+        "presence_penalty",
+        "stop_sequences",
         "temperature",
-        "topP"
+        "top_p",
+        "model_id",
+        "created_at",
+        "updated_at"
       ],
       "title": "Parameter"
-    },
-    "Model": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "slug": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "slug"
-      ],
-      "title": "Model"
     }
   }
 }

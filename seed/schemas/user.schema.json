@@ -6,6 +6,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "id": {
+          "type": "string"
+        },
         "email": {
           "type": "string"
         },
@@ -15,18 +18,31 @@
         "password": {
           "type": "string"
         },
+        "salt": {
+          "type": "string"
+        },
         "role": {
           "enum": [
             "admin",
             "user"
           ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
         }
       },
       "required": [
+        "id",
         "email",
         "username",
         "password",
-        "role"
+        "role",
+        "salt"
       ],
       "title": "User"
     }

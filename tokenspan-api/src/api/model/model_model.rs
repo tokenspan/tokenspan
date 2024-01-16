@@ -11,7 +11,7 @@ pub struct Pricing {
     pub currency: String,
 }
 
-#[derive(SimpleObject, Clone, Model, Debug)]
+#[derive(SimpleObject, Clone, Model, Debug, Deserialize)]
 #[dojo(name = "models", sort_keys = ["created_at", "id"])]
 pub struct Model {
     pub id: Uuid,

@@ -2,7 +2,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::{ComplexObject, Context, Result, SimpleObject};
 use chrono::NaiveDateTime;
 use dojo_macros::Model;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::api::loaders::UserLoader;
 use uuid::Uuid;
@@ -11,7 +11,7 @@ use crate::api::models::{ThreadVersion, User};
 use crate::api::services::ThreadVersionServiceDyn;
 use crate::error::AppError;
 
-#[derive(SimpleObject, Clone, Serialize, Debug, Model)]
+#[derive(SimpleObject, Clone, Debug, Serialize, Deserialize, Model)]
 #[graphql(complex)]
 #[dojo(name = "threads", sort_keys = ["created_at", "id"])]
 pub struct Thread {

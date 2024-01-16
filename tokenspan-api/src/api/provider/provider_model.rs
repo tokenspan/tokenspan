@@ -1,9 +1,10 @@
 use async_graphql::SimpleObject;
 use chrono::NaiveDateTime;
 use dojo_macros::Model;
+use serde::Deserialize;
 use uuid::Uuid;
 
-#[derive(SimpleObject, Debug, Clone, Model)]
+#[derive(SimpleObject, Debug, Clone, Model, Deserialize)]
 #[dojo(name = "providers", sort_keys = ["created_at", "id"])]
 pub struct Provider {
     pub id: Uuid,

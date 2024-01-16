@@ -3,33 +3,33 @@ use dojo_orm::predicates::equals;
 use dojo_orm::Database;
 use tracing::{info, warn};
 
-use tokenspan_api::api::models::Model;
+use tokenspan_api::api::models::Function;
 
 use crate::seed::Seed;
 
-pub struct ModelSeed<'a> {
+pub struct FunctionSeed<'a> {
     pub db: &'a Database,
 }
 
-impl<'a> ModelSeed<'a> {
+impl<'a> FunctionSeed<'a> {
     pub fn new(db: &'a Database) -> Self {
         Self { db }
     }
 }
 
 #[async_trait]
-impl<'a> Seed for ModelSeed<'a> {
+impl<'a> Seed for FunctionSeed<'a> {
     async fn save(&self) -> anyhow::Result<()> {
-        let items = Self::load::<Model>().await?;
+        let items = Self::load::<Function>().await?;
 
         for item in items {
-            let model = self
+            let function = self
                 .db
-                .bind::<Model>()
+                .bind::<Function>()
                 .where_by(equals("id", &item.id))
                 .first()
                 .await?;
-            if model.is_some() {
+            if function.is_some() {
                 warn!("Model {} already exists", item.id);
                 continue;
             }
@@ -42,6 +42,6 @@ impl<'a> Seed for ModelSeed<'a> {
     }
 
     fn path() -> &'static str {
-        "./seed/models"
+        "./seed/functions"
     }
 }

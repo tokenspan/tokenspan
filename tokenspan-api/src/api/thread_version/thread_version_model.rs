@@ -10,7 +10,7 @@ use crate::api::models::{Message, Parameter, Thread};
 use crate::api::services::{MessageServiceDyn, ParameterServiceDyn, ThreadServiceDyn};
 use crate::error::AppError;
 
-#[derive(SimpleObject, Clone, Debug, Model)]
+#[derive(SimpleObject, Clone, Debug, Deserialize, Model)]
 #[graphql(complex)]
 #[dojo(name = "thread_versions", sort_keys = ["created_at", "id"])]
 pub struct ThreadVersion {
@@ -23,6 +23,7 @@ pub struct ThreadVersion {
     pub status: ThreadVersionStatus,
     pub thread_id: Uuid,
     pub owner_id: Uuid,
+    pub published_at: Option<NaiveDateTime>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }

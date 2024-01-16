@@ -1,15 +1,17 @@
-provider:
-  slug: open-ai
+id: 996802de-8619-475c-8e3f-0f78d723f974
+provider_id: 9aed5051-6be5-400a-91ac-3eeec701ee8d
 name: gpt-3.5-turbo-instruct
 description: 'Similar capabilities as text-davinci-003 but compatible with legacy Completions endpoint and not Chat Completions.'
 slug: gpt-3.5-turbo-instruct
 context: 4096
-inputPricing:
+input_pricing:
   price: 0.0015
   tokens: 1000
   currency: USD
-outputPricing:
+output_pricing:
   price: 0.002
   tokens: 1000
   currency: USD
-trainingAt: '2023-04-05T14:30:30'
+training_at: '2023-04-05T14:30:30'
+created_at: '2021-04-05T14:30:30'
+updated_at: '2021-04-05T14:30:30'

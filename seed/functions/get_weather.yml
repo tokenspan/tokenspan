@@ -1,0 +1,22 @@
+id: 12ac51de-b3d9-4abb-ba47-2e583b44c9d9
+name: get_current_weather
+description: Get the current weather
+parameters:
+  type: object
+  properties:
+    location:
+      type: string
+      description: The city and state, e.g. San Francisco, CA
+    format:
+      type: string
+      description: The temperature unit to use. Infer this from the users location.
+      enum:
+          - fahrenheit
+          - celsius
+  required:
+    - location
+    - format
+response:
+owner_id: 3bde4767-4e87-4a5c-a622-c8fa7c97f471
+created_at: 2024-01-15T14:58:19.757300
+updated_at: 2024-01-15T14:58:19.757300

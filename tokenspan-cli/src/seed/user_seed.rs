@@ -1,72 +1,46 @@
 use async_trait::async_trait;
-use serde::Deserialize;
-use tokio_stream::StreamExt;
-
-use tokenspan_api::api::models::UserRole;
-use tokenspan_api::configs::AppConfig;
-use tokenspan_api::state::AppState;
+use dojo_orm::prelude::equals;
+use dojo_orm::Database;
 use tracing::{info, warn};
+
+use tokenspan_api::api::models::User;
 
 use crate::seed::Seed;
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct UserRef {
-    pub email: String,
+pub struct UserSeed<'a> {
+    pub db: &'a Database,
 }
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct User {
-    pub email: String,
-    pub username: String,
-    pub password: String,
-    pub role: UserRole,
-}
-
-pub struct UserSeed {
-    pub data: Vec<User>,
-    pub config: AppConfig,
-    pub state: AppState,
-}
-
-impl UserSeed {
-    pub async fn new(config: AppConfig, state: AppState) -> anyhow::Result<Self> {
-        let data = Self::load().await?;
-        Ok(Self {
-            data,
-            config,
-            state,
-        })
-    }
-
-    pub async fn new_with_data(
-        config: AppConfig,
-        state: AppState,
-        data: Vec<User>,
-    ) -> anyhow::Result<Self> {
-        Ok(Self {
-            data,
-            config,
-            state,
-        })
+impl<'a> UserSeed<'a> {
+    pub fn new(db: &'a Database) -> Self {
+        Self { db }
     }
 }
 
 #[async_trait]
-impl Seed for UserSeed {
+impl<'a> Seed for UserSeed<'a> {
     async fn save(&self) -> anyhow::Result<()> {
-        let user_service = self.state.user_service.clone();
-        let mut stream = tokio_stream::iter(self.data.clone());
-        while let Some(user) = stream.next().await {
-            let result = user_service.find_by_email(&user.email).await?;
-            if let Some(user) = result {
-                warn!("User: {} already existed", user.email);
+        let items = Self::load::<User>().await?;
+
+        for item in items {
+            let user = self
+                .db
+                .bind::<User>()
+                .where_by(equals("id", &item.id))
+                .first()
+                .await?;
+            if user.is_some() {
+                warn!("User {} already exists", item.id);
                 continue;
             }
 
-            let user = user_service
-                .create_with_role(user.email, user.username, user.password, user.role)
-                .await?;
-            info!("User: {} created", user.email)
+            let mut user = item;
+            let (hash_password, salt) = User::hash_password(user.password.as_bytes())?;
+            user.password = hash_password;
+            user.salt = salt;
+
+            self.db.insert(&user).await?;
+            info!("User {} created", user.id);
         }
 
         Ok(())

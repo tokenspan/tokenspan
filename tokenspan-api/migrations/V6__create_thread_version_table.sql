@@ -13,6 +13,7 @@ CREATE TABLE thread_versions
     status       thread_version_status NOT NULL,
     thread_id    uuid                  NOT NULL,
     owner_id     uuid                  NOT NULL,
+    published_at TIMESTAMP,
     created_at   TIMESTAMP             NOT NULL,
     updated_at   TIMESTAMP             NOT NULL,
 

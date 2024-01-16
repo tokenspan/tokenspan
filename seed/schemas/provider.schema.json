@@ -1,24 +1,38 @@
 {
   "$schema": "http://json-schema.org/draft-06/schema#",
-  "type": "object",
-  "items": {
-    "$ref": "#/definitions/Provider"
-  },
+  "$ref": "#/definitions/Provider",
   "definitions": {
     "Provider": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "id": {
+          "type": "string"
+        },
         "name": {
           "type": "string"
         },
         "slug": {
           "type": "string"
+        },
+        "base_url": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
         }
       },
       "required": [
+        "id",
         "name",
-        "slug"
+        "slug",
+        "created_at",
+        "updated_at"
       ],
       "title": "Provider"
     }

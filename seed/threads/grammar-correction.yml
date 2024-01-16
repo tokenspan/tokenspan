@@ -1,34 +1,52 @@
-owner:
-  email: wang_yu_meng@gmail.com
+id: 76b47123-c902-4d2b-a693-558dbf8e3c7e
 name: Grammar correction
 slug: grammar-correction
+owner_id: 3bde4767-4e87-4a5c-a622-c8fa7c97f471
 private: false
+created_at: 2021-04-05T14:30:30
+updated_at: 2021-04-05T14:30:30
 versions:
-  - owner:
-      email: wang_yu_meng@gmail.com
+  - id: ffc805ce-90fc-4a17-a0e8-2d9a64a81707
+    owner_id: 3bde4767-4e87-4a5c-a622-c8fa7c97f471
     semver: 0.0.0
     version: 0
-    releaseNote: ""
+    release_note: ""
     description: Convert ungrammatical statements into standard English.
     document: ""
-    status: published
-    releaseAt: null
+    status: draft
+    published_at: 2021-04-05T14:30:30
+    thread_id: 76b47123-c902-4d2b-a693-558dbf8e3c7e
+    created_at: 2021-04-05T14:30:30
+    updated_at: 2021-04-05T14:30:30
     parameters:
-      - name: default
+      - id: 91706857-2306-4f9f-8b11-ab45b09f76b1
+        name: default
         temperature: 0.7
-        maxTokens: 64
-        stopSequences: [ ]
-        topP: 1.0
-        frequencyPenalty: 0.0
-        presencePenalty: 0.0
+        max_tokens: 64
+        stop_sequences: [ ]
+        top_p: 1.0
+        frequency_penalty: 0.0
+        presence_penalty: 0.0
         extra: null
-        isDefault: true
-        model:
-          slug: gpt-3.5-turbo-1106
+        is_default: true
+        thread_version_id: 3bde4767-4e87-4a5c-a622-c8fa7c97f471
+        model_id: 9f7d2d64-7368-44df-8d08-f772309d757d
+        created_at: 2021-04-05T14:30:30
+        updated_at: 2021-04-05T14:30:30
     messages:
-      - role: system
+      - id: d23fde84-ac45-4205-a6a2-07f66d9e1150
+        role: system
         content: You will be provided with statements, and your task is to convert them to standard English.
         raw: You will be provided with statements, and your task is to convert them to standard English.
-      - role: user
+        owner_id: 3bde4767-4e87-4a5c-a622-c8fa7c97f471
+        thread_version_id: ffc805ce-90fc-4a17-a0e8-2d9a64a81707
+        created_at: 2021-04-05T14:30:30
+        updated_at: 2021-04-05T14:30:30
+      - id: 4a564a39-1958-4c11-a909-c1de8694783d
+        role: user
         content: ${statement}
         raw: ${statement}
+        owner_id: 3bde4767-4e87-4a5c-a622-c8fa7c97f471
+        thread_version_id: ffc805ce-90fc-4a17-a0e8-2d9a64a81707
+        created_at: 2021-04-05T14:30:30
+        updated_at: 2021-04-05T14:30:30
