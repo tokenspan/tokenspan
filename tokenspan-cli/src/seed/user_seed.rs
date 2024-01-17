@@ -3,7 +3,7 @@ use dojo_orm::prelude::equals;
 use dojo_orm::Database;
 use tracing::{info, warn};
 
-use tokenspan_api::api::models::User;
+use tokenspan_api::domains::models::User;
 
 use crate::seed::Seed;
 

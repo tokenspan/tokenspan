@@ -1,12 +1,12 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 use uuid::Uuid;
 
-use crate::api::models::{ParsedToken, UserRole};
-use crate::api::services::ThreadServiceDyn;
-use crate::api::thread::dto::{ThreadCreateInput, ThreadUpdateInput};
-use crate::api::thread::thread_model::Thread;
-use crate::error::AppError;
-use crate::guard::RoleGuard;
+use crate::domains::models::{ParsedToken, UserRole};
+use crate::domains::services::ThreadServiceDyn;
+use crate::domains::thread::dto::{ThreadCreateInput, ThreadUpdateInput};
+use crate::domains::thread::thread_model::Thread;
+use crate::errors::AppError;
+use crate::guards::RoleGuard;
 
 #[derive(Default)]
 pub struct ThreadMutation;

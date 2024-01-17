@@ -4,9 +4,9 @@ use chrono::NaiveDateTime;
 use dojo_macros::Model;
 use uuid::Uuid;
 
-use crate::api::loaders::{ProviderLoader, UserLoader};
-use crate::api::models::{Provider, User};
-use crate::error::AppError;
+use crate::domains::loaders::{ProviderLoader, UserLoader};
+use crate::domains::models::{Provider, User};
+use crate::errors::AppError;
 
 #[derive(SimpleObject, Clone, Model, Debug)]
 #[graphql(complex)]

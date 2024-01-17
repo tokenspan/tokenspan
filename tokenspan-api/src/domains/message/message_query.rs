@@ -1,7 +1,7 @@
-use crate::api::dto::MessageArgs;
-use crate::api::models::Message;
-use crate::api::services::MessageServiceDyn;
-use crate::error::AppError;
+use crate::domains::dto::MessageArgs;
+use crate::domains::models::Message;
+use crate::domains::services::MessageServiceDyn;
+use crate::errors::AppError;
 use async_graphql::connection::Connection;
 use async_graphql::{Context, Object};
 use dojo_orm::pagination::{AdditionalFields, Cursor};

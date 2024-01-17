@@ -8,13 +8,10 @@ use axum::response::{IntoResponse, Redirect};
 use axum::{response, Extension};
 use axum_extra::headers::HeaderMap;
 
-use crate::api::loaders::{
-    ApiKeyLoader, ExecutionLoader, ModelLoader, ProviderLoader, ThreadLoader, ThreadVersionLoader,
-    UserLoader,
-};
-use crate::api::models::ParsedToken;
-use crate::api::{MutationRoot, QueryRoot, SubscriptionRoot};
 use crate::configs::AppConfig;
+use crate::domains::loaders::*;
+use crate::domains::models::ParsedToken;
+use crate::domains::{MutationRoot, QueryRoot, SubscriptionRoot};
 use crate::state::AppState;
 
 pub type AppSchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;

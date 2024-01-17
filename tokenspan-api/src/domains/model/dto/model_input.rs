@@ -4,7 +4,7 @@ use dojo_macros::{EmbeddedModel, UpdateModel};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::api::models::Pricing;
+use crate::domains::models::Pricing;
 
 #[derive(InputObject, Clone, Serialize, Deserialize, Debug, EmbeddedModel)]
 pub struct PricingInput {

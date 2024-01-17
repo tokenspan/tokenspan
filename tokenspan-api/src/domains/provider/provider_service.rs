@@ -8,8 +8,8 @@ use dojo_orm::Database;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use crate::api::models::Provider;
-use crate::api::provider::dto::{ProviderArgs, ProviderCreateInput, ProviderUpdateInput};
+use crate::domains::models::Provider;
+use crate::domains::provider::dto::{ProviderArgs, ProviderCreateInput, ProviderUpdateInput};
 
 #[async_trait::async_trait]
 pub trait ProviderServiceExt {

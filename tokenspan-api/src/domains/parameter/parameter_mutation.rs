@@ -1,12 +1,12 @@
 use async_graphql::{Context, Object, Result};
 use uuid::Uuid;
 
-use crate::api::models::UserRole;
-use crate::api::parameter::dto::{ParameterCreateInput, ParameterUpdateInput};
-use crate::api::parameter::parameter_model::Parameter;
-use crate::api::services::ParameterServiceDyn;
-use crate::error::AppError;
-use crate::guard::RoleGuard;
+use crate::domains::models::UserRole;
+use crate::domains::parameter::dto::{ParameterCreateInput, ParameterUpdateInput};
+use crate::domains::parameter::parameter_model::Parameter;
+use crate::domains::services::ParameterServiceDyn;
+use crate::errors::AppError;
+use crate::guards::RoleGuard;
 
 #[derive(Default)]
 pub struct ParameterMutation;

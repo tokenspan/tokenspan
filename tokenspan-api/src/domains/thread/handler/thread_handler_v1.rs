@@ -1,9 +1,9 @@
 use axum::Json;
 
-use crate::api::models::{Execution, ParsedToken};
-use crate::api::services::ThreadServiceDyn;
-use crate::api::thread::dto::ThreadExecuteInput;
-use crate::api::thread::thread_error::ThreadError;
+use crate::domains::models::{Execution, ParsedToken};
+use crate::domains::services::ThreadServiceDyn;
+use crate::domains::thread::dto::ThreadExecuteInput;
+use crate::domains::thread::thread_error::ThreadError;
 
 pub async fn execute_thread_v1(
     thread_service: ThreadServiceDyn,

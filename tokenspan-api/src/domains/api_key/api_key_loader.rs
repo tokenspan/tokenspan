@@ -4,9 +4,9 @@ use std::sync::Arc;
 use async_graphql::dataloader::{DataLoader, Loader};
 use uuid::Uuid;
 
-use crate::api::api_key::api_key_error::ApiKeyError;
-use crate::api::models::ApiKey;
-use crate::api::services::ApiKeyServiceDyn;
+use crate::domains::api_key::api_key_error::ApiKeyError;
+use crate::domains::models::ApiKey;
+use crate::domains::services::ApiKeyServiceDyn;
 
 pub struct ApiKeyLoader {
     pub api_key_service: ApiKeyServiceDyn,

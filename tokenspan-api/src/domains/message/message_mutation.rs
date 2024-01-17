@@ -1,11 +1,11 @@
 use async_graphql::{Context, ErrorExtensions, Object};
 use uuid::Uuid;
 
-use crate::api::dto::{MessageCreateInput, MessageUpdateInput};
-use crate::api::models::{Message, ParsedToken, UserRole};
-use crate::api::services::MessageServiceDyn;
-use crate::error::AppError;
-use crate::guard::RoleGuard;
+use crate::domains::dto::{MessageCreateInput, MessageUpdateInput};
+use crate::domains::models::{Message, ParsedToken, UserRole};
+use crate::domains::services::MessageServiceDyn;
+use crate::errors::AppError;
+use crate::guards::RoleGuard;
 
 #[derive(Default)]
 pub struct MessageMutation;

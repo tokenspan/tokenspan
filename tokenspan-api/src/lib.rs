@@ -1,9 +1,9 @@
-pub mod api;
 pub mod app;
 pub mod configs;
-pub mod error;
-pub mod extractor;
+pub mod domains;
+pub mod errors;
+pub mod extractors;
 pub mod graphql;
-pub mod guard;
-pub mod prompt;
+pub mod guards;
+pub mod prompts;
 pub mod state;

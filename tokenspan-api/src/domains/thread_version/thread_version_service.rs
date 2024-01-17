@@ -9,10 +9,10 @@ use tracing::info;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use crate::api::dto::ThreadVersionPublishInput;
-use crate::api::models::{ThreadVersion, ThreadVersionStatus};
-use crate::api::services::{MessageServiceDyn, ParameterServiceDyn};
-use crate::api::thread_version::dto::{
+use crate::domains::dto::ThreadVersionPublishInput;
+use crate::domains::models::{ThreadVersion, ThreadVersionStatus};
+use crate::domains::services::{MessageServiceDyn, ParameterServiceDyn};
+use crate::domains::thread_version::dto::{
     ThreadVersionArgs, ThreadVersionCreateInput, ThreadVersionUpdateInput,
 };
 

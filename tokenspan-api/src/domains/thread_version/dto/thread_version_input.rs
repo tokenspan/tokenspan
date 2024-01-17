@@ -1,4 +1,4 @@
-use crate::api::models::ThreadVersionStatus;
+use crate::domains::models::ThreadVersionStatus;
 use async_graphql::InputObject;
 use dojo_macros::UpdateModel;
 use typed_builder::TypedBuilder;

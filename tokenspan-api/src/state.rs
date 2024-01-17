@@ -3,8 +3,8 @@ use dojo_orm::Database;
 use magic_crypt::new_magic_crypt;
 use std::ops::DerefMut;
 
-use crate::api::services::*;
 use crate::configs::AppConfig;
+use crate::domains::services::*;
 
 mod embedded {
     use refinery::embed_migrations;
@@ -71,6 +71,9 @@ impl AppState {
             .build()
             .into();
 
+        let function_service: FunctionServiceDyn =
+            FunctionService::builder().db(db.clone()).build().into();
+
         let thread_service: ThreadServiceDyn = ThreadService::builder()
             .db(db.clone())
             .api_key_service(api_key_service.clone())
@@ -80,11 +83,9 @@ impl AppState {
             .parameter_service(parameter_service.clone())
             .message_service(message_service.clone())
             .provider_service(provider_service.clone())
+            .function_service(function_service.clone())
             .build()
             .into();
-
-        let function_service: FunctionServiceDyn =
-            FunctionService::builder().db(db.clone()).build().into();
 
         Ok(Self {
             user_service,

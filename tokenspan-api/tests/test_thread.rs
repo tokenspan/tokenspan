@@ -5,8 +5,8 @@ use googletest::matchers::{anything, eq, some};
 use googletest::prelude::*;
 use graphql_client::{GraphQLQuery, Response};
 
-use tokenspan_api::api::dto::ThreadCreateInput;
-use tokenspan_api::api::models::UserRole;
+use tokenspan_api::domains::dto::ThreadCreateInput;
+use tokenspan_api::domains::models::UserRole;
 use tokenspan_api::state::AppState;
 
 use crate::graphql::{
@@ -22,7 +22,7 @@ macro_rules! create_model {
     ($state: ident, name = $name: literal) => {
         let provider_fixture = $state
             .provider_service
-            .create(tokenspan_api::api::dto::ProviderCreateInput {
+            .create(tokenspan_api::domains::dto::ProviderCreateInput {
                 name: "OpenAI".to_string(),
                 slug: "openai".to_string(),
             })
@@ -30,17 +30,17 @@ macro_rules! create_model {
 
         $state
             .model_service
-            .create(tokenspan_api::api::dto::ModelCreateInput {
+            .create(tokenspan_api::domains::dto::ModelCreateInput {
                 name: $name.to_string(),
                 description: $name.to_string(),
                 slug: $name.to_string(),
                 context: 256,
-                input_pricing: tokenspan_api::api::dto::PricingInput {
+                input_pricing: tokenspan_api::domains::dto::PricingInput {
                     currency: "USD".to_string(),
                     price: 0.06,
                     tokens: 1,
                 },
-                output_pricing: tokenspan_api::api::dto::PricingInput {
+                output_pricing: tokenspan_api::domains::dto::PricingInput {
                     currency: "USD".to_string(),
                     price: 0.06,
                     tokens: 1,

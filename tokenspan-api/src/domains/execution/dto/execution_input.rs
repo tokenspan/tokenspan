@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use uuid::Uuid;
 
-use crate::api::models::{Elapsed, ExecutionStatus, Message, Usage};
+use crate::domains::models::{Elapsed, ExecutionStatus, Message, Usage};
 
 pub struct ExecutionCreateInput {
     pub thread_id: Uuid,

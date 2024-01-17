@@ -6,9 +6,9 @@ use serde::Deserialize;
 use strum_macros::EnumString;
 use uuid::Uuid;
 
-use crate::api::models::{Message, Parameter, Thread};
-use crate::api::services::{MessageServiceDyn, ParameterServiceDyn, ThreadServiceDyn};
-use crate::error::AppError;
+use crate::domains::models::{Message, Parameter, Thread};
+use crate::domains::services::{MessageServiceDyn, ParameterServiceDyn, ThreadServiceDyn};
+use crate::errors::AppError;
 
 #[derive(SimpleObject, Clone, Debug, Deserialize, Model)]
 #[graphql(complex)]

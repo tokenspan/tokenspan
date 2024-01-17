@@ -2,10 +2,10 @@ use axum_test::TestServer;
 use chrono::Utc;
 use httpmock::prelude::*;
 use httpmock::MockServer;
-use tokenspan_api::api::dto::{
+use tokenspan_api::domains::dto::{
     ApiKeyCreateInput, ModelCreateInput, PricingInput, ProviderCreateInput, ThreadCreateInput,
 };
-use tokenspan_api::api::models::UserRole;
+use tokenspan_api::domains::models::UserRole;
 use tokenspan_api::state::AppState;
 
 mod common;

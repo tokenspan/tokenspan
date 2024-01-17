@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use async_graphql::InputObject;
 use dojo_macros::UpdateModel;
 use serde::Deserialize;
+use strum_macros::{Display, EnumString};
 use uuid::Uuid;
 use validator::Validate;
 
@@ -18,24 +19,26 @@ pub struct ThreadUpdateInput {
     pub slug: Option<String>,
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug, PartialEq, Eq, EnumString, Display)]
 pub enum ToolType {
+    #[strum(serialize = "function")]
+    #[serde(rename = "function")]
     Function,
 }
 
 #[derive(Deserialize, Validate, Clone, Debug)]
-struct ToolInput {
+pub struct ToolInput {
     #[serde(rename = "type")]
     pub ty: ToolType,
     pub id: Uuid,
 }
 
 #[derive(Deserialize, Validate, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct ThreadExecuteInput {
     pub thread_version_id: Uuid,
     pub parameter_id: Uuid,
     pub api_key_id: Uuid,
-    pub tools: Vec<ToolType>,
+    #[serde(default)]
+    pub tools: Vec<ToolInput>,
     pub variables: HashMap<String, String>,
 }

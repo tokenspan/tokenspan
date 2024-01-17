@@ -4,12 +4,12 @@ use chrono::NaiveDateTime;
 use dojo_macros::Model;
 use serde::{Deserialize, Serialize};
 
-use crate::api::loaders::UserLoader;
+use crate::domains::loaders::UserLoader;
 use uuid::Uuid;
 
-use crate::api::models::{ThreadVersion, User};
-use crate::api::services::ThreadVersionServiceDyn;
-use crate::error::AppError;
+use crate::domains::models::{ThreadVersion, User};
+use crate::domains::services::ThreadVersionServiceDyn;
+use crate::errors::AppError;
 
 #[derive(SimpleObject, Clone, Debug, Serialize, Deserialize, Model)]
 #[graphql(complex)]

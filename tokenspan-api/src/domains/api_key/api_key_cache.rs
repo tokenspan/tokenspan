@@ -6,9 +6,9 @@ use async_trait::async_trait;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-use crate::api::cache::CacheExt;
-use crate::api::dto::ApiKeyArgs;
-use crate::api::services::ApiKeyServiceDyn;
+use crate::domains::cache::CacheExt;
+use crate::domains::dto::ApiKeyArgs;
+use crate::domains::services::ApiKeyServiceDyn;
 
 #[derive(Clone)]
 pub struct ApiKeyCache {

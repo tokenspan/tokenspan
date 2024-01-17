@@ -4,9 +4,9 @@ use std::sync::Arc;
 use async_graphql::dataloader::Loader;
 use uuid::Uuid;
 
-use crate::api::models::Provider;
-use crate::api::provider::provider_error::ProviderError;
-use crate::api::services::ProviderServiceDyn;
+use crate::domains::models::Provider;
+use crate::domains::provider::provider_error::ProviderError;
+use crate::domains::services::ProviderServiceDyn;
 
 pub struct ProviderLoader {
     pub provider_service: ProviderServiceDyn,

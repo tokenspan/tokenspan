@@ -6,10 +6,10 @@ use async_trait::async_trait;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-use crate::api::cache::CacheExt;
-use crate::api::dto::ModelArgs;
-use crate::api::models::Model;
-use crate::api::services::ModelServiceDyn;
+use crate::domains::cache::CacheExt;
+use crate::domains::dto::ModelArgs;
+use crate::domains::models::Model;
+use crate::domains::services::ModelServiceDyn;
 
 #[derive(Clone)]
 pub struct ModelCache {

@@ -5,8 +5,8 @@ use googletest::matchers::{anything, eq, some};
 use googletest::prelude::*;
 use graphql_client::{GraphQLQuery, Response};
 
-use tokenspan_api::api::dto::{ApiKeyCreateInput, ProviderCreateInput};
-use tokenspan_api::api::models::UserRole;
+use tokenspan_api::domains::dto::{ApiKeyCreateInput, ProviderCreateInput};
+use tokenspan_api::domains::models::UserRole;
 use tokenspan_api::state::AppState;
 
 use crate::graphql::{
@@ -74,6 +74,7 @@ async fn test_paginate_forward_api_keys() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "https://api.openai.com".to_string(),
         })
         .await?;
 
@@ -186,6 +187,7 @@ async fn test_paginate_backward_api_keys() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "https://api.openai.com".to_string(),
         })
         .await?;
 
@@ -292,6 +294,7 @@ async fn test_get_api_keys() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "https://api.openai.com".to_string(),
         })
         .await?;
 
@@ -398,6 +401,7 @@ async fn test_get_api_key_by_id() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "https://api.openai.com".to_string(),
         })
         .await?;
 
@@ -480,6 +484,7 @@ async fn test_create_api_key() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "https://api.openai.com".to_string(),
         })
         .await?;
 
@@ -556,6 +561,7 @@ async fn test_update_api_key() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "https://api.openai.com".to_string(),
         })
         .await?;
 
@@ -628,6 +634,7 @@ async fn test_delete_api_key() -> Result<()> {
         .create(ProviderCreateInput {
             name: "OpenAI".to_string(),
             slug: "openai".to_string(),
+            base_url: "https://api.openai.com".to_string(),
         })
         .await?;
 

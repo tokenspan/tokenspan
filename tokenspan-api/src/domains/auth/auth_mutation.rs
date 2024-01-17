@@ -1,11 +1,11 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 use chrono::Duration;
 
-use crate::api::auth::auth_model::AuthPayload;
-use crate::api::auth::dto::{RefreshTokenInput, SignInInput, SignUpInput};
-use crate::api::models::RefreshPayload;
-use crate::api::services::AuthServiceDyn;
-use crate::error::AppError;
+use crate::domains::auth::auth_model::AuthPayload;
+use crate::domains::auth::dto::{RefreshTokenInput, SignInInput, SignUpInput};
+use crate::domains::models::RefreshPayload;
+use crate::domains::services::AuthServiceDyn;
+use crate::errors::AppError;
 
 #[derive(Default)]
 pub struct AuthMutation;

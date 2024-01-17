@@ -1,9 +1,9 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 
-use crate::api::auth::auth_model::SessionPayload;
-use crate::api::models::ParsedToken;
-use crate::api::services::AuthServiceDyn;
-use crate::error::AppError;
+use crate::domains::auth::auth_model::SessionPayload;
+use crate::domains::models::ParsedToken;
+use crate::domains::services::AuthServiceDyn;
+use crate::errors::AppError;
 
 #[derive(Default)]
 pub struct AuthQuery;

@@ -9,8 +9,8 @@ use magic_crypt::{MagicCrypt256, MagicCryptTrait};
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use crate::api::api_key::api_key_model::ApiKey;
-use crate::api::api_key::dto::{ApiKeyArgs, ApiKeyCreateInput, ApiKeyUpdateInput};
+use crate::domains::api_key::api_key_model::ApiKey;
+use crate::domains::api_key::dto::{ApiKeyArgs, ApiKeyCreateInput, ApiKeyUpdateInput};
 
 #[async_trait::async_trait]
 pub trait ApiKeyServiceExt {

@@ -4,9 +4,9 @@ use std::sync::Arc;
 use async_graphql::dataloader::Loader;
 use uuid::Uuid;
 
-use crate::api::execution::execution_error::ExecutionError;
-use crate::api::models::Execution;
-use crate::api::services::ExecutionServiceDyn;
+use crate::domains::execution::execution_error::ExecutionError;
+use crate::domains::models::Execution;
+use crate::domains::services::ExecutionServiceDyn;
 
 pub struct ExecutionLoader {
     pub execution_service: ExecutionServiceDyn,

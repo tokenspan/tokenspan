@@ -3,7 +3,7 @@ use dojo_orm::predicates::equals;
 use dojo_orm::Database;
 use tracing::{info, warn};
 
-use tokenspan_api::api::models::{Message, Parameter, Thread, ThreadVersion};
+use tokenspan_api::domains::models::{Message, Parameter, Thread, ThreadVersion};
 
 use crate::seed::Seed;
 

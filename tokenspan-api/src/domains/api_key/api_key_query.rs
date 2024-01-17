@@ -2,10 +2,10 @@ use async_graphql::connection::Connection;
 use async_graphql::{Context, Object, Result};
 use uuid::Uuid;
 
-use crate::api::api_key::api_key_model::ApiKey;
-use crate::api::api_key::dto::ApiKeyArgs;
-use crate::api::services::ApiKeyServiceDyn;
-use crate::error::AppError;
+use crate::domains::api_key::api_key_model::ApiKey;
+use crate::domains::api_key::dto::ApiKeyArgs;
+use crate::domains::services::ApiKeyServiceDyn;
+use crate::errors::AppError;
 use dojo_orm::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]

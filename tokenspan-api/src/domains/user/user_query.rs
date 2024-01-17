@@ -1,12 +1,12 @@
-use crate::api::dto::UserArgs;
-use crate::api::models::User;
-use crate::api::services::UserServiceDyn;
+use crate::domains::dto::UserArgs;
+use crate::domains::models::User;
+use crate::domains::services::UserServiceDyn;
 use async_graphql::connection::Connection;
 use async_graphql::{Context, Object, Result};
 use dojo_orm::pagination::{AdditionalFields, Cursor};
 use uuid::Uuid;
 
-use crate::error::AppError;
+use crate::errors::AppError;
 
 #[derive(Default)]
 pub struct UserQuery;

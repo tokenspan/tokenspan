@@ -1,12 +1,12 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 use uuid::Uuid;
 
-use crate::api::function::dto::{FunctionCreateInput, FunctionUpdateInput};
-use crate::api::function::function_model::Function;
-use crate::api::models::{ParsedToken, UserRole};
-use crate::api::services::FunctionServiceDyn;
-use crate::error::AppError;
-use crate::guard::RoleGuard;
+use crate::domains::function::dto::{FunctionCreateInput, FunctionUpdateInput};
+use crate::domains::function::function_model::Function;
+use crate::domains::models::{ParsedToken, UserRole};
+use crate::domains::services::FunctionServiceDyn;
+use crate::errors::AppError;
+use crate::guards::RoleGuard;
 
 #[derive(Default)]
 pub struct FunctionMutation;

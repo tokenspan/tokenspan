@@ -8,8 +8,8 @@ use dojo_orm::Database;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use crate::api::function::dto::{FunctionArgs, FunctionCreateInput, FunctionUpdateInput};
-use crate::api::models::Function;
+use crate::domains::function::dto::{FunctionArgs, FunctionCreateInput, FunctionUpdateInput};
+use crate::domains::models::Function;
 
 #[async_trait::async_trait]
 pub trait FunctionServiceExt {

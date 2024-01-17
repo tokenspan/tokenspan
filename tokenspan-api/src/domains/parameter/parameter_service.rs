@@ -8,8 +8,8 @@ use dojo_orm::Database;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use crate::api::dto::{ParameterArgs, ParameterCreateInput, ParameterUpdateInput};
-use crate::api::models::Parameter;
+use crate::domains::dto::{ParameterArgs, ParameterCreateInput, ParameterUpdateInput};
+use crate::domains::models::Parameter;
 
 #[async_trait::async_trait]
 pub trait ParameterServiceExt {

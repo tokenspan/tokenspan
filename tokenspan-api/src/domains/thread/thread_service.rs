@@ -5,7 +5,8 @@ use std::time::Instant;
 use anyhow::Result;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
-    ChatCompletionRequestMessage, CreateChatCompletionRequestArgs, CreateChatCompletionResponse,
+    ChatCompletionRequestMessage, ChatCompletionToolArgs, ChatCompletionToolType,
+    CreateChatCompletionRequestArgs, CreateChatCompletionResponse, FunctionObjectArgs,
 };
 use async_openai::Client;
 use axum::extract::FromRef;
@@ -20,18 +21,21 @@ use tracing::info;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use crate::api::api_key::api_key_error::ApiKeyError;
-use crate::api::dto::{
+use crate::domains::api_key::api_key_error::ApiKeyError;
+use crate::domains::dto::{
     ExecutionCreateInput, ParameterCreateInput, ThreadExecuteInput, ThreadVersionCreateInput,
+    ToolType,
 };
-use crate::api::models::{Elapsed, Execution, ExecutionStatus, Model, Parameter, Thread, Usage};
-use crate::api::services::{
-    ApiKeyServiceDyn, ExecutionServiceDyn, MessageServiceDyn, ModelServiceDyn, ParameterServiceDyn,
-    ProviderServiceDyn, ThreadVersionServiceDyn,
+use crate::domains::models::{
+    Elapsed, Execution, ExecutionStatus, Function, Model, Parameter, Thread, Usage,
 };
-use crate::api::thread::dto::{ThreadArgs, ThreadCreateInput, ThreadUpdateInput};
-use crate::api::thread::thread_error::ThreadError;
-use crate::prompt::{ChatMessage, PromptRole};
+use crate::domains::services::{
+    ApiKeyServiceDyn, ExecutionServiceDyn, FunctionServiceDyn, MessageServiceDyn, ModelServiceDyn,
+    ParameterServiceDyn, ProviderServiceDyn, ThreadVersionServiceDyn,
+};
+use crate::domains::thread::dto::{ThreadArgs, ThreadCreateInput, ThreadUpdateInput};
+use crate::domains::thread::thread_error::ThreadError;
+use crate::prompts::{ChatMessage, PromptRole};
 use crate::state::AppState;
 
 #[async_trait::async_trait]
@@ -66,6 +70,7 @@ pub struct ThreadService {
     execution_service: ExecutionServiceDyn,
     thread_version_service: ThreadVersionServiceDyn,
     message_service: MessageServiceDyn,
+    function_service: FunctionServiceDyn,
 }
 
 impl ThreadService {
@@ -76,6 +81,7 @@ impl ThreadService {
         api_key: &String,
         parameter: Parameter,
         model: Model,
+        functions: &[Function],
     ) -> Result<(
         CreateChatCompletionResponse,
         Vec<ChatCompletionRequestMessage>,
@@ -85,7 +91,7 @@ impl ThreadService {
             messages.push(message.try_into()?);
         }
 
-        let request = CreateChatCompletionRequestArgs::default()
+        let mut request = CreateChatCompletionRequestArgs::default()
             .model(model.name.clone())
             .max_tokens(parameter.max_tokens as u16)
             .temperature(parameter.temperature)
@@ -96,6 +102,28 @@ impl ThreadService {
             .messages(messages.clone())
             .build()
             .map_err(|e| anyhow::anyhow!(e))?;
+
+        let mut tools = vec![];
+        if !functions.is_empty() {
+            for function in functions.iter().cloned() {
+                let tool_args = ChatCompletionToolArgs::default()
+                    .r#type(ChatCompletionToolType::Function)
+                    .function(
+                        FunctionObjectArgs::default()
+                            .name(function.name)
+                            .description(function.description)
+                            .parameters(function.parameters)
+                            .build()
+                            .map_err(|e| anyhow::anyhow!(e.to_string()))?,
+                    )
+                    .build()
+                    .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+
+                tools.push(tool_args);
+            }
+        }
+
+        request.tools = Some(tools);
 
         let config = OpenAIConfig::new()
             .with_api_key(api_key)
@@ -291,6 +319,21 @@ impl ThreadServiceExt for ThreadService {
         let provider_elapsed = start.elapsed();
 
         let start = Instant::now();
+        let function_ids = input
+            .tools
+            .iter()
+            .filter_map(|tool| {
+                if tool.ty == ToolType::Function {
+                    Some(tool.id)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        let functions = self.function_service.find_by_ids(&function_ids).await?;
+        let function_elapsed = start.elapsed();
+
+        let start = Instant::now();
         let response = self
             .chat_completion(
                 &provider.base_url,
@@ -298,6 +341,7 @@ impl ThreadServiceExt for ThreadService {
                 &decrypted_key,
                 parameter.clone(),
                 model,
+                &functions,
             )
             .await;
         let api_call_elapsed = start.elapsed();
@@ -328,14 +372,15 @@ impl ThreadServiceExt for ThreadService {
         let post_elapsed = start.elapsed();
 
         let elapsed = Elapsed {
-            api_key_elapsed: api_key_elapsed.as_secs_f64(),
-            thread_version_elapsed: thread_version_elapsed.as_secs_f64(),
-            messages_elapsed: messages_elapsed.as_secs_f64(),
-            parameter_elapsed: parameter_elapsed.as_secs_f64(),
-            model_elapsed: model_elapsed.as_secs_f64(),
-            provider_elapsed: provider_elapsed.as_secs_f64(),
-            api_call_elapsed: api_call_elapsed.as_secs_f64(),
-            post_elapsed: post_elapsed.as_secs_f64(),
+            api_key: api_key_elapsed.as_secs_f64(),
+            thread_version: thread_version_elapsed.as_secs_f64(),
+            messages: messages_elapsed.as_secs_f64(),
+            parameter: parameter_elapsed.as_secs_f64(),
+            model: model_elapsed.as_secs_f64(),
+            provider: provider_elapsed.as_secs_f64(),
+            function: function_elapsed.as_secs_f64(),
+            api_call: api_call_elapsed.as_secs_f64(),
+            post: post_elapsed.as_secs_f64(),
         };
 
         let execution = self

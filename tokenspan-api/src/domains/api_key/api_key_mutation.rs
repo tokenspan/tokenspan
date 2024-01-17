@@ -1,12 +1,12 @@
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 use uuid::Uuid;
 
-use crate::api::api_key::api_key_model::ApiKey;
-use crate::api::api_key::dto::{ApiKeyCreateInput, ApiKeyUpdateInput};
-use crate::api::models::{ParsedToken, UserRole};
-use crate::api::services::ApiKeyServiceDyn;
-use crate::error::AppError;
-use crate::guard::RoleGuard;
+use crate::domains::api_key::api_key_model::ApiKey;
+use crate::domains::api_key::dto::{ApiKeyCreateInput, ApiKeyUpdateInput};
+use crate::domains::models::{ParsedToken, UserRole};
+use crate::domains::services::ApiKeyServiceDyn;
+use crate::errors::AppError;
+use crate::guards::RoleGuard;
 
 #[derive(Default)]
 pub struct ApiKeyMutation;

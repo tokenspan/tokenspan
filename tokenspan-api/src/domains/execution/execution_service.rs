@@ -8,8 +8,8 @@ use dojo_orm::Database;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use crate::api::execution::dto::{ExecutionArgs, ExecutionCreateInput};
-use crate::api::execution::execution_model::Execution;
+use crate::domains::execution::dto::{ExecutionArgs, ExecutionCreateInput};
+use crate::domains::execution::execution_model::Execution;
 
 #[async_trait::async_trait]
 pub trait ExecutionServiceExt {

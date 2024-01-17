@@ -4,9 +4,9 @@ use std::sync::Arc;
 use async_graphql::dataloader::Loader;
 use uuid::Uuid;
 
-use crate::api::models::Thread;
-use crate::api::services::ThreadServiceDyn;
-use crate::api::thread::thread_error::ThreadError;
+use crate::domains::models::Thread;
+use crate::domains::services::ThreadServiceDyn;
+use crate::domains::thread::thread_error::ThreadError;
 
 pub struct ThreadLoader {
     pub thread_service: ThreadServiceDyn,

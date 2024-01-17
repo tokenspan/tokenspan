@@ -4,9 +4,9 @@ use std::sync::Arc;
 use async_graphql::dataloader::Loader;
 use uuid::Uuid;
 
-use crate::api::models::ThreadVersion;
-use crate::api::services::ThreadVersionServiceDyn;
-use crate::api::thread_version::thread_version_error::ThreadVersionError;
+use crate::domains::models::ThreadVersion;
+use crate::domains::services::ThreadVersionServiceDyn;
+use crate::domains::thread_version::thread_version_error::ThreadVersionError;
 
 pub struct ThreadVersionLoader {
     pub thread_version_service: ThreadVersionServiceDyn,

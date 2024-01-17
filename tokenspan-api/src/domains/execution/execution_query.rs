@@ -3,10 +3,10 @@ use async_graphql::{Context, Object, Result};
 use dojo_orm::pagination::{AdditionalFields, Cursor};
 use uuid::Uuid;
 
-use crate::api::execution::dto::ExecutionArgs;
-use crate::api::execution::execution_model::Execution;
-use crate::api::services::ExecutionServiceDyn;
-use crate::error::AppError;
+use crate::domains::execution::dto::ExecutionArgs;
+use crate::domains::execution::execution_model::Execution;
+use crate::domains::services::ExecutionServiceDyn;
+use crate::errors::AppError;
 
 #[derive(Default)]
 pub struct ExecutionQuery;

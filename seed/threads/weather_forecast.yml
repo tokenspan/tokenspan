@@ -1,0 +1,44 @@
+id: 8665b7f2-f5a7-4ca5-9bb1-416ba9614bed
+name: Weather forecast
+slug: weather-forecast
+owner_id: 3bde4767-4e87-4a5c-a622-c8fa7c97f471
+private: false
+created_at: 2021-04-05T14:30:30
+updated_at: 2021-04-05T14:30:30
+versions:
+  - id: 3f80b806-33c6-4280-bb74-baa94d4e59f6
+    owner_id: 3bde4767-4e87-4a5c-a622-c8fa7c97f471
+    semver: 0.0.0
+    version: 0
+    release_note: ""
+    description: Get the weather forecast for a location.
+    document: ""
+    status: draft
+    published_at: 2021-04-05T14:30:30
+    thread_id: 8665b7f2-f5a7-4ca5-9bb1-416ba9614bed
+    created_at: 2021-04-05T14:30:30
+    updated_at: 2021-04-05T14:30:30
+    parameters:
+      - id: f5628a28-c55d-4029-9559-f588f7cdbb5e
+        name: default
+        temperature: 0.7
+        max_tokens: 256
+        stop_sequences: [ ]
+        top_p: 1.0
+        frequency_penalty: 0.0
+        presence_penalty: 0.0
+        extra: null
+        is_default: true
+        thread_version_id: 3f80b806-33c6-4280-bb74-baa94d4e59f6
+        model_id: 9f7d2d64-7368-44df-8d08-f772309d757d
+        created_at: 2021-04-05T14:30:30
+        updated_at: 2021-04-05T14:30:30
+    messages:
+      - id: cca75ab7-8011-4af5-8d2f-1e551c54eb34
+        role: user
+        content: What is the weather forecast for ${location} in ${format}?
+        raw: What is the weather forecast for ${location} in ${format}?
+        owner_id: 3bde4767-4e87-4a5c-a622-c8fa7c97f471
+        thread_version_id: 3f80b806-33c6-4280-bb74-baa94d4e59f6
+        created_at: 2021-04-05T14:30:30
+        updated_at: 2021-04-05T14:30:30

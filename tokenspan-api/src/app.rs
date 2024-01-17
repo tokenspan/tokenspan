@@ -19,7 +19,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 use crate::configs::{AppConfig, AppEnv};
 use crate::graphql::{build_schema, graphiql, graphql_handler, graphql_sandbox};
 use crate::state::AppState;
-use crate::{api, configs, guard};
+use crate::{configs, domains, guards};
 
 async fn handler_404() -> impl IntoResponse {
     (
@@ -84,10 +84,13 @@ pub async fn make_app_with_state(config: AppConfig, state: AppState) -> Result<R
     let app = Router::new()
         .route("/graphql", get(graphql_sandbox).post(graphql_handler))
         .route("/graphiql", get(graphiql))
-        .nest("/api/:version", api::ApiRouter::new())
+        .nest("/api/:version", domains::ApiRouter::new())
         .route_service("/ws", GraphQLSubscription::new(schema.clone()))
         .fallback(handler_404)
-        .layer(middleware::from_fn_with_state(config.clone(), guard::guard))
+        .layer(middleware::from_fn_with_state(
+            config.clone(),
+            guards::guard,
+        ))
         .layer(cors_layer)
         .layer(timeout_layer)
         .layer(trace_layer)

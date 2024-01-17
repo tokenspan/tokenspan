@@ -8,11 +8,11 @@ use tracing::info;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use crate::api::auth::auth_error::AuthError;
-use crate::api::auth::auth_model::{AuthPayload, Claims, ParsedToken, SessionPayload};
-use crate::api::models::{RefreshPayload, UserRole};
-use crate::api::services::UserServiceDyn;
 use crate::configs::AuthConfig;
+use crate::domains::auth::auth_error::AuthError;
+use crate::domains::auth::auth_model::{AuthPayload, Claims, ParsedToken, SessionPayload};
+use crate::domains::models::{RefreshPayload, UserRole};
+use crate::domains::services::UserServiceDyn;
 
 #[async_trait::async_trait]
 pub trait AuthServiceExt {

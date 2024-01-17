@@ -3,10 +3,10 @@ use async_graphql::{Context, Object, Result};
 use dojo_orm::pagination::{AdditionalFields, Cursor};
 use uuid::Uuid;
 
-use crate::api::parameter::dto::ParameterArgs;
-use crate::api::parameter::parameter_model::Parameter;
-use crate::api::services::ParameterServiceDyn;
-use crate::error::AppError;
+use crate::domains::parameter::dto::ParameterArgs;
+use crate::domains::parameter::parameter_model::Parameter;
+use crate::domains::services::ParameterServiceDyn;
+use crate::errors::AppError;
 
 #[derive(Default)]
 pub struct ParameterQuery;

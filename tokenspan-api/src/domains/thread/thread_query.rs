@@ -1,12 +1,12 @@
-use crate::api::models::ParsedToken;
+use crate::domains::models::ParsedToken;
 use async_graphql::connection::Connection;
 use async_graphql::{Context, ErrorExtensions, Object, Result};
 use uuid::Uuid;
 
-use crate::api::services::ThreadServiceDyn;
-use crate::api::thread::dto::ThreadArgs;
-use crate::api::thread::thread_model::Thread;
-use crate::error::AppError;
+use crate::domains::services::ThreadServiceDyn;
+use crate::domains::thread::dto::ThreadArgs;
+use crate::domains::thread::thread_model::Thread;
+use crate::errors::AppError;
 use dojo_orm::pagination::{AdditionalFields, Cursor};
 
 #[derive(Default)]

@@ -7,9 +7,9 @@ use axum_extra::headers::authorization::Bearer;
 use axum_extra::headers::{Authorization, HeaderMapExt};
 use tracing::info;
 
-use crate::api::models::{ParsedToken, UserRole};
-use crate::api::services::AuthService;
 use crate::configs::AppConfig;
+use crate::domains::models::{ParsedToken, UserRole};
+use crate::domains::services::AuthService;
 
 pub async fn guard(
     State(config): State<AppConfig>,

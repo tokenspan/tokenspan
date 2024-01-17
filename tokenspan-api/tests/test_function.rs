@@ -4,9 +4,9 @@ use axum_test::TestServer;
 use googletest::matchers::{anything, eq, some};
 use googletest::prelude::*;
 use graphql_client::{GraphQLQuery, Response};
-use tokenspan_api::api::dto::FunctionCreateInput;
+use tokenspan_api::domains::dto::FunctionCreateInput;
 
-use tokenspan_api::api::models::UserRole;
+use tokenspan_api::domains::models::UserRole;
 use tokenspan_api::state::AppState;
 
 use crate::graphql::{

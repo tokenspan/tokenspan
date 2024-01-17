@@ -9,7 +9,7 @@ use serde::de::DeserializeOwned;
 use thiserror::Error;
 use validator::{Validate, ValidationErrors};
 
-use crate::error::ErrorResponse;
+use crate::errors::ErrorResponse;
 
 #[derive(Clone, Debug)]
 pub struct ValidQuery<T: Validate>(pub T);

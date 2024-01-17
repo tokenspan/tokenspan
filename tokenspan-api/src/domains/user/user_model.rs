@@ -1,4 +1,4 @@
-use crate::api::user::user_error::UserError;
+use crate::domains::user::user_error::UserError;
 use async_graphql::{Enum, SimpleObject};
 use chrono::NaiveDateTime;
 use data_encoding::HEXUPPER;

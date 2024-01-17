@@ -9,8 +9,8 @@ use dojo_orm::Database;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use crate::api::dto::{MessageArgs, MessageCreateInput, MessageUpdateInput};
-use crate::api::models::Message;
+use crate::domains::dto::{MessageArgs, MessageCreateInput, MessageUpdateInput};
+use crate::domains::models::Message;
 use crate::state::AppState;
 
 #[async_trait::async_trait]

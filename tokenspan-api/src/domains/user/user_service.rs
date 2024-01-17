@@ -8,8 +8,8 @@ use dojo_orm::Database;
 use typed_builder::TypedBuilder;
 use uuid::Uuid;
 
-use crate::api::dto::{UserArgs, UserUpdateInput};
-use crate::api::models::{User, UserRole};
+use crate::domains::dto::{UserArgs, UserUpdateInput};
+use crate::domains::models::{User, UserRole};
 
 #[async_trait::async_trait]
 pub trait UserServiceExt {

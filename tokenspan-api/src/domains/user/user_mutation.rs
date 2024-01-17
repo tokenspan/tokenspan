@@ -2,9 +2,9 @@ use async_graphql::{Context, Object, Result};
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::api::models::UserRole;
-use crate::api::user::dto::UserCreateInput;
-use crate::api::user::user_model::User;
+use crate::domains::models::UserRole;
+use crate::domains::user::dto::UserCreateInput;
+use crate::domains::user::user_model::User;
 
 #[derive(Default)]
 pub struct UserMutation;
