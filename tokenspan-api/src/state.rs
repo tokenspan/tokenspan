@@ -33,10 +33,7 @@ impl AppState {
         let db = Database::new(app_config.database.url.as_str()).await?;
         let mut conn = db.get().await?;
         let client = conn.deref_mut();
-        embedded::migrations::runner()
-            .run_async(client)
-            .await
-            .unwrap();
+        embedded::migrations::runner().run_async(client).await?;
 
         let user_service: UserServiceDyn = UserService::builder().db(db.clone()).build().into();
         let auth_service: AuthServiceDyn = AuthService::builder()
