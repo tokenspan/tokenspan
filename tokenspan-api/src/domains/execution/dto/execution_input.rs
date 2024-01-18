@@ -2,12 +2,12 @@ use std::collections::HashMap;
 
 use uuid::Uuid;
 
-use crate::domains::models::{Elapsed, ExecutionStatus, Message, Usage};
+use crate::domains::models::{Elapsed, ExecutionStatus, Message, Parameter, Usage};
 
 pub struct ExecutionCreateInput {
     pub thread_id: Uuid,
     pub thread_version_id: Uuid,
-    pub parameter_id: Uuid,
+    pub parameter: Parameter,
     pub elapsed: Elapsed,
     pub input_messages: Vec<Message>,
     pub output_messages: Vec<Message>,

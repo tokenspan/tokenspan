@@ -67,7 +67,7 @@ impl ExecutionServiceExt for ExecutionService {
             id: Uuid::new_v4(),
             thread_version_id: input.thread_version_id,
             executed_by_id: executor_id,
-            parameter_id: input.parameter_id,
+            parameter: input.parameter,
             input_messages: input.input_messages,
             output_messages: input.output_messages,
             elapsed: input.elapsed,
@@ -79,7 +79,7 @@ impl ExecutionServiceExt for ExecutionService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db.insert(&input).await
+        self.db.insert(&input).exec().await
     }
 
     async fn delete_by_id(&self, id: &Uuid) -> Result<Execution> {

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use uuid::Uuid;
 
-use crate::domains::models::Message;
+use crate::domains::models::{Message, Parameter};
 
 #[derive(SimpleObject, Debug, Clone, Serialize, Deserialize, EmbeddedModel)]
 pub struct Usage {
@@ -33,15 +33,12 @@ pub struct Execution {
     pub id: Uuid,
     pub thread_version_id: Uuid,
     pub executed_by_id: Uuid,
-    pub parameter_id: Uuid,
-    #[dojo(embedded)]
+    pub parameter: Parameter,
     pub elapsed: Elapsed,
-    #[dojo(embedded)]
     pub input_messages: Vec<Message>,
     pub output_messages: Vec<Message>,
     pub response: Option<serde_json::Value>,
     pub error: Option<serde_json::Value>,
-    #[dojo(embedded)]
     pub usage: Option<Usage>,
     pub status: ExecutionStatus,
     pub created_at: NaiveDateTime,

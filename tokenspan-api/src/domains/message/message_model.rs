@@ -13,6 +13,7 @@ pub struct Message {
     pub raw: String,
     pub content: String,
     pub role: String,
+    pub index: i32,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }

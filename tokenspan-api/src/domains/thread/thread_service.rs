@@ -200,7 +200,7 @@ impl ThreadServiceExt for ThreadService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db.insert(&input).await
+        self.db.insert(&input).exec().await
     }
 
     async fn new(&self, input: ThreadCreateInput, owner_id: Uuid) -> Result<Thread> {
@@ -389,8 +389,8 @@ impl ThreadServiceExt for ThreadService {
                 ExecutionCreateInput {
                     thread_id: thread_version.thread_id,
                     thread_version_id: input.thread_version_id,
-                    parameter_id: parameter.id,
                     variables: input.variables,
+                    parameter,
                     input_messages,
                     output_messages: vec![],
                     elapsed,

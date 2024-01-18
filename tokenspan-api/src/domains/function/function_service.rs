@@ -74,7 +74,7 @@ impl FunctionServiceExt for FunctionService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db.insert(&input).await
+        self.db.insert(&input).exec().await
     }
 
     async fn update_by_id(&self, id: &Uuid, input: FunctionUpdateInput) -> Result<Function> {

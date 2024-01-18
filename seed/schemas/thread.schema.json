@@ -163,6 +163,9 @@
         "owner_id": {
           "type": "string"
         },
+        "index": {
+          "type": "integer"
+        },
         "created_at": {
           "type": "string",
           "format": "date-time"
@@ -179,6 +182,7 @@
         "raw",
         "thread_version_id",
         "owner_id",
+        "index",
         "created_at",
         "updated_at"
       ],

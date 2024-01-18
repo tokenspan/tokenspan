@@ -19,9 +19,7 @@ pub struct Model {
     pub description: String,
     pub slug: String,
     pub context: i32,
-    #[dojo(embedded)]
     pub input_pricing: Pricing,
-    #[dojo(embedded)]
     pub output_pricing: Pricing,
     pub training_at: NaiveDateTime,
     pub provider_id: Uuid,

@@ -1,11 +1,11 @@
 use async_graphql::SimpleObject;
 use chrono::NaiveDateTime;
-use dojo_macros::Model;
+use dojo_macros::{EmbeddedModel, Model};
 use serde::{Deserialize, Serialize};
 
 use uuid::Uuid;
 
-#[derive(SimpleObject, Clone, Serialize, Deserialize, Debug, Model)]
+#[derive(SimpleObject, Clone, Serialize, Deserialize, Debug, Model, EmbeddedModel)]
 #[serde(rename(serialize = "camelCase"))]
 #[dojo(name = "parameters", sort_keys = ["created_at", "id"])]
 pub struct Parameter {

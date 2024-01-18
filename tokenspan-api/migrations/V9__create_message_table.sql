@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS messages
     content           TEXT      NOT NULL,
     role              TEXT      NOT NULL,
     raw               TEXT      NOT NULL,
+    index             INTEGER   NOT NULL,
     created_at        TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMP NOT NULL DEFAULT NOW(),
 

@@ -34,7 +34,7 @@ impl<'a> Seed for ModelSeed<'a> {
                 continue;
             }
 
-            self.db.insert(&item).await?;
+            self.db.insert(&item).exec().await?;
             info!("Model {} created", item.id);
         }
 
