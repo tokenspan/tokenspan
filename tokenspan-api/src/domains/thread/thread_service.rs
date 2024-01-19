@@ -121,9 +121,9 @@ impl ThreadService {
 
                 tools.push(tool_args);
             }
-        }
 
-        request.tools = Some(tools);
+            request.tools = Some(tools);
+        }
 
         let config = OpenAIConfig::new()
             .with_api_key(api_key)

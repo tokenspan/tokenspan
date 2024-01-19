@@ -1,13 +1,34 @@
-# execute task
-POST {{host}}/api/v1/tasks/execute
+### execute task
+POST {{host}}/api/v1/threads/execute
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "parameterId": "00000000-0000-0000-0000-000000000000",
-  "taskVersionId": "2e48ccab-c9ce-4982-9af7-e69c2fa25680",
-  "apiKeyId": "862c53e7-7c84-472c-92eb-26880ada7bd8",
+  "thread_version_id": "ffc805ce-90fc-4a17-a0e8-2d9a64a81707",
+  "parameter_id": "91706857-2306-4f9f-8b11-ab45b09f76b1",
+  "api_key_id": "400c18e8-7513-4202-909f-48fd476658aa",
   "variables": {
-    "text": "She no went to the market."
+    "statement": "She no went to the market."
   }
+}
+
+### weather
+POST {{host}}/api/v1/threads/execute
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "thread_version_id": "3f80b806-33c6-4280-bb74-baa94d4e59f6",
+  "parameter_id": "f5628a28-c55d-4029-9559-f588f7cdbb5e",
+  "api_key_id": "061eb04d-97a9-41ba-baa6-5e1a80148bdf",
+  "variables": {
+    "location": "Chiyoda Tokyo",
+    "format": "celsius"
+  },
+  "tools": [
+    {
+      "type": "function",
+      "id": "12ac51de-b3d9-4abb-ba47-2e583b44c9d9"
+    }
+  ]
 }
