@@ -76,13 +76,24 @@ impl MessageServiceExt for MessageService {
     }
 
     async fn create(&self, input: MessageCreateInput, owner_id: Uuid) -> Result<Message> {
+        let index = if let Some(index) = input.index {
+            index
+        } else {
+            self.db
+                .bind::<Message>()
+                .where_by(equals("thread_version_id", &input.thread_version_id))
+                .order_by(desc("index"))
+                .count()
+                .await? as i32
+        };
+
         let input = Message {
             id: Uuid::new_v4(),
             role: input.role,
             thread_version_id: input.thread_version_id,
             owner_id,
+            index,
             raw: input.raw,
-            index: input.index,
             content: input.content,
             created_at: Utc::now().naive_utc(),
             updated_at: Utc::now().naive_utc(),

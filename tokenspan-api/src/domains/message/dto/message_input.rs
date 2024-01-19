@@ -9,7 +9,7 @@ pub struct MessageCreateInput {
     pub content: String,
     pub role: String,
     pub thread_version_id: Uuid,
-    pub index: i32,
+    pub index: Option<i32>,
 }
 
 #[derive(InputObject, UpdateModel)]

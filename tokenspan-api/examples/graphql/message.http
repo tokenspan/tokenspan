@@ -1,0 +1,20 @@
+### Create message
+GRAPHQL {{host}}/graphql
+Authorization: Bearer {{token}}
+
+mutation CreateMessage($input: MessageCreateInput!) {
+  createMessage(input: $input) {
+    id
+    index
+    content
+  }
+}
+
+{
+  "input": {
+    "content": "test",
+    "raw": "test",
+    "role": "user",
+    "threadVersionId": "3f80b806-33c6-4280-bb74-baa94d4e59f6"
+  }
+}
