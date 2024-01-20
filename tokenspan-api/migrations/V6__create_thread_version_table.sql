@@ -21,8 +21,13 @@ CREATE TABLE thread_versions
     CONSTRAINT fk_thread_versions_owner_id FOREIGN KEY (owner_id) REFERENCES users (id)
 );
 
-CREATE INDEX idx_thread_versions_thread_id ON thread_versions (thread_id);
-CREATE INDEX idx_thread_versions_owner_id ON thread_versions (owner_id);
-CREATE UNIQUE INDEX idx_thread_versions_version ON thread_versions (id, version);
-CREATE UNIQUE INDEX idx_thread_versions_semver ON thread_versions (id, semver);
-CREATE INDEX idx_thread_versions_created_at ON thread_versions (created_at);
+ALTER TABLE thread_versions
+    ADD search tsvector GENERATED ALWAYS AS
+        (TO_TSVECTOR('simple', description) || ' ' || TO_TSVECTOR('simple', document) || ' ') STORED;
+
+CREATE INDEX idx_thread_version_thread_id ON thread_versions (thread_id);
+CREATE INDEX idx_thread_version_owner_id ON thread_versions (owner_id);
+CREATE UNIQUE INDEX idx_thread_version_version ON thread_versions (id, version);
+CREATE UNIQUE INDEX idx_thread_version_semver ON thread_versions (id, semver);
+CREATE INDEX idx_thread_version_created_at ON thread_versions (created_at, id);
+CREATE INDEX idx_thread_version_search ON thread_versions USING GIN (search);

@@ -45,8 +45,16 @@ pub struct MessageService {
 #[async_trait::async_trait]
 impl MessageServiceExt for MessageService {
     async fn paginate(&self, args: MessageArgs) -> Result<Pagination<Message>> {
+        let mut predicates = vec![];
+        if let Some(r#where) = &args.r#where {
+            if let Some(content) = &r#where.content {
+                predicates.push(text_search("content", "simple", content));
+            }
+        }
+
         self.db
             .bind::<Message>()
+            .where_by(and(&predicates))
             .cursor(args.first, args.after, args.last, args.before)
             .await
     }

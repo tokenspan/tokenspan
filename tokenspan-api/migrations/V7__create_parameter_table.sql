@@ -21,6 +21,6 @@ CREATE TABLE parameters
     CONSTRAINT fk_parameters_thread_version_id FOREIGN KEY (thread_version_id) REFERENCES thread_versions (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_parameters_model_id ON parameters (model_id);
-CREATE INDEX idx_parameters_thread_version_id ON parameters (thread_version_id);
-CREATE INDEX idx_parameters_created_at ON parameters (created_at);
+CREATE INDEX idx_parameter_id ON parameters (model_id);
+CREATE INDEX idx_parameter_thread_version_id ON parameters (thread_version_id);
+CREATE INDEX idx_parameter_created_at ON parameters (created_at, id);

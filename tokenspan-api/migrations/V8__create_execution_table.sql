@@ -22,6 +22,6 @@ CREATE TABLE executions
     CONSTRAINT fk_executions_executed_by_id FOREIGN KEY (executed_by_id) REFERENCES users (id)
 );
 
-CREATE INDEX idx_executions_thread_version_id ON executions (thread_version_id);
-CREATE INDEX idx_executions_executed_by_id ON executions (executed_by_id);
-CREATE INDEX idx_executions_created_at ON executions (created_at);
+CREATE INDEX idx_execution_thread_version_id ON executions (thread_version_id);
+CREATE INDEX idx_execution_executed_by_id ON executions (executed_by_id);
+CREATE INDEX idx_execution_created_at ON executions (created_at, id);

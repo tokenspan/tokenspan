@@ -12,4 +12,4 @@ CREATE TABLE IF NOT EXISTS providers
 );
 
 CREATE UNIQUE INDEX idx_provider_slug ON providers (slug);
-CREATE INDEX idx_provider_created_at ON providers (created_at);
+CREATE INDEX idx_provider_created_at ON providers (created_at, id);

@@ -19,4 +19,4 @@ CREATE TABLE models
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_model_slug ON models (slug);
-CREATE INDEX IF NOT EXISTS idx_model_created_at ON models (created_at);
+CREATE INDEX IF NOT EXISTS idx_model_created_at ON models (created_at, id);

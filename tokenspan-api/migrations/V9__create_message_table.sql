@@ -13,6 +13,11 @@ CREATE TABLE IF NOT EXISTS messages
     CONSTRAINT fk_messages_owner_id FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_messages_thread_version_id ON messages (thread_version_id);
-CREATE INDEX IF NOT EXISTS idx_messages_owner_id ON messages (owner_id);
-CREATE INDEX IF NOT EXISTS idx_created_at ON messages (created_at);
+ALTER TABLE messages
+    ADD search tsvector GENERATED ALWAYS AS
+        (TO_TSVECTOR('simple', content) || ' ') STORED;
+
+CREATE INDEX IF NOT EXISTS idx_message_thread_version_id ON messages (thread_version_id);
+CREATE INDEX IF NOT EXISTS idx_message_owner_id ON messages (owner_id);
+CREATE INDEX IF NOT EXISTS idx_message_created_at ON messages (created_at, id);
+CREATE INDEX idx_message_search ON messages USING GIN(search);

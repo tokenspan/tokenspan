@@ -58,8 +58,24 @@ pub struct ThreadVersionService {
 #[async_trait::async_trait]
 impl ThreadVersionServiceExt for ThreadVersionService {
     async fn paginate(&self, args: ThreadVersionArgs) -> Result<Pagination<ThreadVersion>> {
+        let mut predicates = vec![];
+        if let Some(r#where) = &args.r#where {
+            if let Some(thread_id) = &r#where.thread_id {
+                predicates.push(equals("thread_id", thread_id));
+            }
+
+            if let Some(description) = &r#where.description {
+                predicates.push(text_search("description", "simple", description));
+            }
+
+            if let Some(document) = &r#where.document {
+                predicates.push(text_search("document", "simple", document));
+            }
+        }
+
         self.db
             .bind::<ThreadVersion>()
+            .where_by(and(&predicates))
             .cursor(args.first, args.after, args.last, args.before)
             .await
     }

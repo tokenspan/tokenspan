@@ -12,5 +12,11 @@ CREATE TABLE threads
     CONSTRAINT fk_threads_owner_id FOREIGN KEY (owner_id) REFERENCES users (id)
 );
 
-CREATE UNIQUE INDEX idx_threads_slug ON threads (slug);
-CREATE INDEX idx_threads_owner_id ON threads (owner_id);
+ALTER TABLE threads
+    ADD search tsvector GENERATED ALWAYS AS
+        (TO_TSVECTOR('simple', name) || ' ') STORED;
+
+CREATE UNIQUE INDEX idx_thread_slug ON threads (slug);
+CREATE INDEX idx_thread_owner_id ON threads (owner_id);
+CREATE INDEX idx_thread_created_at ON threads (created_at, id);
+CREATE INDEX idx_thread_search ON threads USING GIN(search);

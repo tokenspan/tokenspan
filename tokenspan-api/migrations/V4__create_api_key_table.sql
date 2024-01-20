@@ -14,5 +14,5 @@ CREATE TABLE api_keys
     CONSTRAINT fk_api_keys_provider_id FOREIGN KEY (provider_id) REFERENCES providers (id)
 );
 
-CREATE INDEX idx_api_keys_owner_id ON api_keys (owner_id);
-CREATE INDEX idx_api_keys_provider_id ON api_keys (provider_id);
+CREATE INDEX idx_api_key_owner_id ON api_keys (owner_id);
+CREATE INDEX idx_api_key_provider_id ON api_keys (provider_id, id);

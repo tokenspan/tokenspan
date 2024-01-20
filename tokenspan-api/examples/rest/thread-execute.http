@@ -1,4 +1,4 @@
-### execute task
+### grammar correct
 POST {{host}}/api/v1/threads/execute
 Content-Type: application/json
 Authorization: Bearer {{token}}
@@ -20,7 +20,7 @@ Authorization: Bearer {{token}}
 {
   "thread_version_id": "3f80b806-33c6-4280-bb74-baa94d4e59f6",
   "parameter_id": "f5628a28-c55d-4029-9559-f588f7cdbb5e",
-  "api_key_id": "061eb04d-97a9-41ba-baa6-5e1a80148bdf",
+  "api_key_id": "400c18e8-7513-4202-909f-48fd476658aa",
   "variables": {
     "location": "Chiyoda Tokyo",
     "format": "celsius"

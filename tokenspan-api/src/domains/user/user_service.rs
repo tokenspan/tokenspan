@@ -38,9 +38,21 @@ pub struct UserService {
 #[async_trait::async_trait]
 impl UserServiceExt for UserService {
     async fn paginate(&self, args: UserArgs) -> Result<Pagination<User>> {
+        let mut predicates = vec![];
+        if let Some(r#where) = &args.r#where {
+            if let Some(username) = &r#where.username {
+                predicates.push(text_search("username", "english", username));
+            }
+
+            if let Some(email) = &r#where.email {
+                predicates.push(text_search("email", "simple", email));
+            }
+        }
+
         self.db
             .bind::<User>()
-            .cursor(args.first, args.after, args.first, args.before)
+            .where_by(and(&predicates))
+            .cursor(args.first, args.after, args.last, args.before)
             .await
     }
 

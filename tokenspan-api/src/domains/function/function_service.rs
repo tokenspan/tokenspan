@@ -32,8 +32,20 @@ pub struct FunctionService {
 #[async_trait::async_trait]
 impl FunctionServiceExt for FunctionService {
     async fn paginate(&self, args: FunctionArgs) -> Result<Pagination<Function>> {
+        let mut predicates = vec![];
+        if let Some(r#where) = &args.r#where {
+            if let Some(name) = &r#where.name {
+                predicates.push(text_search("name", "simple", name));
+            }
+
+            if let Some(description) = &r#where.description {
+                predicates.push(text_search("name", "simple", description));
+            }
+        }
+
         self.db
             .bind::<Function>()
+            .where_by(and(&predicates))
             .cursor(args.first, args.after, args.last, args.before)
             .await
     }

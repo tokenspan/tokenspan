@@ -10,4 +10,9 @@ CREATE TABLE IF NOT EXISTS functions
     updated_at  TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_created_at ON functions (created_at);
+ALTER TABLE functions
+    ADD search tsvector GENERATED ALWAYS AS
+        (TO_TSVECTOR('simple', name) || ' ' || TO_TSVECTOR('simple', description) || ' ') STORED;
+
+CREATE INDEX IF NOT EXISTS idx_function_created_at ON functions (created_at, id);
+CREATE INDEX idx_function_search ON functions USING GIN(search);

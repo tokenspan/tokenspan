@@ -4,12 +4,19 @@ use uuid::Uuid;
 use dojo_orm::pagination::Cursor;
 
 #[derive(InputObject, Default)]
+pub struct ThreadVersionWhereArgs {
+    pub thread_id: Option<Uuid>,
+    pub description: Option<String>,
+    pub document: Option<String>,
+}
+
+#[derive(InputObject, Default)]
 pub struct ThreadVersionArgs {
-    pub thread_id: Uuid,
     pub first: Option<i64>,
     pub last: Option<i64>,
     pub before: Option<Cursor>,
     pub after: Option<Cursor>,
+    pub r#where: Option<ThreadVersionWhereArgs>,
 }
 
 #[derive(InputObject)]

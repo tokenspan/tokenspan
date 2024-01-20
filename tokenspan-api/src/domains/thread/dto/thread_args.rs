@@ -3,13 +3,9 @@ use dojo_orm::pagination::Cursor;
 use uuid::Uuid;
 
 #[derive(InputObject, Default)]
-pub struct ThreadWhereOwnerIdArgs {
-    pub equals: Option<Uuid>,
-}
-
-#[derive(InputObject, Default)]
 pub struct ThreadWhereArgs {
-    pub owner_id: Option<ThreadWhereOwnerIdArgs>,
+    pub owner_id: Option<Uuid>,
+    pub name: Option<String>,
 }
 
 #[derive(InputObject, Default)]
