@@ -94,7 +94,7 @@ impl ParameterServiceExt for ParameterService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db.insert(&input).exec().await
+        self.db.insert(&[&input]).first_or_throw().await
     }
 
     async fn duplicate_by_thread_version_id(
@@ -112,7 +112,8 @@ impl ParameterServiceExt for ParameterService {
             parameter.updated_at = Utc::now().naive_utc();
         }
 
-        self.db.insert_many(&parameters).exec().await
+        let parameters = parameters.iter().collect::<Vec<_>>();
+        self.db.insert(&parameters).all().await
     }
 
     async fn update_by_id(&self, id: &Uuid, input: ParameterUpdateInput) -> Result<Parameter> {

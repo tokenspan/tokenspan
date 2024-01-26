@@ -46,7 +46,7 @@ impl ApiKeyServiceExt for ApiKeyService {
     }
 
     async fn paginate(&self, args: ApiKeyArgs) -> Result<Pagination<ApiKey>> {
-        let mut predicates: Vec<Predicate> = vec![];
+        let mut predicates = vec![];
         if let Some(where_args) = args.r#where {
             if let Some(provider_id) = where_args.provider_id {
                 if let Some(id) = provider_id.equals {
@@ -88,7 +88,7 @@ impl ApiKeyServiceExt for ApiKeyService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db.insert(&input).exec().await
+        self.db.insert(&[&input]).first_or_throw().await
     }
 
     async fn update_by_id(&self, id: &Uuid, input: ApiKeyUpdateInput) -> Result<ApiKey> {

@@ -79,7 +79,7 @@ impl ExecutionServiceExt for ExecutionService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db.insert(&input).exec().await
+        self.db.insert(&[&input]).first_or_throw().await
     }
 
     async fn delete_by_id(&self, id: &Uuid) -> Result<Execution> {

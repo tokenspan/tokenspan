@@ -202,7 +202,7 @@ impl ThreadServiceExt for ThreadService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db.insert(&input).exec().await
+        self.db.insert(&[&input]).first_or_throw().await
     }
 
     async fn new(&self, input: ThreadCreateInput, owner_id: Uuid) -> Result<Thread> {

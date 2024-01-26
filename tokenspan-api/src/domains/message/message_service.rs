@@ -107,7 +107,7 @@ impl MessageServiceExt for MessageService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db.insert(&input).exec().await
+        self.db.insert(&[&input]).first_or_throw().await
     }
 
     async fn duplicate_by_thread_version_id(
@@ -130,7 +130,8 @@ impl MessageServiceExt for MessageService {
             message.updated_at = Utc::now().naive_utc();
         }
 
-        self.db.insert_many(&messages).exec().await
+        let messages = messages.iter().collect::<Vec<_>>();
+        self.db.insert(&messages).all().await
     }
 
     async fn update_by_id(&self, id: &Uuid, input: MessageUpdateInput) -> Result<Message> {

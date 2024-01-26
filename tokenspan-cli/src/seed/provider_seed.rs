@@ -34,7 +34,7 @@ impl<'a> Seed for ProviderSeed<'a> {
                 continue;
             }
 
-            self.db.insert(&item).exec().await?;
+            self.db.insert(&[&item]).first_or_throw().await?;
             info!("Provider {} created", item.id);
         }
 

@@ -39,7 +39,7 @@ impl<'a> Seed for UserSeed<'a> {
             user.password = hash_password;
             user.salt = salt;
 
-            self.db.insert(&user).exec().await?;
+            self.db.insert(&[&user]).first_or_throw().await?;
             info!("User {} created", user.id);
         }
 

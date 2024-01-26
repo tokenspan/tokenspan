@@ -3,13 +3,8 @@ use dojo_orm::pagination::Cursor;
 use uuid::Uuid;
 
 #[derive(InputObject, Default)]
-pub struct ModelWhereProviderIdArgs {
-    pub equals: Option<Uuid>,
-}
-
-#[derive(InputObject, Default)]
 pub struct ModelWhereArgs {
-    pub provider_id: Option<ModelWhereProviderIdArgs>,
+    pub provider_id: Option<Uuid>,
 }
 
 #[derive(InputObject, Default)]

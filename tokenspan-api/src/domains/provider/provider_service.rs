@@ -72,7 +72,7 @@ impl ProviderServiceExt for ProviderService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db.insert(&input).exec().await
+        self.db.insert(&[&input]).first_or_throw().await
     }
 
     async fn update_by_id(&self, id: &Uuid, input: ProviderUpdateInput) -> Result<Provider> {

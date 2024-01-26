@@ -41,12 +41,10 @@ pub struct ModelService {
 #[async_trait::async_trait]
 impl ModelServiceExt for ModelService {
     async fn paginate(&self, args: ModelArgs) -> Result<Pagination<Model>> {
-        let mut predicates: Vec<Predicate> = vec![];
+        let mut predicates = vec![];
         if let Some(where_args) = &args.r#where {
             if let Some(provider_id) = &where_args.provider_id {
-                if let Some(id) = &provider_id.equals {
-                    predicates.push(equals("provider_id", id));
-                }
+                predicates.push(equals("provider_id", provider_id));
             }
         }
 
@@ -100,7 +98,7 @@ impl ModelServiceExt for ModelService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db.insert(&input).exec().await
+        self.db.insert(&[&input]).first_or_throw().await
     }
 
     async fn update_by_id(&self, id: &Uuid, input: ModelUpdateInput) -> Result<Model> {

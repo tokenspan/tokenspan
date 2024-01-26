@@ -140,7 +140,7 @@ impl ThreadVersionServiceExt for ThreadVersionService {
             updated_at: Utc::now().naive_utc(),
         };
 
-        self.db.insert(&input).exec().await
+        self.db.insert(&[&input]).first_or_throw().await
     }
 
     async fn publish(
@@ -180,7 +180,7 @@ impl ThreadVersionServiceExt for ThreadVersionService {
             created_at: Utc::now().naive_utc(),
             updated_at: Utc::now().naive_utc(),
         };
-        let new_thread_version = self.db.insert(&input).exec().await?;
+        let new_thread_version = self.db.insert(&[&input]).first_or_throw().await?;
 
         self.parameter_service
             .duplicate_by_thread_version_id(&current_thread_version.id, new_thread_version.id)

@@ -41,7 +41,7 @@ impl<'a> ThreadSeed<'a> {
             return Ok(());
         }
 
-        self.db.insert::<Message>(data).exec().await?;
+        self.db.insert(&[data]).first_or_throw().await?;
         info!("Message {} created", data.id);
 
         Ok(())
@@ -70,7 +70,7 @@ impl<'a> ThreadSeed<'a> {
             return Ok(());
         }
 
-        self.db.insert::<Parameter>(data).exec().await?;
+        self.db.insert(&[data]).first_or_throw().await?;
         info!("Parameter {} created", data.id);
 
         Ok(())
@@ -102,7 +102,7 @@ impl<'a> ThreadSeed<'a> {
             return Ok(());
         }
 
-        self.db.insert::<ThreadVersion>(data).exec().await?;
+        self.db.insert(&[data]).first_or_throw().await?;
         info!("ThreadVersion {} created", data.id);
 
         Ok(())
@@ -120,7 +120,7 @@ impl<'a> ThreadSeed<'a> {
             return Ok(());
         }
 
-        self.db.insert(item).exec().await?;
+        self.db.insert(&[item]).first_or_throw().await?;
         info!("Thread {} created", item.id);
 
         Ok(())
